@@ -88,17 +88,19 @@ export async function POST(
     );
 
     // Return user data (without password)
-    const { password_hash, ...safeUser } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash: _, ...safeUser } = user;
 
     return NextResponse.json({
       success: true,
       user: safeUser,
       token,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Login error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An error occurred during login';
     return NextResponse.json(
-      { error: 'An error occurred during login' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

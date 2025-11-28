@@ -829,7 +829,7 @@ export function hasLegacyData(section: WebsiteSection): boolean {
 }
 
 export function getSectionDisplayName(type: SectionType): string {
-  const names: Record<SectionType, string> = {
+  const names: Partial<Record<SectionType, string>> = {
     'announcement-bar': 'Announcement Bar',
     'header': 'Header',
     'hero-slider': 'Hero Slider',
@@ -863,7 +863,7 @@ export function getSectionDisplayName(type: SectionType): string {
 }
 
 export function getBlockDisplayName(type: BlockType): string {
-  const names: Record<BlockType, string> = {
+  const names: Partial<Record<BlockType, string>> = {
     'heading': 'Heading',
     'subheading': 'Subheading',
     'paragraph': 'Paragraph',

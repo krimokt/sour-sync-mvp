@@ -44,8 +44,6 @@ export default async function SiteHomePage({
   const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData;
   
   const themeColor = settings?.primary_color || '#3B82F6';
-  const fontHeading = settings?.font_heading || 'Inter';
-  const fontBody = settings?.font_body || 'Inter';
   const isPreview = searchParams.preview === 'true';
 
   let layout: WebsiteSection[] = [];
@@ -60,8 +58,6 @@ export default async function SiteHomePage({
     <PreviewWrapper
       initialLayout={layout || []}
       themeColor={themeColor}
-      fontHeading={fontHeading}
-      fontBody={fontBody}
       companyId={company.id}
       companySlug={company.slug}
       companyName={company.name}

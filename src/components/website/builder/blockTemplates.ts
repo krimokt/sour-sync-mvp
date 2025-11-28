@@ -6,16 +6,6 @@ import {
   SectionSettings,
   BlockSettings,
   SectionTemplate,
-  AnnouncementBarData,
-  HeroSliderData,
-  HeroBannerData,
-  FeaturedCollectionData,
-  PromoBannerData,
-  TestimonialsData,
-  ImageWithTextData,
-  MulticolumnData,
-  NewsletterData,
-  FooterData,
 } from '@/types/website';
 
 // ============================================
@@ -252,7 +242,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         ],
         autoRotate: true,
         rotationSpeed: 4000,
-      } as AnnouncementBarData;
+      } as Record<string, unknown>;
 
     case 'hero-slider':
       return {
@@ -284,7 +274,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         showDots: false,
         height: 600,
         mobileHeight: 500,
-      } as HeroSliderData;
+      } as Record<string, unknown>;
 
     case 'hero-banner':
       return {
@@ -297,7 +287,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         textAlignment: 'center',
         overlayColor: '#000000',
         overlayOpacity: 0.4,
-      } as HeroBannerData;
+      } as Record<string, unknown>;
 
     case 'featured-collection':
     case 'product-carousel':
@@ -316,7 +306,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         showRating: true,
         showPrice: true,
         showBadges: true,
-      } as FeaturedCollectionData;
+      } as Record<string, unknown>;
 
     case 'promo-banner':
     case 'split-banner':
@@ -342,7 +332,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
           },
         ],
         layout: 'split',
-      } as PromoBannerData;
+      } as Record<string, unknown>;
 
     case 'testimonials':
       return {
@@ -377,7 +367,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         layout: 'carousel',
         showRating: true,
         showAvatar: true,
-      } as TestimonialsData;
+      } as Record<string, unknown>;
 
     case 'image-with-text':
       return {
@@ -390,7 +380,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         imagePosition: 'right',
         imageWidth: 'half',
         verticalAlignment: 'center',
-      } as ImageWithTextData;
+      } as Record<string, unknown>;
 
     case 'multicolumn':
       return {
@@ -423,7 +413,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         ],
         columnsDesktop: 4,
         columnsMobile: 2,
-      } as MulticolumnData;
+      } as Record<string, unknown>;
 
     case 'newsletter':
       return {
@@ -432,7 +422,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
         buttonText: 'Subscribe',
         placeholder: 'Enter your email address',
         layout: 'simple',
-      } as NewsletterData;
+      } as Record<string, unknown>;
 
     case 'footer':
       return {
@@ -483,7 +473,7 @@ function getDefaultSectionData(type: SectionType): Record<string, unknown> {
           { text: 'Privacy Policy', link: '/privacy' },
           { text: 'Terms of Service', link: '/terms' },
         ],
-      } as FooterData;
+      } as Record<string, unknown>;
 
     default:
       return {};

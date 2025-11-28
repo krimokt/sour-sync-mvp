@@ -7,12 +7,9 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle, 
-  Eye, 
   Download,
   Loader2,
-  ExternalLink,
-  Search,
-  Filter
+  ExternalLink
 } from 'lucide-react';
 import { PaymentProof, Order } from '@/types/store';
 

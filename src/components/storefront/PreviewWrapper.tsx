@@ -29,7 +29,6 @@ export default function PreviewWrapper({
   const [themeColor, setThemeColor] = useState(initialThemeColor);
   const [fontHeading, setFontHeading] = useState(initialFontHeading);
   const [fontBody, setFontBody] = useState(initialFontBody);
-  const [updateCounter, setUpdateCounter] = useState(0);
 
   // Handle incoming message
   const handleMessage = useCallback((event: MessageEvent) => {
@@ -39,7 +38,6 @@ export default function PreviewWrapper({
     if (type === 'LAYOUT_UPDATE' && newLayout) {
       console.log('[Preview] Received layout update:', newLayout.length, 'sections');
       setLayout([...newLayout]); // Create new array to force re-render
-      setUpdateCounter(c => c + 1); // Force re-render
       
       if (theme) {
         if (theme.primaryColor) setThemeColor(theme.primaryColor);

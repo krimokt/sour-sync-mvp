@@ -4,19 +4,15 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { WebsiteBlock } from '@/types/website';
-import { getBlockTypeName, getBlockTypeIcon } from './blockTemplates';
+import { getBlockTypeName } from './blockTemplates';
 import {
   GripVertical,
   Copy,
   Trash2,
-  Type,
   Text,
-  AlignLeft,
   Image,
   MousePointer2,
-  Star,
   Package,
-  Minus,
   Square,
 } from 'lucide-react';
 
@@ -28,18 +24,6 @@ interface BlockItemProps {
   onDuplicate: () => void;
 }
 
-// Map icon names to components
-const iconMap: Record<string, React.FC<{ className?: string }>> = {
-  Type,
-  Text,
-  AlignLeft,
-  Image,
-  MousePointer2,
-  Star,
-  Package,
-  Minus,
-  Square,
-};
 
 export default function BlockItem({
   block,
@@ -63,8 +47,15 @@ export default function BlockItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const iconName = getBlockTypeIcon(block.type);
-  const IconComponent = iconMap[iconName] || Square;
+  // Map block types to icons
+  const getIconForBlockType = (type: string) => {
+    if (type.includes('text') || type.includes('heading')) return Text;
+    if (type.includes('image')) return Image;
+    if (type.includes('button')) return MousePointer2;
+    if (type.includes('product')) return Package;
+    return Square;
+  };
+  const IconComponent = getIconForBlockType(block.type);
 
   // Get preview text from block data
   const getPreviewText = () => {

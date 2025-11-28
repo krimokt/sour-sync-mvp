@@ -10,7 +10,6 @@ import {
   Check, 
   X, 
   Loader2,
-  GripVertical,
   ToggleLeft,
   ToggleRight
 } from 'lucide-react';

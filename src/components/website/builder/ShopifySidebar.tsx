@@ -52,7 +52,7 @@ interface ShopifySidebarProps {
 }
 
 // Section type icons
-const sectionIcons: Record<SectionType, React.FC<{ className?: string }>> = {
+const sectionIcons: Partial<Record<SectionType, React.FC<{ className?: string }>>> = {
   hero: Sparkles,
   services: Briefcase,
   products: ShoppingBag,
@@ -66,7 +66,7 @@ const sectionIcons: Record<SectionType, React.FC<{ className?: string }>> = {
 };
 
 // Block type icons
-const blockIcons: Record<WebsiteBlock['type'], React.FC<{ className?: string }>> = {
+const blockIcons: Partial<Record<WebsiteBlock['type'], React.FC<{ className?: string }>>> = {
   title: Type,
   subtitle: Type,
   text: Type,

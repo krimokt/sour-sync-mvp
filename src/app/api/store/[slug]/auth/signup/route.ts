@@ -100,6 +100,7 @@ export async function POST(
     );
 
     // Return user data (without password)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password_hash: _, ...safeUser } = newUser;
 
     return NextResponse.json({
@@ -107,10 +108,11 @@ export async function POST(
       user: safeUser,
       token,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Signup error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An error occurred during signup';
     return NextResponse.json(
-      { error: 'An error occurred during signup' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

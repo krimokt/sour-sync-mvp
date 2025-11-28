@@ -24,7 +24,7 @@ export default function Multicolumn({ data, themeColor }: MulticolumnProps) {
 
   // Dynamic icon rendering
   const renderIcon = (iconName: string) => {
-    const Icon = (Icons as any)[iconName];
+    const Icon = (Icons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[iconName];
     if (!Icon) return null;
     return <Icon className="w-8 h-8" style={{ color: themeColor }} />;
   };

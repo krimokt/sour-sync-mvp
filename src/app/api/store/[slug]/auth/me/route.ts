@@ -10,8 +10,7 @@ const supabase = createClient(
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { slug: string } }
+  request: NextRequest
 ) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -41,10 +40,11 @@ export async function GET(
     }
 
     // Remove sensitive data
-    const { password_hash, ...safeUser } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash: _, ...safeUser } = user;
 
     return NextResponse.json({ user: safeUser });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Auth me error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }

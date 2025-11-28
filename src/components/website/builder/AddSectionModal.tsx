@@ -15,6 +15,7 @@ import {
   Megaphone,
   PanelTop,
   PanelBottom,
+  LayoutTemplate,
 } from 'lucide-react';
 
 interface AddSectionModalProps {
@@ -24,7 +25,7 @@ interface AddSectionModalProps {
 }
 
 // Map section types to icons
-const sectionIcons: Record<SectionType, React.FC<{ className?: string }>> = {
+const sectionIcons: Partial<Record<SectionType, React.FC<{ className?: string }>>> = {
   hero: Sparkles,
   services: Briefcase,
   products: ShoppingBag,
@@ -101,8 +102,10 @@ export default function AddSectionModal({
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {category.types.map((type) => {
-                    const template = sectionTemplates[type];
-                    const IconComponent = sectionIcons[type];
+                    const template = sectionTemplates.find(t => t.type === type);
+                    const IconComponent = sectionIcons[type] || LayoutTemplate;
+                    
+                    if (!template) return null;
                     
                     return (
                       <button

@@ -65,7 +65,7 @@ export async function GET(
     const { data: cart } = await cartQuery.single();
 
     return NextResponse.json({ cart });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Cart GET error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
@@ -195,7 +195,7 @@ export async function POST(
     const response = NextResponse.json({ cart: updatedCart, session_id: sessionId });
     
     return response;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Cart POST error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }

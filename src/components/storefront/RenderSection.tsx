@@ -104,7 +104,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'announcement-bar':
       return (
         <AnnouncementBar 
-          data={data as AnnouncementBarData} 
+          data={data as unknown as AnnouncementBarData} 
           themeColor={themeColor} 
         />
       );
@@ -112,7 +112,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'header':
       return (
         <HeaderSection 
-          data={data as HeaderData} 
+          data={data as unknown as HeaderData} 
           themeColor={themeColor} 
         />
       );
@@ -120,7 +120,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'hero-slider':
       return (
         <HeroSlider 
-          data={data as HeroSliderData} 
+          data={data as unknown as HeroSliderData} 
           themeColor={themeColor} 
         />
       );
@@ -128,7 +128,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'hero-banner':
       return wrapSection(
         <HeroBanner 
-          data={data as HeroBannerData} 
+          data={data as unknown as HeroBannerData} 
           themeColor={themeColor} 
         />
       );
@@ -137,7 +137,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'product-carousel':
       return (
         <ProductCarousel 
-          data={data as FeaturedCollectionData} 
+          data={data as unknown as FeaturedCollectionData} 
           themeColor={themeColor}
           companyId={companyId}
           companySlug={companySlug}
@@ -148,7 +148,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'split-banner':
       return (
         <PromoBanner 
-          data={data as PromoBannerData} 
+          data={data as unknown as PromoBannerData} 
           themeColor={themeColor} 
         />
       );
@@ -157,7 +157,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'reviews-carousel':
       return (
         <TestimonialsCarousel 
-          data={data as TestimonialsData} 
+          data={data as unknown as TestimonialsData} 
           themeColor={themeColor} 
         />
       );
@@ -165,7 +165,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'image-with-text':
       return wrapSection(
         <ImageWithText 
-          data={data as ImageWithTextData} 
+          data={data as unknown as ImageWithTextData} 
           themeColor={themeColor} 
         />
       );
@@ -173,7 +173,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'multicolumn':
       return wrapSection(
         <Multicolumn 
-          data={data as MulticolumnData} 
+          data={data as unknown as MulticolumnData} 
           themeColor={themeColor} 
         />
       );
@@ -181,7 +181,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'newsletter':
       return wrapSection(
         <Newsletter 
-          data={data as NewsletterData} 
+          data={data as unknown as NewsletterData} 
           themeColor={themeColor} 
         />
       );
@@ -189,7 +189,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'contact-info':
       return wrapSection(
         <ContactInfo 
-          data={data as ContactInfoData} 
+          data={data as unknown as ContactInfoData} 
           themeColor={themeColor} 
         />
       );
@@ -198,7 +198,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'shipment-timeline':
       return wrapSection(
         <ShipmentTimeline 
-          data={data as ShipmentTimelineData} 
+          data={data as unknown as ShipmentTimelineData} 
           themeColor={themeColor} 
         />
       );
@@ -206,7 +206,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'pricing-table':
       return wrapSection(
         <PricingTable 
-          data={data as PricingTableData} 
+          data={data as unknown as PricingTableData} 
           themeColor={themeColor} 
         />
       );
@@ -214,7 +214,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'warehouse-gallery':
       return wrapSection(
         <WarehouseGallery 
-          data={data as WarehouseGalleryData} 
+          data={data as unknown as WarehouseGalleryData} 
           themeColor={themeColor} 
         />
       );
@@ -222,7 +222,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'process-steps':
       return wrapSection(
         <ProcessSteps 
-          data={data as ProcessStepsData} 
+          data={data as unknown as ProcessStepsData} 
           themeColor={themeColor} 
         />
       );
@@ -230,7 +230,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'quote-form':
       return wrapSection(
         <QuoteForm 
-          data={data as QuoteFormData} 
+          data={data as unknown as QuoteFormData} 
           themeColor={themeColor} 
         />
       );
@@ -238,7 +238,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'logo-list':
       return wrapSection(
         <LogoList 
-          data={data as LogoListData} 
+          data={data as unknown as LogoListData} 
           themeColor={themeColor} 
         />
       );
@@ -246,7 +246,7 @@ export default function RenderSection({ section, themeColor, companyId, companyS
     case 'footer':
       return (
         <Footer 
-          data={data as FooterData} 
+          data={data as unknown as FooterData} 
           themeColor={themeColor} 
         />
       );

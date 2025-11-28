@@ -9,7 +9,6 @@ interface WarehouseGalleryProps {
 }
 
 export default function WarehouseGallery({ data }: WarehouseGalleryProps) {
-  const layout = data.layout || 'grid';
   const columns = data.columns || 3;
 
   const getGridCols = (cols: number) => {

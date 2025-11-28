@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,7 +36,7 @@ export async function GET(
     }
 
     return NextResponse.json({ accounts });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Bank accounts GET error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
@@ -87,7 +86,7 @@ export async function POST(
     }
 
     return NextResponse.json({ account });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Bank account POST error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }

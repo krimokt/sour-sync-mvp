@@ -6,10 +6,10 @@ import { Loader2, RefreshCw, ExternalLink } from 'lucide-react';
 interface ShopifyPreviewProps {
   companySlug: string;
   pageSlug?: string;
-  devicePreview: 'desktop' | 'tablet' | 'mobile';
+  devicePreview?: 'desktop' | 'tablet' | 'mobile';
 }
 
-export default function ShopifyPreview({ companySlug, pageSlug = '/', devicePreview }: ShopifyPreviewProps) {
+export default function ShopifyPreview({ companySlug, pageSlug = '/' }: ShopifyPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { FooterData } from '@/types/website';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 
 interface FooterProps {
   data: FooterData;

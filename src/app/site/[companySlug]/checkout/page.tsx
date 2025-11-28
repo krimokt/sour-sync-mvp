@@ -57,32 +57,31 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const { data } = await supabase
+          .from('companies')
+          .select('id, name, slug, logo_url, website_settings(primary_color)')
+          .eq('slug', companySlug)
+          .eq('status', 'active')
+          .single();
+
+        if (data) {
+          setCompany({
+            ...data,
+            website_settings: Array.isArray(data.website_settings) 
+              ? data.website_settings[0] 
+              : data.website_settings
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching company:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchCompany();
   }, [companySlug]);
-
-  const fetchCompany = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('id, name, slug, logo_url, website_settings(primary_color)')
-        .eq('slug', companySlug)
-        .eq('status', 'active')
-        .single();
-
-      if (data) {
-        setCompany({
-          ...data,
-          website_settings: Array.isArray(data.website_settings) 
-            ? data.website_settings[0] 
-            : data.website_settings
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching company:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -138,8 +137,9 @@ export default function CheckoutPage() {
       }
 
       setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-3">Order Submitted!</h1>
             <p className="text-gray-600 mb-8">
-              Thank you for your order. We've received your request and will contact you shortly 
+              Thank you for your order. We&apos;ve received your request and will contact you shortly 
               with pricing and shipping details.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -226,7 +226,7 @@ export default function CheckoutPage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Place Your Order</h1>
           <p className="text-gray-600">
-            Fill in your details and we'll get back to you with pricing and shipping information.
+            Fill in your details and we&apos;ll get back to you with pricing and shipping information.
           </p>
         </div>
 
@@ -423,7 +423,7 @@ export default function CheckoutPage() {
             </button>
 
             <p className="text-center text-sm text-gray-500">
-              We'll review your order and contact you within 24 hours with pricing details.
+              We&apos;ll review your order and contact you within 24 hours with pricing details.
             </p>
           </form>
         </div>

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import { Menu, X, ShoppingBag, Truck } from 'lucide-react';
+import { Menu, X, ShoppingBag } from 'lucide-react';
 
 interface StoreHeaderProps {
   companyName?: string;

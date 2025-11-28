@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ShipmentTimelineData } from '@/types/website';
-import { CheckCircle2, Circle, Clock, Package } from 'lucide-react';
+import { CheckCircle2, Circle, Clock } from 'lucide-react';
 
 interface ShipmentTimelineProps {
   data: ShipmentTimelineData;

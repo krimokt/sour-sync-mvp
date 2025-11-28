@@ -37,8 +37,9 @@ export default function TrackOrderClient({ companySlug, themeColor }: TrackOrder
 
       const data = await response.json();
       setOrder(data.order);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
     } finally {
       setIsSearching(false);
     }

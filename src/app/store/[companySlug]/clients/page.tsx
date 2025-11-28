@@ -58,7 +58,7 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {clients?.map((client: any) => (
+              {clients?.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

@@ -46,7 +46,7 @@ export default function Newsletter({ data, themeColor }: NewsletterProps) {
                   type="email"
                   placeholder={placeholder}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent outline-none transition-shadow"
-                  style={{ ['--tw-ring-color' as any]: themeColor }}
+                  style={{ ['--tw-ring-color' as string]: themeColor } as React.CSSProperties}
                   required
                 />
                 <button
@@ -79,7 +79,7 @@ export default function Newsletter({ data, themeColor }: NewsletterProps) {
             type="email"
             placeholder={placeholder}
             className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:border-transparent outline-none transition-shadow"
-            style={{ ['--tw-ring-color' as any]: themeColor }}
+            style={{ ['--tw-ring-color' as string]: themeColor } as React.CSSProperties}
             required
           />
           <button

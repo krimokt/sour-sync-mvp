@@ -260,10 +260,12 @@ function ButtonBlock({
   const variant = settings.buttonVariant || 'primary';
   const size = settings.buttonSize || 'md';
 
-  const sizeClasses = {
+  const sizeClasses: Record<string, string> = {
+    xs: 'px-3 py-1.5 text-xs',
     sm: 'px-4 py-2 text-sm',
     md: 'px-6 py-3 text-base',
     lg: 'px-8 py-4 text-lg',
+    xl: 'px-10 py-5 text-xl',
   };
 
   const getVariantStyles = (): React.CSSProperties => {

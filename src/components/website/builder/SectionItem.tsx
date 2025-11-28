@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { WebsiteSection, WebsiteBlock } from '@/types/website';
-import { getSectionTypeName, getSectionTypeIcon, getAvailableBlockTypes, getBlockTypeName } from './blockTemplates';
+import { getSectionTypeName, getAvailableBlockTypes, getBlockTypeName } from './blockTemplates';
 import BlockItem from './BlockItem';
 import {
   GripVertical,
@@ -16,17 +16,11 @@ import {
   Copy,
   Trash2,
   Plus,
-  Sparkles,
   Briefcase,
   ShoppingBag,
-  Mail,
-  Info,
-  Images,
-  MessageSquare,
-  Megaphone,
-  PanelTop,
-  PanelBottom,
   Square,
+  Image,
+  LayoutTemplate,
 } from 'lucide-react';
 
 interface SectionItemProps {
@@ -45,20 +39,6 @@ interface SectionItemProps {
   onDuplicateBlock: (blockId: string) => void;
 }
 
-// Map icon names to components
-const iconMap: Record<string, React.FC<{ className?: string }>> = {
-  Sparkles,
-  Briefcase,
-  ShoppingBag,
-  Mail,
-  Info,
-  Images,
-  MessageSquare,
-  Megaphone,
-  PanelTop,
-  PanelBottom,
-  Square,
-};
 
 export default function SectionItem({
   section,
@@ -93,8 +73,16 @@ export default function SectionItem({
   };
 
   const isHidden = section.settings?.isHidden;
-  const iconName = getSectionTypeIcon(section.type);
-  const IconComponent = iconMap[iconName] || Square;
+  // Map section types to icons
+  const getIconForSectionType = (type: string) => {
+    if (type.includes('hero')) return Image;
+    if (type.includes('header')) return LayoutTemplate;
+    if (type.includes('footer')) return LayoutTemplate;
+    if (type.includes('product')) return ShoppingBag;
+    if (type.includes('service')) return Briefcase;
+    return Square;
+  };
+  const IconComponent = getIconForSectionType(section.type);
   const availableBlockTypes = getAvailableBlockTypes(section.type);
 
   const handleAddBlock = (type: WebsiteBlock['type']) => {

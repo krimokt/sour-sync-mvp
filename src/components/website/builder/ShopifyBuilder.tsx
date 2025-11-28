@@ -30,7 +30,6 @@ import {
   Monitor, 
   Tablet, 
   Smartphone,
-  ChevronLeft,
   ChevronDown,
   MoreHorizontal,
   Save,

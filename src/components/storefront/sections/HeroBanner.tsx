@@ -26,7 +26,6 @@ export default function HeroBanner({ data, themeColor }: HeroBannerProps) {
   } = data;
 
   const isBackground = imagePosition === 'background';
-  const isLeft = imagePosition === 'left';
   const isRight = imagePosition === 'right';
 
   // Background Image Layout

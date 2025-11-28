@@ -292,10 +292,10 @@ function renderSectionContent(
             checked={Boolean(data.showViewAll)}
             onChange={(checked) => updateData('showViewAll', checked)}
           />
-          {data.showViewAll && (
+          {Boolean(data.showViewAll) && (
             <TextInput
               label="View all link"
-              value={String(data.viewAllLink || '')}
+              value={String((data.viewAllLink as string) || '')}
               onChange={(value) => updateData('viewAllLink', value)}
               placeholder="/collections/all"
             />

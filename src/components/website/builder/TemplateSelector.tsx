@@ -186,7 +186,7 @@ export const websiteTemplates: WebsiteTemplate[] = [
       },
       {
         id: crypto.randomUUID(),
-        type: 'testimonials-carousel',
+        type: 'testimonials',
         name: 'Testimonials',
         data: {
           title: 'What Our Clients Say',

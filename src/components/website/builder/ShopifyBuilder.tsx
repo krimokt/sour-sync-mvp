@@ -44,6 +44,7 @@ import {
   Eye,
   PanelLeftClose,
   PanelLeftOpen,
+  ExternalLink,
 } from 'lucide-react';
 
 interface ShopifyBuilderProps {
@@ -609,6 +610,17 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
             <Menu className="w-5 h-5" />
           </button>
           
+          <a
+            href={`https://${companySlug}.soursync.com`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-300 hover:text-white bg-transparent hover:bg-[#333] border border-[#444] rounded transition-colors"
+            title={`View live site: ${companySlug}.soursync.com`}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{companySlug}.soursync.com</span>
+          </a>
+          
           <div className="flex items-center gap-1 bg-[#0d0d0d] rounded-lg p-1">
             <button
               onClick={() => setDevicePreview('desktop')}
@@ -744,6 +756,16 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
+              <a
+                href={`https://${companySlug}.soursync.com`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-300 hover:text-white bg-transparent hover:bg-[#333] border border-[#444] rounded transition-colors"
+                title={`View live site: ${companySlug}.soursync.com`}
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span className="hidden xl:inline">{companySlug}.soursync.com</span>
+              </a>
               <button
                 onClick={() => setShowTemplateSelector(true)}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-transparent hover:bg-[#333] border border-[#444] rounded transition-colors"

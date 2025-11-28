@@ -611,26 +611,14 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
           </button>
           
           <a
-            href={
-              process.env.NEXT_PUBLIC_USE_SUBDOMAINS === 'true'
-                ? `https://${companySlug}.soursync.com`
-                : `https://soursync.com/site/${companySlug}`
-            }
+            href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://soursync.com'}/site/${companySlug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-300 hover:text-white bg-transparent hover:bg-[#333] border border-[#444] rounded transition-colors"
-            title={
-              process.env.NEXT_PUBLIC_USE_SUBDOMAINS === 'true'
-                ? `View live site: ${companySlug}.soursync.com`
-                : `View live site: soursync.com/site/${companySlug}`
-            }
+            title="View live site"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {process.env.NEXT_PUBLIC_USE_SUBDOMAINS === 'true'
-                ? `${companySlug}.soursync.com`
-                : `soursync.com/site/${companySlug}`}
-            </span>
+            <span className="hidden sm:inline">View Site</span>
           </a>
           
           <div className="flex items-center gap-1 bg-[#0d0d0d] rounded-lg p-1">
@@ -769,26 +757,14 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
             {/* Right Actions */}
             <div className="flex items-center gap-2">
               <a
-                href={
-                  process.env.NEXT_PUBLIC_USE_SUBDOMAINS === 'true'
-                    ? `https://${companySlug}.soursync.com`
-                    : `https://soursync.com/site/${companySlug}`
-                }
+                href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://soursync.com'}/site/${companySlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-300 hover:text-white bg-transparent hover:bg-[#333] border border-[#444] rounded transition-colors"
-                title={
-                  process.env.NEXT_PUBLIC_USE_SUBDOMAINS === 'true'
-                    ? `View live site: ${companySlug}.soursync.com`
-                    : `View live site: soursync.com/site/${companySlug}`
-                }
+                title={`View live site`}
               >
                 <ExternalLink className="w-4 h-4" />
-                <span className="hidden xl:inline">
-                  {process.env.NEXT_PUBLIC_USE_SUBDOMAINS === 'true'
-                    ? `${companySlug}.soursync.com`
-                    : `soursync.com/site/${companySlug}`}
-                </span>
+                <span className="hidden xl:inline">View Site</span>
               </a>
               <button
                 onClick={() => setShowTemplateSelector(true)}

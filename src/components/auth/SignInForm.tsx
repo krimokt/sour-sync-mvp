@@ -1,53 +1,118 @@
-"use client";
-import Checkbox from "@/components/form/input/Checkbox";
-import Input from "@/components/form/input/InputField";
-import Label from "@/components/form/Label";
-import Button from "@/components/ui/button/Button";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-import Link from "next/link";
-import React, { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+'use client';
+
+import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
+import Label from '@/components/form/Label';
+import Button from '@/components/ui/button/Button';
+import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from '@/icons';
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { signIn } = useAuth();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setIsLoading(true);
-    console.log("Sign-in attempt with email:", email);
 
     if (!email || !password) {
-      setError("Please fill in all fields");
+      setError('Please fill in all fields');
       setIsLoading(false);
       return;
     }
 
     try {
-      console.log("Calling signIn function");
-      const result = await signIn(email, password);
-      console.log("Sign-in result:", result);
-      if (result?.error) {
-        console.error("Sign-in error:", result.error);
-        setError(result.error.message || "Invalid email or password");
-      } else {
-        console.log("Sign-in successful, redirecting");
-        
-        // Force a hard redirect directly to the dashboard
-        window.location.href = "/dashboard-home";
+      // Step 1: Sign in with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        throw new Error(authError.message);
       }
+
+      if (!authData.user) {
+        throw new Error('Sign in failed');
+      }
+
+      // Wait a moment for the session to be fully established
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 2: Get user's profile to find their company
+      console.log('Fetching profile for user:', authData.user.id);
+      
+      // Re-get the session to ensure we have a valid token
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session ? 'Valid' : 'None');
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id, role')
+        .eq('id', authData.user.id)
+        .single();
+
+      console.log('Profile result:', { profile, profileError });
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        // Show error instead of redirecting to signup
+        throw new Error(`Could not load your profile: ${profileError.message}`);
+      }
+
+      if (!profile) {
+        throw new Error('Profile not found. Please contact support.');
+      }
+
+      if (!profile.company_id) {
+        // User has profile but no company - redirect to create one
+        router.push('/signup?step=company');
+        return;
+      }
+
+      // Step 3: Get company slug
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select('slug, status')
+        .eq('id', profile.company_id)
+        .single();
+
+      if (companyError || !company) {
+        throw new Error('Could not find your company');
+      }
+
+      // Check if company is active
+      if (company.status !== 'active') {
+        setError('Your company account is suspended. Please contact support.');
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      // Step 4: Redirect to company dashboard
+      // If there was a redirect URL and it's for the same company, use it
+      if (redirectTo && redirectTo.startsWith(`/store/${company.slug}`)) {
+        window.location.href = redirectTo;
+      } else {
+        window.location.href = `/store/${company.slug}`;
+      }
+
     } catch (err: unknown) {
-      console.error("Sign-in exception:", err);
-      const errorMessage = err instanceof Error ? err.message : "An error occurred during sign in";
+      const errorMessage =
+        err instanceof Error ? err.message : 'An error occurred during sign in';
       setError(errorMessage);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -60,7 +125,7 @@ export default function SignInForm() {
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <ChevronLeftIcon />
-          Back to dashboard
+          Back to home
         </Link>
       </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
@@ -70,7 +135,7 @@ export default function SignInForm() {
               Sign In
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign in!
+              Enter your email and password to access your dashboard
             </p>
           </div>
           <div>
@@ -135,11 +200,11 @@ export default function SignInForm() {
               <div className="space-y-6">
                 <div>
                   <Label>
-                    Email <span className="text-error-500">*</span>{" "}
+                    Email <span className="text-error-500">*</span>
                   </Label>
-                  <Input 
-                    placeholder="info@gmail.com" 
-                    type="email" 
+                  <Input
+                    placeholder="info@gmail.com"
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -147,11 +212,11 @@ export default function SignInForm() {
                 </div>
                 <div>
                   <Label>
-                    Password <span className="text-error-500">*</span>{" "}
+                    Password <span className="text-error-500">*</span>
                   </Label>
                   <div className="relative">
                     <Input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -184,13 +249,13 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     size="sm"
                     type="submit"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Signing in..." : "Sign in"}
+                    {isLoading ? 'Signing in...' : 'Sign in'}
                   </Button>
                 </div>
               </div>
@@ -198,7 +263,7 @@ export default function SignInForm() {
 
             <div className="mt-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                Don&apos;t have an account? {""}
+                Don&apos;t have an account?{' '}
                 <Link
                   href="/signup"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400"

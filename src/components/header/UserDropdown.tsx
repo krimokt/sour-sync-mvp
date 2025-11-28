@@ -171,10 +171,10 @@ export default function UserDropdown() {
 
   // Generate a background color based on the user's name for the profile circle
   const getProfileColor = () => {
+    // Use logo colors for consistency
     const colors = [
-      "bg-blue-500", "bg-green-500", "bg-purple-500", 
-      "bg-red-500", "bg-yellow-500", "bg-indigo-500",
-      "bg-pink-500", "bg-teal-500"
+      "bg-[#06b6d4]", "bg-[#0f7aff]", "bg-[#06b6d4]", 
+      "bg-[#0f7aff]", "bg-[#06b6d4]", "bg-[#0f7aff]"
     ];
     
     // Simple hash function to generate a consistent color for the same user
@@ -186,25 +186,28 @@ export default function UserDropdown() {
     <div className="relative">
       <button
         onClick={toggleDropdown} 
-        className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
+        className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-700 dark:text-gray-400 hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] dark:hover:bg-[#0f7aff]/10 dark:hover:text-[#0f7aff] transition-all duration-200 dropdown-toggle"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11 flex items-center justify-center">
+        <span className="overflow-hidden rounded-xl h-10 w-10 flex items-center justify-center ring-1 ring-gray-200 dark:ring-gray-700 hover:ring-[#0f7aff]/30 transition-all">
           {user?.user_metadata?.avatar_url ? (
             <Image
-              width={44}
-              height={44}
+              width={40}
+              height={40}
               src={user.user_metadata.avatar_url}
               alt={userData.fullName}
               className="object-cover w-full h-full"
             />
           ) : (
-            <div className={`w-full h-full ${getProfileColor()} flex items-center justify-center text-white font-medium`}>
+            <div className={`w-full h-full ${getProfileColor()} flex items-center justify-center text-white font-semibold text-sm`}>
               {getInitials()}
             </div>
           )}
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">{userData.fullName}</span>
+        <div className="flex flex-col items-start mr-1">
+          <span className="block text-sm font-medium text-gray-900 dark:text-white leading-tight">{userData.fullName}</span>
+          <span className="block text-xs text-gray-500 dark:text-gray-400 leading-tight">{userData.email}</span>
+        </div>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -229,35 +232,54 @@ export default function UserDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+        className="absolute right-0 mt-2 flex w-[280px] flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-800 dark:bg-gray-900"
       >
-        <div>
-          <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {userData.fullName}
+        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-800">
+          <span className="overflow-hidden rounded-xl h-12 w-12 flex items-center justify-center ring-1 ring-[#06b6d4]/20">
+            {user?.user_metadata?.avatar_url ? (
+              <Image
+                width={48}
+                height={48}
+                src={user.user_metadata.avatar_url}
+                alt={userData.fullName}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div className={`w-full h-full ${getProfileColor()} flex items-center justify-center text-white font-semibold`}>
+                {getInitials()}
+              </div>
+            )}
           </span>
-          <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {userData.email}
-          </span>
-          
-          {(!userData.firstName && !userData.lastName) && (
-            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300">
-              Please complete your profile
-            </div>
-          )}
+          <div className="flex-1 min-w-0">
+            <span className="block text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {userData.fullName}
+            </span>
+            <span className="block text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              {userData.email}
+            </span>
+          </div>
         </div>
+        
+        {(!userData.firstName && !userData.lastName) && (
+          <div className="mt-3 p-3 bg-[#06b6d4]/10 dark:bg-[#06b6d4]/20 rounded-lg border border-[#06b6d4]/20">
+            <p className="text-xs font-medium text-[#06b6d4] dark:text-[#06b6d4]">
+              Please complete your profile
+            </p>
+          </div>
+        )}
 
-        <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
+        <ul className="flex flex-col gap-1 pt-3 pb-3 border-b border-gray-200 dark:border-gray-800">
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
               href="/profile"
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="flex items-center gap-3 px-3 py-2.5 font-medium text-gray-700 rounded-lg group text-sm hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] dark:text-gray-400 dark:hover:bg-[#0f7aff]/10 dark:hover:text-[#0f7aff] transition-colors"
             >
               <svg
-                className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
-                width="24"
-                height="24"
+                className="fill-gray-500 group-hover:fill-[#0f7aff] dark:fill-gray-400 dark:group-hover:fill-[#0f7aff] transition-colors"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -277,12 +299,12 @@ export default function UserDropdown() {
               onItemClick={closeDropdown}
               tag="a"
               href="/profile"
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="flex items-center gap-3 px-3 py-2.5 font-medium text-gray-700 rounded-lg group text-sm hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] dark:text-gray-400 dark:hover:bg-[#0f7aff]/10 dark:hover:text-[#0f7aff] transition-colors"
             >
               <svg
-                className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
-                width="24"
-                height="24"
+                className="fill-gray-500 group-hover:fill-[#0f7aff] dark:fill-gray-400 dark:group-hover:fill-[#0f7aff] transition-colors"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -302,12 +324,12 @@ export default function UserDropdown() {
               onItemClick={closeDropdown}
               tag="a"
               href="/profile"
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="flex items-center gap-3 px-3 py-2.5 font-medium text-gray-700 rounded-lg group text-sm hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] dark:text-gray-400 dark:hover:bg-[#0f7aff]/10 dark:hover:text-[#0f7aff] transition-colors"
             >
               <svg
-                className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
-                width="24"
-                height="24"
+                className="fill-gray-500 group-hover:fill-[#0f7aff] dark:fill-gray-400 dark:group-hover:fill-[#0f7aff] transition-colors"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -326,12 +348,12 @@ export default function UserDropdown() {
         <a
           href="#"
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+          className="flex items-center gap-3 px-3 py-2.5 mt-3 font-medium text-red-600 rounded-lg group text-sm hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 transition-colors"
         >
           <svg
-            className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
-            width="24"
-            height="24"
+            className="fill-red-500 group-hover:fill-red-600 dark:fill-red-400 dark:group-hover:fill-red-300 transition-colors"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"

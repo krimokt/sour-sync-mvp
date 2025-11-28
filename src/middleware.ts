@@ -3,134 +3,244 @@ import type { NextRequest } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 // List of public routes that don't require authentication
-const publicRoutes = ['/signin', '/signup', '/reset-password'];
+const publicRoutes = ['/signin', '/signup', '/reset-password', '/'];
 
-// Client accessible dashboard routes
-const clientRoutes = [
-  '/dashboard-home', 
-  '/profile',
-  '/quotation',
-  '/order',
-  '/payment',
-  '/shipment-tracking',
-  '/payment-example',
-  '/checkoutpage',
-  '/user-profiles',
-  '/user-profile-edit',
-  '/user-profile-password',
-  '/user-profile-delete',
-  '/user-profile-logout',
-  '/user-profile-logout',
-  '/user-profile-logout',
-];
-
-// Admin-only routes (redirect clients away from these)
-const adminOnlyRoutes = [
-  '/admin-dashboard',
-  '/admin-users',
-  '/admin-analytics',
-  '/admin-settings'
-];
-
-// Routes that should be accessible without authentication (static assets, etc.)
+// Routes that should be accessible without authentication (static assets, API, etc.)
 const alwaysPublicPatterns = [
   /^\/api\//,
   /^\/_next\//,
   /^\/images\//,
   /^\/favicon\.ico$/,
+  /^\/payment-info/, // Public payment info page
+  /^\/payment-details/, // Public payment details page
+  /^\/site\//, // Public company websites
 ];
 
-export async function middleware(req: NextRequest) {
-  console.log('Middleware executing for path:', req.nextUrl.pathname);
-  
-  // Check if the path should always be public
-  const isAlwaysPublic = alwaysPublicPatterns.some(pattern => pattern.test(req.nextUrl.pathname));
-  if (isAlwaysPublic) {
-    console.log('Path is always public, allowing access:', req.nextUrl.pathname);
-    return NextResponse.next();
+// Legacy dashboard routes (keep for backward compatibility during migration)
+const legacyDashboardRoutes = [
+  '/dashboard-home',
+  '/profile',
+  '/quotation',
+  '/order',
+  '/payment',
+  '/shipment-tracking',
+  '/checkoutpage',
+  '/user-profiles',
+];
+
+// Reserved subdomains that should not be treated as company slugs
+const reservedSubdomains = ['www', 'admin', 'api', 'app', 'dashboard'];
+
+// Extract subdomain from hostname
+function getSubdomain(hostname: string): string | null {
+  // Handle localhost (e.g., whitesourcing.localhost:3000)
+  if (hostname.includes('localhost')) {
+    const parts = hostname.split('.');
+    if (parts.length > 1 && parts[0] !== 'localhost') {
+      return parts[0];
+    }
+    return null;
   }
   
+  // Handle production domain (e.g., whitesourcing.soursync.com)
+  const parts = hostname.split('.');
+  // For soursync.com or www.soursync.com, no subdomain
+  if (parts.length <= 2) return null;
+  
+  const subdomain = parts[0];
+  if (reservedSubdomains.includes(subdomain)) return null;
+  
+  return subdomain;
+}
+
+export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  const hostname = req.headers.get('host') || '';
+  
+  // ----- SUBDOMAIN ROUTING FOR PUBLIC WEBSITES -----
+  const subdomain = getSubdomain(hostname);
+  if (subdomain && !path.startsWith('/store/') && !path.startsWith('/site/')) {
+    // Rewrite subdomain requests to /site/[companySlug] path
+    const url = req.nextUrl.clone();
+    url.pathname = `/site/${subdomain}${path}`;
+    return NextResponse.rewrite(url);
+  }
+  
+  // Check if the path should always be public
+  const isAlwaysPublic = alwaysPublicPatterns.some(pattern => pattern.test(path));
+  if (isAlwaysPublic) {
+    return NextResponse.next();
+  }
+
   // Initialize response
   const res = NextResponse.next();
-  
+
   try {
     // Create Supabase client with the request
     const supabase = createMiddlewareClient({ req, res });
-    
+
     // Get session data
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
-    console.log('Middleware session check:', session ? 'Session exists' : 'No session');
-    
-    // Get current path
-    const path = req.nextUrl.pathname;
-    
-    // TEMPORARY: Allow direct access to client routes for development/testing
-    if (clientRoutes.includes(path)) {
-      console.log('Allowing direct access to client route:', path);
-      return NextResponse.next();
+    // ----- STORE ROUTES (/store/*) -----
+    // These are protected and require authentication
+    if (path.startsWith('/store/')) {
+      if (!session) {
+        // Redirect to signin with return URL
+        const redirectUrl = new URL('/signin', req.url);
+        redirectUrl.searchParams.set('redirect', path);
+        return NextResponse.redirect(redirectUrl);
+      }
+      // User is authenticated - let the layout handle company verification
+      return res;
     }
-    
-    // If the user is not logged in and trying to access a protected route
-    if (!session && !publicRoutes.includes(path)) {
-      console.log('Redirecting to /signin from:', path);
+
+    // ----- SELECT STORE PAGE -----
+    if (path === '/select-store') {
+      if (!session) {
+        const redirectUrl = new URL('/signin', req.url);
+        return NextResponse.redirect(redirectUrl);
+      }
+      return res;
+    }
+
+    // ----- PUBLIC AUTH ROUTES (/signin, /signup) -----
+    if (publicRoutes.includes(path)) {
+      if (session) {
+        // User is already logged in - redirect to their company dashboard
+        try {
+          // Get user's profile to find their company
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile?.company_id) {
+            // Get company slug
+            const { data: company } = await supabase
+              .from('companies')
+              .select('slug')
+              .eq('id', profile.company_id)
+              .single();
+
+            if (company?.slug) {
+              const redirectUrl = new URL(`/store/${company.slug}`, req.url);
+              return NextResponse.redirect(redirectUrl);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user company in middleware:', error);
+        }
+        // If we can't determine the company, just continue to the page
+        // The signin/signup pages will handle the redirect
+      }
+      return res;
+    }
+
+    // ----- LEGACY DASHBOARD ROUTES -----
+    // Keep these working during migration, but redirect authenticated users to new store routes
+    if (legacyDashboardRoutes.some(route => path === route || path.startsWith(route + '/'))) {
+      if (!session) {
+        const redirectUrl = new URL('/signin', req.url);
+        redirectUrl.searchParams.set('redirect', path);
+        return NextResponse.redirect(redirectUrl);
+      }
+
+      // Try to redirect to the new store route
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.company_id) {
+          const { data: company } = await supabase
+            .from('companies')
+            .select('slug')
+            .eq('id', profile.company_id)
+            .single();
+
+          if (company?.slug) {
+            // Map legacy routes to new store routes
+            let newPath = `/store/${company.slug}`;
+            
+            if (path === '/quotation' || path.startsWith('/quotation/')) {
+              newPath = `/store/${company.slug}/quotations`;
+            } else if (path === '/payment' || path.startsWith('/payment/')) {
+              newPath = `/store/${company.slug}/payments`;
+            } else if (path === '/shipment-tracking' || path.startsWith('/shipment-tracking/')) {
+              newPath = `/store/${company.slug}/shipping`;
+            } else if (path === '/profile' || path.startsWith('/profile/')) {
+              newPath = `/store/${company.slug}/settings`;
+            }
+            // dashboard-home and others go to main dashboard
+
+            const redirectUrl = new URL(newPath, req.url);
+            return NextResponse.redirect(redirectUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error redirecting legacy route:', error);
+      }
+
+      // If redirect fails, allow access to legacy route
+      return res;
+    }
+
+    // ----- ROOT PATH -----
+    if (path === '/') {
+      if (session) {
+        // Redirect logged-in users to their dashboard
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile?.company_id) {
+            const { data: company } = await supabase
+              .from('companies')
+              .select('slug')
+              .eq('id', profile.company_id)
+              .single();
+
+            if (company?.slug) {
+              const redirectUrl = new URL(`/store/${company.slug}`, req.url);
+              return NextResponse.redirect(redirectUrl);
+            }
+          }
+        } catch (error) {
+          console.error('Error redirecting from root:', error);
+        }
+      }
+      // Allow access to landing page for non-authenticated users
+      return res;
+    }
+
+    // ----- ALL OTHER ROUTES -----
+    // Default behavior: require authentication
+    if (!session) {
       const redirectUrl = new URL('/signin', req.url);
+      redirectUrl.searchParams.set('redirect', path);
       return NextResponse.redirect(redirectUrl);
     }
-    
-    // If user is logged in and trying to access auth pages
-    if (session && publicRoutes.includes(path)) {
-      console.log('Redirecting to /dashboard-home from:', path);
-      const redirectUrl = new URL('/dashboard-home', req.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-    
-    // If user is logged in, check roles for admin-only routes
-    if (session && adminOnlyRoutes.some(route => path.startsWith(route))) {
-      // Get user role
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          profiles (
-            id,
-            email,
-            full_name
-          )
-        `)
-        .eq('id', session.user.id)
-        .single();
-        
-      if (userError) {
-        console.error('Error fetching user role:', userError);
-        // If there's an error, redirect to client dashboard for safety
-        const redirectUrl = new URL('/dashboard-home', req.url);
-        return NextResponse.redirect(redirectUrl);
-      }
-      
-      if (userData && userData.role !== 'admin') {
-        console.log('Non-admin user attempting to access admin route, redirecting to dashboard');
-        const redirectUrl = new URL('/dashboard-home', req.url);
-        return NextResponse.redirect(redirectUrl);
-      }
-    }
-    
-    console.log('Continuing to:', path);
+
     return res;
+
   } catch (error) {
     console.error('Middleware error:', error);
-    
+
     // In case of error, allow access to public routes
-    const path = req.nextUrl.pathname;
-    if (publicRoutes.includes(path) || clientRoutes.includes(path)) {
-      console.log('Error occurred, but path is public or client route, allowing access:', path);
+    if (publicRoutes.includes(path)) {
       return NextResponse.next();
     }
-    
+
     // For other routes, redirect to signin for safety
-    console.log('Error occurred, redirecting to /signin from:', path);
     const redirectUrl = new URL('/signin', req.url);
     return NextResponse.redirect(redirectUrl);
   }
@@ -138,4 +248,4 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image).*)'],
-}
+};

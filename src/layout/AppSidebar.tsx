@@ -1,8 +1,8 @@
 "use client";
-import React, { useEffect, useRef, useState,useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
   ChevronDownIcon,
@@ -10,7 +10,7 @@ import {
   HorizontaLDots,
   UserCircleIcon,
   PaperPlaneIcon,
-
+  GroupIcon,
   DollarLineIcon,
   DocsIcon,
 } from "../icons/index";
@@ -33,11 +33,15 @@ const navItems: NavItem[] = [
     name: "Quotation",
     path: "/quotation",
   },
-
   {
     icon: <DocsIcon />,
     name: "Shipment Tracking",
     path: "/shipment-tracking",
+  },
+  {
+    icon: <GroupIcon />,
+    name: "Clients",
+    path: "/clients",
   },
   {
     icon: <DollarLineIcon />,
@@ -45,14 +49,24 @@ const navItems: NavItem[] = [
     path: "/payment",
   },
   {
-    icon: <UserCircleIcon />,
-    name: "Profile",
-    path: "/profile",
+    icon: <DollarLineIcon />,
+    name: "Bank Accounts",
+    path: "/bank-accounts",
+  },
+  {
+    icon: <DollarLineIcon />,
+    name: "Payment Proofs",
+    path: "/payment-proofs",
   },
   {
     icon: <UserCircleIcon />,
-    name: "User Profiles",
-    path: "/user-profiles",
+    name: "Website Builder",
+    path: "/website-builder",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Profile",
+    path: "/profile",
   },
 ];
 
@@ -60,8 +74,44 @@ const navItems: NavItem[] = [
 const othersItems: NavItem[] = [];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, isManuallyToggled } = useSidebar();
   const pathname = usePathname();
+  const params = useParams();
+  const companySlug = params?.companySlug as string;
+
+  const getPath = useCallback((path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('/store')) return path;
+    return companySlug ? `/store/${companySlug}${path}` : path;
+  }, [companySlug]);
+
+  const isActive = useCallback((path: string) => {
+    const fullPath = getPath(path);
+    return pathname === fullPath || pathname?.startsWith(`${fullPath}/`);
+  }, [pathname, getPath]);
+
+  const [openSubmenu, setOpenSubmenu] = useState<{
+    type: "main" | "others";
+    index: number;
+  } | null>(null);
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
+    {}
+  );
+  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
+    setOpenSubmenu((prevOpenSubmenu) => {
+      if (
+        prevOpenSubmenu &&
+        prevOpenSubmenu.type === menuType &&
+        prevOpenSubmenu.index === index
+      ) {
+        return null;
+      }
+      return { type: menuType, index };
+    });
+  };
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -109,7 +159,7 @@ const AppSidebar: React.FC = () => {
           ) : (
             nav.path && (
               <Link
-                href={nav.path}
+                href={getPath(nav.path)}
                 className={`menu-item group ${
                   isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                 }`}
@@ -146,7 +196,7 @@ const AppSidebar: React.FC = () => {
                 {nav.subItems.map((subItem) => (
                   <li key={subItem.name}>
                     <Link
-                      href={subItem.path}
+                      href={getPath(subItem.path)}
                       className={`menu-dropdown-item ${
                         isActive(subItem.path)
                           ? "menu-dropdown-item-active"
@@ -189,18 +239,6 @@ const AppSidebar: React.FC = () => {
     </ul>
   );
 
-  const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others";
-    index: number;
-  } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
-  );
-  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
-
   useEffect(() => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
@@ -225,7 +263,7 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [pathname,isActive]);
+  }, [pathname, isActive]);
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened
@@ -240,19 +278,6 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
-  const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type === menuType &&
-        prevOpenSubmenu.index === index
-      ) {
-        return null;
-      }
-      return { type: menuType, index };
-    });
-  };
-
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
@@ -265,8 +290,8 @@ const AppSidebar: React.FC = () => {
         }
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
-      onMouseEnter={() => !isExpanded && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => !isExpanded && !isManuallyToggled && setIsHovered(true)}
+      onMouseLeave={() => !isManuallyToggled && setIsHovered(false)}
     >
       <div
         className={`py-8 flex  ${
@@ -278,14 +303,14 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/Logo2.png"
+                src="/images/logo/soursync-logo.svg"
                 alt="Logo"
                 width={150}
                 height={40}
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/Logo2.png"
+                src="/images/logo/soursync-logo.svg"
                 alt="Logo"
                 width={150}
                 height={40}
@@ -293,7 +318,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/Logo2.png"
+              src="/images/logo/soursync-logo.svg"
               alt="Logo"
               width={32}
               height={32}

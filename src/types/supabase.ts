@@ -9,6 +9,188 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      companies: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          owner_id: string | null
+          logo_url: string | null
+          country: string | null
+          currency: string
+          timezone: string
+          plan: 'starter' | 'pro' | 'enterprise'
+          status: 'active' | 'suspended' | 'cancelled'
+          custom_domain: string | null
+          website_settings: {
+            hero_title?: string
+            hero_subtitle?: string
+            hero_image?: string | null
+            theme_color?: string
+            show_prices?: boolean
+          } | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          owner_id?: string | null
+          logo_url?: string | null
+          country?: string | null
+          currency?: string
+          timezone?: string
+          plan?: 'starter' | 'pro' | 'enterprise'
+          status?: 'active' | 'suspended' | 'cancelled'
+          custom_domain?: string | null
+          website_settings?: {
+            hero_title?: string
+            hero_subtitle?: string
+            hero_image?: string | null
+            theme_color?: string
+            show_prices?: boolean
+          } | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          owner_id?: string | null
+          logo_url?: string | null
+          country?: string | null
+          currency?: string
+          timezone?: string
+          plan?: 'starter' | 'pro' | 'enterprise'
+          status?: 'active' | 'suspended' | 'cancelled'
+          custom_domain?: string | null
+          website_settings?: {
+            hero_title?: string
+            hero_subtitle?: string
+            hero_image?: string | null
+            theme_color?: string
+            show_prices?: boolean
+          } | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          company_id: string | null
+          full_name: string | null
+          email: string | null
+          phone: string | null
+          avatar_url: string | null
+          role: 'owner' | 'admin' | 'staff' | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          company_id?: string | null
+          full_name?: string | null
+          email?: string | null
+          phone?: string | null
+          avatar_url?: string | null
+          role?: 'owner' | 'admin' | 'staff' | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string | null
+          full_name?: string | null
+          email?: string | null
+          phone?: string | null
+          avatar_url?: string | null
+          role?: 'owner' | 'admin' | 'staff' | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      products: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          description: string | null
+          price: number
+          compare_price: number | null
+          sku: string | null
+          stock: number
+          category: string | null
+          images: string[]
+          variants: { name: string; value: string; price_adjustment?: number }[]
+          is_published: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          description?: string | null
+          price: number
+          compare_price?: number | null
+          sku?: string | null
+          stock?: number
+          category?: string | null
+          images?: string[]
+          variants?: { name: string; value: string; price_adjustment?: number }[]
+          is_published?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          description?: string | null
+          price?: number
+          compare_price?: number | null
+          sku?: string | null
+          stock?: number
+          category?: string | null
+          images?: string[]
+          variants?: { name: string; value: string; price_adjustment?: number }[]
+          is_published?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      categories: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          slug: string
+          description: string | null
+          image_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          slug: string
+          description?: string | null
+          image_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          image_url?: string | null
+          created_at?: string
+        }
+      }
       payments: {
         Row: {
           id: string

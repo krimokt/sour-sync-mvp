@@ -204,11 +204,11 @@ layer(base);
 }
 
 @utility menu-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+  @apply bg-[#06b6d4]/10 text-[#06b6d4] dark:bg-[#06b6d4]/12 dark:text-[#06b6d4];
 }
 
 @utility menu-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
+  @apply text-gray-700 hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] group-hover:text-[#0f7aff] dark:text-gray-300 dark:hover:bg-[#0f7aff]/5 dark:hover:text-[#0f7aff];
 }
 
 @utility menu-item-icon {
@@ -216,11 +216,11 @@ layer(base);
 }
 
 @utility menu-item-icon-active {
-  @apply text-brand-500 dark:text-brand-400;
+  @apply text-[#06b6d4] dark:text-[#06b6d4];
 }
 
 @utility menu-item-icon-inactive {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300;
+  @apply text-gray-500 group-hover:text-[#0f7aff] dark:text-gray-400 dark:group-hover:text-[#0f7aff];
 }
 
 @utility menu-item-arrow {
@@ -228,11 +228,11 @@ layer(base);
 }
 
 @utility menu-item-arrow-active {
-  @apply rotate-180 text-brand-500 dark:text-brand-400;
+  @apply rotate-180 text-[#06b6d4] dark:text-[#06b6d4];
 }
 
 @utility menu-item-arrow-inactive {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300;
+  @apply text-gray-500 group-hover:text-[#0f7aff] dark:text-gray-400 dark:group-hover:text-[#0f7aff];
 }
 
 @utility menu-dropdown-item {
@@ -240,23 +240,23 @@ layer(base);
 }
 
 @utility menu-dropdown-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+  @apply bg-[#06b6d4]/10 text-[#06b6d4] dark:bg-[#06b6d4]/12 dark:text-[#06b6d4];
 }
 
 @utility menu-dropdown-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5;
+  @apply text-gray-700 hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] dark:text-gray-300 dark:hover:bg-[#0f7aff]/5 dark:hover:text-[#0f7aff];
 }
 
 @utility menu-dropdown-badge {
-  @apply block rounded-full px-2.5 py-0.5 text-xs font-medium uppercase text-brand-500 dark:text-brand-400;
+  @apply block rounded-full px-2.5 py-0.5 text-xs font-medium uppercase text-[#06b6d4] dark:text-[#06b6d4];
 }
 
 @utility menu-dropdown-badge-active {
-  @apply bg-brand-100 dark:bg-brand-500/20;
+  @apply bg-[#06b6d4]/20 dark:bg-[#06b6d4]/20;
 }
 
 @utility menu-dropdown-badge-inactive {
-  @apply bg-brand-50 group-hover:bg-brand-100 dark:bg-brand-500/15 dark:group-hover:bg-brand-500/20;
+  @apply bg-[#06b6d4]/10 group-hover:bg-[#0f7aff]/20 dark:bg-[#06b6d4]/15 dark:group-hover:bg-[#0f7aff]/20;
 }
 
 @utility no-scrollbar {

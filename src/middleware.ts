@@ -31,6 +31,19 @@ const legacyDashboardRoutes = [
 // Reserved subdomains that should not be treated as company slugs
 const reservedSubdomains = ['www', 'admin', 'api', 'app', 'dashboard'];
 
+// Main platform domains (not custom domains)
+const platformDomains = [
+  'soursync.com',
+  'netlify.app',
+  'localhost',
+];
+
+// Check if hostname is a custom domain (not our platform domain)
+function isCustomDomain(hostname: string): boolean {
+  const hostWithoutPort = hostname.split(':')[0];
+  return !platformDomains.some(domain => hostWithoutPort.endsWith(domain));
+}
+
 // Extract subdomain from hostname
 function getSubdomain(hostname: string): string | null {
   // Handle localhost (e.g., whitesourcing.localhost:3000)
@@ -57,6 +70,37 @@ export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const hostname = req.headers.get('host') || '';
   
+  // Initialize response early for Supabase client
+  const res = NextResponse.next();
+  
+  // ----- CUSTOM DOMAIN ROUTING -----
+  // Check if this is a custom domain (client's own domain like mycompany.com)
+  if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/')) {
+    try {
+      // Create Supabase client to look up custom domain
+      const supabase = createMiddlewareClient({ req, res });
+      
+      // Look up company by custom domain
+      const hostWithoutPort = hostname.split(':')[0];
+      const { data: settings } = await supabase
+        .from('website_settings')
+        .select('company_id, companies!inner(slug)')
+        .eq('custom_domain', hostWithoutPort)
+        .single();
+      
+      if (settings?.companies) {
+        // Found company with this custom domain - rewrite to /site/[companySlug]
+        const companySlug = (settings.companies as { slug: string }).slug;
+        const url = req.nextUrl.clone();
+        url.pathname = `/site/${companySlug}${path}`;
+        return NextResponse.rewrite(url);
+      }
+    } catch (error) {
+      console.error('Custom domain lookup error:', error);
+    }
+    // If custom domain not found, continue to show 404 or default page
+  }
+  
   // ----- SUBDOMAIN ROUTING FOR PUBLIC WEBSITES -----
   const subdomain = getSubdomain(hostname);
   if (subdomain && !path.startsWith('/store/') && !path.startsWith('/site/')) {
@@ -71,9 +115,6 @@ export async function middleware(req: NextRequest) {
   if (isAlwaysPublic) {
     return NextResponse.next();
   }
-
-  // Initialize response
-  const res = NextResponse.next();
 
   try {
     // Create Supabase client with the request

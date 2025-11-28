@@ -13,6 +13,7 @@ import {
   Truck,
   CreditCard,
   Globe,
+  Link2,
   Settings,
   ChevronDown,
   MoreHorizontal,
@@ -67,6 +68,11 @@ const StoreSidebar: React.FC<StoreSidebarProps> = ({ companySlug }) => {
       icon: <Globe className="w-5 h-5" />,
       name: 'Website Builder',
       path: `${basePath}/website`,
+    },
+    {
+      icon: <Link2 className="w-5 h-5" />,
+      name: 'Domain',
+      path: `${basePath}/domain`,
     },
     {
       icon: <Settings className="w-5 h-5" />,

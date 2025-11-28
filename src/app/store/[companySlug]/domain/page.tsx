@@ -61,7 +61,7 @@ export default function DomainSettingsPage() {
 
     try {
       // Clean up the domain (remove protocol, www, trailing slashes)
-      let cleanDomain = customDomain
+      const cleanDomain = customDomain
         .toLowerCase()
         .trim()
         .replace(/^https?:\/\//, '')

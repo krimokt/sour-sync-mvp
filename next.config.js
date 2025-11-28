@@ -19,11 +19,6 @@ const nextConfig = {
       },
     ],
   },
-  // Allow subdomain requests in development
-  allowedDevOrigins: [
-    'http://localhost:3000',
-    'http://*.localhost:3000',
-  ],
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,

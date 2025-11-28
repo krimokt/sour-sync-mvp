@@ -90,10 +90,14 @@ export async function middleware(req: NextRequest) {
       
       if (settings?.companies) {
         // Found company with this custom domain - rewrite to /site/[companySlug]
-        const companySlug = (settings.companies as { slug: string }).slug;
-        const url = req.nextUrl.clone();
-        url.pathname = `/site/${companySlug}${path}`;
-        return NextResponse.rewrite(url);
+        // Handle companies as array (from join) or single object
+        const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
+        const company = companies[0] as { slug: string } | undefined;
+        if (company?.slug) {
+          const url = req.nextUrl.clone();
+          url.pathname = `/site/${company.slug}${path}`;
+          return NextResponse.rewrite(url);
+        }
       }
     } catch (error) {
       console.error('Custom domain lookup error:', error);

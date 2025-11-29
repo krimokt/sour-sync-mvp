@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { supabase } from '@/lib/supabase';
-import { Globe, CheckCircle, AlertCircle, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import { Globe, CheckCircle, AlertCircle, Copy, ExternalLink, Loader2, RefreshCw, CheckCircle2, ShieldCheck, Globe2 } from 'lucide-react';
 
 interface DomainSettings {
   custom_domain: string | null;
   custom_domain_verified: boolean;
+  ssl_status?: string;
+  dns_status?: string;
+  last_checked_at?: string;
 }
 
 export default function DomainSettingsPage() {
@@ -16,11 +19,11 @@ export default function DomainSettingsPage() {
   const [customDomain, setCustomDomain] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
 
-  // Netlify site URL - this should be configured
+  // Netlify site URL
   const netlifyUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://soursync.com';
   const platformDomain = netlifyUrl.replace('https://', '').replace('http://', '');
 
@@ -30,13 +33,26 @@ export default function DomainSettingsPage() {
     }
   }, [company?.id]);
 
+  // Polling Effect for Status
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const shouldPoll = settings?.custom_domain && 
+      (settings.dns_status !== 'active' || settings.ssl_status !== 'active');
+
+    if (shouldPoll) {
+      // Check every 10s
+      interval = setInterval(checkStatus, 10000);
+    }
+    return () => clearInterval(interval);
+  }, [settings?.custom_domain, settings?.dns_status, settings?.ssl_status]);
+
   const fetchSettings = async () => {
     if (!company?.id) return;
     
     try {
       const { data, error } = await supabase
         .from('website_settings')
-        .select('custom_domain, custom_domain_verified')
+        .select('custom_domain, custom_domain_verified, ssl_status, dns_status, last_checked_at')
         .eq('company_id', company.id)
         .single();
 
@@ -45,11 +61,36 @@ export default function DomainSettingsPage() {
       if (data) {
         setSettings(data);
         setCustomDomain(data.custom_domain || '');
+        
+        // If pending, check status immediately
+        if (data.custom_domain && (data.dns_status !== 'active' || data.ssl_status !== 'active')) {
+            checkStatus();
+        }
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkStatus = async () => {
+    if (!company?.id || !settings?.custom_domain) return;
+    setIsChecking(true);
+    try {
+      const res = await fetch('/api/netlfy/check-domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: settings.custom_domain, companyId: company.id }),
+      });
+      const data = await res.json();
+      if (data.dns_status) {
+        setSettings(prev => prev ? { ...prev, ...data } : null);
+      }
+    } catch (e) {
+      console.error('Status check failed', e);
+    } finally {
+        setIsChecking(false);
     }
   };
 
@@ -60,7 +101,7 @@ export default function DomainSettingsPage() {
     setMessage(null);
 
     try {
-      // Clean up the domain (remove protocol, www, trailing slashes)
+      // Clean up the domain
       const cleanDomain = customDomain
         .toLowerCase()
         .trim()
@@ -80,7 +121,9 @@ export default function DomainSettingsPage() {
         .from('website_settings')
         .update({
           custom_domain: cleanDomain || null,
-          custom_domain_verified: false, // Reset verification when domain changes
+          custom_domain_verified: false,
+          ssl_status: 'pending',
+          dns_status: 'pending',
         })
         .eq('company_id', company.id);
 
@@ -93,60 +136,32 @@ export default function DomainSettingsPage() {
       } else {
         // Add domain to Netlify automatically
         try {
-          const netlifyRes = await fetch('/api/netlfy/add-domain', {
+          await fetch('/api/netlfy/add-domain', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ domain: cleanDomain }),
           });
-          
-          const netlifyData = await netlifyRes.json();
-          if (netlifyData.warning) {
-            console.warn(netlifyData.warning);
-          }
         } catch (err) {
           console.error('Failed to auto-configure Netlify:', err);
-          // We don't fail the whole operation since the DB save worked
         }
 
-        setMessage({ type: 'success', text: 'Domain saved! Please configure your DNS records below.' });
-        setSettings(prev => prev ? { ...prev, custom_domain: cleanDomain || null, custom_domain_verified: false } : null);
+        setMessage({ type: 'success', text: 'Domain saved! Follow the DNS instructions below.' });
+        setSettings(prev => prev ? { 
+            ...prev, 
+            custom_domain: cleanDomain || null, 
+            custom_domain_verified: false,
+            ssl_status: 'pending',
+            dns_status: 'pending'
+        } : null);
+        
+        // Trigger immediate check
+        setTimeout(checkStatus, 2000);
       }
     } catch (error) {
       console.error('Error saving settings:', error);
       setMessage({ type: 'error', text: 'Failed to save settings' });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleVerify = async () => {
-    if (!company?.id || !settings?.custom_domain) return;
-    
-    setIsVerifying(true);
-    setMessage(null);
-
-    try {
-      // Simple verification: try to fetch from the custom domain
-      // In production, you might want to check DNS records or use a verification token
-      const response = await fetch(`/api/verify-domain?domain=${encodeURIComponent(settings.custom_domain)}`);
-      const data = await response.json();
-
-      if (data.verified) {
-        await supabase
-          .from('website_settings')
-          .update({ custom_domain_verified: true })
-          .eq('company_id', company.id);
-
-        setSettings(prev => prev ? { ...prev, custom_domain_verified: true } : null);
-        setMessage({ type: 'success', text: 'Domain verified successfully!' });
-      } else {
-        setMessage({ type: 'error', text: 'Domain verification failed. Please check your DNS settings.' });
-      }
-    } catch (error) {
-      console.error('Error verifying domain:', error);
-      setMessage({ type: 'error', text: 'Verification failed. Please try again.' });
-    } finally {
-      setIsVerifying(false);
     }
   };
 
@@ -167,11 +182,13 @@ export default function DomainSettingsPage() {
         .update({
           custom_domain: null,
           custom_domain_verified: false,
+          ssl_status: 'pending',
+          dns_status: 'pending'
         })
         .eq('company_id', company.id);
 
       setCustomDomain('');
-      setSettings(prev => prev ? { ...prev, custom_domain: null, custom_domain_verified: false } : null);
+      setSettings(prev => prev ? { ...prev, custom_domain: null, custom_domain_verified: false, ssl_status: 'pending', dns_status: 'pending' } : null);
       setMessage({ type: 'success', text: 'Custom domain removed' });
     } catch (error) {
       console.error('Error removing domain:', error);
@@ -190,17 +207,17 @@ export default function DomainSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Domain Settings</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Connect your own domain to your storefront, just like Shopify
+          Connect your own domain to your storefront. We handle SSL and hosting automatically.
         </p>
       </div>
 
       {/* Current URLs */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Store URLs</h2>
         
         <div className="space-y-4">
@@ -227,19 +244,39 @@ export default function DomainSettingsPage() {
 
           {/* Custom Domain */}
           {settings?.custom_domain && (
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
               <div className="flex items-center gap-3">
-                {settings.custom_domain_verified ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
+                {settings.ssl_status === 'active' ? (
+                  <ShieldCheck className="w-5 h-5 text-green-500" />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-yellow-500" />
+                  <Globe2 className="w-5 h-5 text-cyan-500" />
                 )}
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">Custom Domain</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     {settings.custom_domain}
-                    {!settings.custom_domain_verified && (
-                      <span className="ml-2 text-yellow-500">(pending verification)</span>
+                    
+                    {/* Status Badges */}
+                    {settings.dns_status === 'active' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            DNS Active
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 animate-pulse">
+                            Verifying DNS...
+                        </span>
+                    )}
+
+                    {settings.dns_status === 'active' && (
+                        settings.ssl_status === 'active' ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                SSL Secure
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 animate-pulse">
+                                Provisioning SSL...
+                            </span>
+                        )
                     )}
                   </p>
                 </div>
@@ -258,7 +295,7 @@ export default function DomainSettingsPage() {
       </div>
 
       {/* Custom Domain Configuration */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {settings?.custom_domain ? 'Update Custom Domain' : 'Add Custom Domain'}
         </h2>
@@ -301,21 +338,19 @@ export default function DomainSettingsPage() {
           </div>
 
           {settings?.custom_domain && (
-            <div className="flex gap-2">
-              {!settings.custom_domain_verified && (
-                <button
-                  onClick={handleVerify}
-                  disabled={isVerifying}
-                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isVerifying && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Verify Domain
-                </button>
-              )}
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={checkStatus}
+                disabled={isChecking}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isChecking ? 'animate-spin' : ''}`} />
+                Check Status
+              </button>
               <button
                 onClick={handleRemoveDomain}
                 disabled={isSaving}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 Remove Domain
               </button>
@@ -324,52 +359,46 @@ export default function DomainSettingsPage() {
         </div>
       </div>
 
-      {/* DNS Instructions */}
-      {settings?.custom_domain && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            DNS Configuration Instructions
+      {/* DNS Instructions - Only show if not fully active */}
+      {settings?.custom_domain && settings.ssl_status !== 'active' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm animate-fade-in">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+            Required DNS Configuration
           </h2>
           
           <div className="space-y-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              To connect your domain <strong>{settings.custom_domain}</strong>, add the following DNS records at your domain registrar:
+              To activate <strong>{settings.custom_domain}</strong>, add ONE of the following records to your domain provider:
             </p>
 
-            {/* Option 1: CNAME */}
+            {/* Option 1: CNAME (Recommended) */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 Option 1: CNAME Record (Recommended)
+                <span className="text-xs font-normal text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Best for subdomains like www</span>
               </h3>
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-500 dark:text-gray-400">Type</p>
-                    <p className="font-mono font-medium text-gray-900 dark:text-white">CNAME</p>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Type</p>
+                    <p className="font-mono font-bold text-gray-900 dark:text-white">CNAME</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 dark:text-gray-400">Name/Host</p>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Host</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono font-medium text-gray-900 dark:text-white">@</p>
-                      <button
-                        onClick={() => copyToClipboard('@', 'cname-name')}
-                        className="p-1 text-gray-400 hover:text-cyan-500 transition-colors"
-                      >
-                        {copied === 'cname-name' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      <p className="font-mono font-bold text-gray-900 dark:text-white">www</p>
+                      <button onClick={() => copyToClipboard('www', 'cname-name')} className="text-gray-400 hover:text-cyan-500">
+                        {copied === 'cname-name' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <p className="text-gray-500 dark:text-gray-400">Value/Target</p>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Value</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono font-medium text-gray-900 dark:text-white text-xs break-all">
-                        phenomenal-snickerdoodle-3977a7.netlify.app
-                      </p>
-                      <button
-                        onClick={() => copyToClipboard('phenomenal-snickerdoodle-3977a7.netlify.app', 'cname-value')}
-                        className="p-1 text-gray-400 hover:text-cyan-500 transition-colors shrink-0"
-                      >
-                        {copied === 'cname-value' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      <p className="font-mono font-bold text-gray-900 dark:text-white text-xs truncate max-w-[150px]">phenomenal-snickerdoodle-3977a7.netlify.app</p>
+                      <button onClick={() => copyToClipboard('phenomenal-snickerdoodle-3977a7.netlify.app', 'cname-value')} className="text-gray-400 hover:text-cyan-500">
+                        {copied === 'cname-value' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
@@ -379,36 +408,31 @@ export default function DomainSettingsPage() {
 
             {/* Option 2: A Record */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Option 2: A Record (If CNAME not supported for root domain)
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                Option 2: A Record
+                <span className="text-xs font-normal text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Use for root domain (example.com)</span>
               </h3>
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-500 dark:text-gray-400">Type</p>
-                    <p className="font-mono font-medium text-gray-900 dark:text-white">A</p>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Type</p>
+                    <p className="font-mono font-bold text-gray-900 dark:text-white">A</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 dark:text-gray-400">Name/Host</p>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Host</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono font-medium text-gray-900 dark:text-white">@</p>
-                      <button
-                        onClick={() => copyToClipboard('@', 'a-name')}
-                        className="p-1 text-gray-400 hover:text-cyan-500 transition-colors"
-                      >
-                        {copied === 'a-name' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      <p className="font-mono font-bold text-gray-900 dark:text-white">@</p>
+                      <button onClick={() => copyToClipboard('@', 'a-name')} className="text-gray-400 hover:text-cyan-500">
+                        {copied === 'a-name' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <p className="text-gray-500 dark:text-gray-400">Value (Netlify Load Balancer)</p>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Value</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono font-medium text-gray-900 dark:text-white">75.2.60.5</p>
-                      <button
-                        onClick={() => copyToClipboard('75.2.60.5', 'a-value')}
-                        className="p-1 text-gray-400 hover:text-cyan-500 transition-colors"
-                      >
-                        {copied === 'a-value' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      <p className="font-mono font-bold text-gray-900 dark:text-white">75.2.60.5</p>
+                      <button onClick={() => copyToClipboard('75.2.60.5', 'a-value')} className="text-gray-400 hover:text-cyan-500">
+                        {copied === 'a-value' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
@@ -416,65 +440,12 @@ export default function DomainSettingsPage() {
               </div>
             </div>
 
-            {/* Add domain to Netlify reminder */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-                ⚠️ Important: Add Domain to Netlify
-              </h3>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                You also need to add <strong>{settings.custom_domain}</strong> as a custom domain in Netlify:
-              </p>
-              <ol className="mt-2 text-sm text-yellow-700 dark:text-yellow-300 list-decimal list-inside space-y-1">
-                <li>Go to <a href="https://app.netlify.com" target="_blank" rel="noopener noreferrer" className="underline">Netlify Dashboard</a></li>
-                <li>Select your site → Domain settings</li>
-                <li>Click &quot;Add custom domain&quot;</li>
-                <li>Enter: <strong>{settings.custom_domain}</strong></li>
-              </ol>
-            </div>
-
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              DNS changes can take up to 48 hours to propagate. Once configured, click &quot;Verify Domain&quot; to confirm your setup.
+            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+              Note: DNS propagation can take from a few minutes to 24 hours. The status above will update automatically.
             </p>
           </div>
         </div>
       )}
-
-      {/* How it works */}
-      <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/5 dark:to-blue-500/5 rounded-xl border border-cyan-200 dark:border-cyan-800 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          How Custom Domains Work
-        </h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 font-bold">
-              1
-            </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">Add Your Domain</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Enter your domain name (e.g., mycompany.com) and save.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 font-bold">
-              2
-            </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">Configure DNS</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Add the DNS records at your domain registrar (GoDaddy, Namecheap, etc.)
-            </p>
-          </div>
-          <div className="space-y-2">
-            <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 font-bold">
-              3
-            </div>
-            <h3 className="font-medium text-gray-900 dark:text-white">Go Live!</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Once DNS propagates, your store will be live on your custom domain with SSL.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
-

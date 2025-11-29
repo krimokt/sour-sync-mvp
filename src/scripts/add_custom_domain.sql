@@ -20,3 +20,5 @@ COMMENT ON COLUMN website_settings.custom_domain_verification_token IS 'Token us
 -- Example: To set a custom domain
 -- UPDATE website_settings SET custom_domain = 'mycompany.com' WHERE company_id = 'xxx';
 
+
+

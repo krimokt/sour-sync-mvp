@@ -51,3 +51,5 @@ CREATE POLICY "Public can view published pages" ON website_pages
 CREATE INDEX IF NOT EXISTS idx_website_pages_company_id ON website_pages(company_id);
 CREATE INDEX IF NOT EXISTS idx_website_pages_slug ON website_pages(slug);
 
+
+

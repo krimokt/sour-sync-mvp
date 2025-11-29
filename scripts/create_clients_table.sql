@@ -53,3 +53,5 @@ CREATE POLICY "Clients can view own record" ON clients
 CREATE INDEX IF NOT EXISTS idx_clients_company_id ON clients(company_id);
 CREATE INDEX IF NOT EXISTS idx_clients_user_id ON clients(user_id);
 
+
+

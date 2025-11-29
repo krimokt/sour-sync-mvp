@@ -67,3 +67,5 @@ If your project URL is `https://cfhochnjniddaztgwrbk.supabase.co`:
 - **Description**: MCP server for PostgREST that allows LLMs to perform database queries and operations
 
 
+
+

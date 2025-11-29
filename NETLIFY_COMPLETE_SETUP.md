@@ -187,3 +187,5 @@ Make sure these are set in Netlify:
 
 That's it! Everything is handled in Netlify. 🎉
 
+
+

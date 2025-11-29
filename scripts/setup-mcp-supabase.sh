@@ -30,3 +30,5 @@ exec npx -y @supabase/mcp-server-postgrest@latest \
   --schema public
 
 
+
+

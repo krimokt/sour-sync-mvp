@@ -6,3 +6,5 @@ ADD COLUMN IF NOT EXISTS accent_color TEXT DEFAULT '#06b6d4';
 
 -- Also ensure we have created_at/updated_at if missing (create_website_settings.sql has them)
 
+
+

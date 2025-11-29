@@ -91,7 +91,24 @@ export default function DomainSettingsPage() {
           throw error;
         }
       } else {
-        setMessage({ type: 'success', text: 'Domain settings saved! Please configure your DNS.' });
+        // Add domain to Netlify automatically
+        try {
+          const netlifyRes = await fetch('/api/netlfy/add-domain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain: cleanDomain }),
+          });
+          
+          const netlifyData = await netlifyRes.json();
+          if (netlifyData.warning) {
+            console.warn(netlifyData.warning);
+          }
+        } catch (err) {
+          console.error('Failed to auto-configure Netlify:', err);
+          // We don't fail the whole operation since the DB save worked
+        }
+
+        setMessage({ type: 'success', text: 'Domain saved! Please configure your DNS records below.' });
         setSettings(prev => prev ? { ...prev, custom_domain: cleanDomain || null, custom_domain_verified: false } : null);
       }
     } catch (error) {

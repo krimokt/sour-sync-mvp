@@ -281,8 +281,18 @@ export const SignInPage: React.FC<SignInPageProps> = ({
       {heroImageSrc && (
         <section className="hidden lg:block flex-1 relative p-6 bg-gray-900">
           <div className="animate-slide-right animate-delay-300 absolute inset-6 rounded-[2.5rem] bg-cover bg-center overflow-hidden shadow-2xl ring-1 ring-white/10" style={{ backgroundImage: `url(${heroImageSrc})` }}>
-             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
              <div className="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
+             
+             {/* Slogan Overlay */}
+             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 z-10">
+                <h2 className="text-4xl xl:text-5xl font-bold text-white mb-6 tracking-tight leading-tight drop-shadow-lg">
+                  The All-In-One Operating System for <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">Global Sourcing</span>
+                </h2>
+                <p className="text-lg xl:text-xl text-gray-200 font-medium max-w-xl leading-relaxed drop-shadow-md bg-black/20 backdrop-blur-sm p-4 rounded-2xl border border-white/10">
+                  Manage product quotations, track logistics, and launch your B2B storefront instantly.
+                </p>
+             </div>
           </div>
           
           {testimonials.length > 0 && (

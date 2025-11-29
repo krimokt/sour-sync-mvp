@@ -31,12 +31,12 @@ export async function POST(request: Request) {
       const isRoot = domain.split('.').length === 2; // e.g. example.com
       
       if (isRoot) {
-        const ips = await resolve4(domain).catch(() => []);
+        const ips: string[] = await resolve4(domain).catch(() => []);
         if (ips.includes('75.2.60.5')) {
           dnsStatus = 'active';
         }
       } else {
-        const cnames = await resolveCname(domain).catch(() => []);
+        const cnames: string[] = await resolveCname(domain).catch(() => []);
         if (cnames.some(c => c.includes('netlify.app'))) {
           dnsStatus = 'active';
         }
@@ -59,27 +59,17 @@ export async function POST(request: Request) {
       
       if (hasAlias) {
         // Check SSL certificate
-        // Netlify returns ssl_url or we can fetch /ssl endpoint
-        // But looking at site object is faster for status
-        // If URL works with https, it's active?
-        // Better: fetch /ssl endpoint specifically for this domain?
-        // Netlify has one cert for the site (SAN).
-        // We check if the cert includes this domain and is ready.
-        
         // Usually checking accessing HTTPS is the best proof
         if (dnsStatus === 'active') {
              // Try to trigger/check SSL provisioning
-             const sslRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/ssl`, {
+             await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/ssl`, {
                 headers: { Authorization: `Bearer ${token}` },
              });
-             const sslData = await sslRes.json();
+             // const sslData = await sslRes.json(); // unused
              
              // Check if certificate includes the domain and is valid
-             // This might be complex to parse from Netlify API directly easily.
-             // Heuristic: If DNS is active, we assume SSL will follow shortly.
-             // But we can try to fetch the HTTPS URL.
              try {
-                const checkHttps = await fetch(`https://${domain}`, { method: 'HEAD', timeout: 5000 } as any).catch(() => null);
+                const checkHttps = await fetch(`https://${domain}`, { method: 'HEAD' });
                 if (checkHttps && checkHttps.ok) {
                     sslStatus = 'active';
                 }
@@ -119,9 +109,9 @@ export async function POST(request: Request) {
       checked_at: new Date().toISOString() 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Check domain error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

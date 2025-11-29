@@ -62,9 +62,6 @@ export async function POST(request: Request) {
     }
 
     // 3. Trigger SSL provisioning (Let's Encrypt)
-    // This is usually automatic but hitting this endpoint ensures it checks immediately.
-    // Note: DNS must point to Netlify for this to succeed, so it might fail if done immediately.
-    // We ignore the error here as it might just be "DNS not ready".
     try {
       await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/ssl`, {
         method: 'POST',
@@ -76,9 +73,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error adding domain to Netlify:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

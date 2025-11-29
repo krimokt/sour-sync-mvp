@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { supabase } from '@/lib/supabase';
-import { Globe, CheckCircle, AlertCircle, Copy, ExternalLink, Loader2, RefreshCw, CheckCircle2, ShieldCheck, Globe2 } from 'lucide-react';
+import { Globe, Copy, ExternalLink, Loader2, RefreshCw, CheckCircle2, ShieldCheck, Globe2 } from 'lucide-react';
 
 interface DomainSettings {
   custom_domain: string | null;
@@ -31,6 +31,7 @@ export default function DomainSettingsPage() {
     if (company?.id) {
       fetchSettings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company?.id]);
 
   // Polling Effect for Status
@@ -44,6 +45,7 @@ export default function DomainSettingsPage() {
       interval = setInterval(checkStatus, 10000);
     }
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.custom_domain, settings?.dns_status, settings?.ssl_status]);
 
   const fetchSettings = async () => {

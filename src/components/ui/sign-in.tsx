@@ -95,16 +95,16 @@ export const SignInPage: React.FC<SignInPageProps> = ({
     : "Access your account and continue your journey with us";
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw] overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-500">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row font-geist w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-500">
       {/* Left column: form */}
-      <section className="flex-1 flex items-center justify-center p-6 md:p-12 overflow-y-auto custom-scrollbar relative">
+      <section className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 relative">
         {/* Background blobs for subtle effect */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
             <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-cyan-500/5 blur-[100px] animate-pulse" style={{ animationDuration: '8s' }}></div>
             <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '1s' }}></div>
         </div>
 
-        <div className="w-full max-w-md py-10 relative z-10">
+        <div className="w-full max-w-md py-6 relative z-10">
           <div className="flex flex-col gap-8">
             <div className="animate-element animate-delay-100">
               <div className="flex items-center gap-3 mb-6">
@@ -119,9 +119,15 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                  <span className="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Soursync</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white drop-shadow-sm">{title}</h1>
+              
+              {/* Mobile Slogan - Visible only on screens smaller than lg */}
+              <div className="mt-4 lg:hidden">
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400">Global Sourcing OS</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage quotations, logistics, and your B2B storefront.</p>
+              </div>
             </div>
             
-            <p className="animate-element animate-delay-200 text-gray-500 dark:text-gray-400 text-lg leading-relaxed">
+            <p className="animate-element animate-delay-200 text-gray-500 dark:text-gray-400 text-lg leading-relaxed hidden lg:block">
               {description || defaultDescription}
             </p>
 

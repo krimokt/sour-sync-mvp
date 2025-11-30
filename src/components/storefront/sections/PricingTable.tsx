@@ -74,3 +74,4 @@ export default function PricingTable({ data, themeColor }: PricingTableProps) {
 
 
 
+

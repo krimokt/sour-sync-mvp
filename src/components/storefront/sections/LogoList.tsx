@@ -47,3 +47,4 @@ export default function LogoList({ data }: LogoListProps) {
 
 
 
+

@@ -73,6 +73,19 @@ export async function middleware(req: NextRequest) {
   // Initialize response early for Supabase client
   const res = NextResponse.next();
   
+  // ----- WWW TO ROOT REDIRECT -----
+  // If client only configured root domain, redirect www to root
+  // This handles the case where www.domain.com should redirect to domain.com
+  if (hostname.startsWith('www.')) {
+    const rootDomain = hostname.replace('www.', '');
+    // Only redirect for custom domains (not platform domains like www.soursync.com)
+    if (isCustomDomain(hostname)) {
+      const url = req.nextUrl.clone();
+      url.host = rootDomain;
+      return NextResponse.redirect(url, 301);
+    }
+  }
+  
   // ----- CUSTOM DOMAIN ROUTING -----
   // Check if this is a custom domain (client's own domain like mycompany.com)
   if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/')) {

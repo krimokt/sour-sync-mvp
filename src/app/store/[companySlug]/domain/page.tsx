@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { supabase } from '@/lib/supabase';
-import { Globe, Copy, ExternalLink, Loader2, RefreshCw, CheckCircle2, ShieldCheck, Globe2 } from 'lucide-react';
+import { Globe, Copy, ExternalLink, Loader2, RefreshCw, CheckCircle2, ShieldCheck, Globe2, Clock, Check, Circle } from 'lucide-react';
+
+interface DnsRecord {
+  type: string;
+  host: string;
+  value: string;
+}
 
 interface DomainSettings {
   custom_domain: string | null;
@@ -11,6 +17,79 @@ interface DomainSettings {
   ssl_status?: string;
   dns_status?: string;
   last_checked_at?: string;
+  netlify_dns_records?: DnsRecord[];
+  netlify_domain_id?: string;
+  domain_registered_at?: string;
+  dns_verified_at?: string;
+  ssl_provisioned_at?: string;
+}
+
+// Progress steps for domain setup
+const DOMAIN_STEPS = [
+  { id: 'registered', label: 'Domain Registered', description: 'Domain added to Netlify' },
+  { id: 'dns_pending', label: 'DNS Configuration', description: 'Waiting for DNS to propagate' },
+  { id: 'dns_verified', label: 'DNS Verified', description: 'DNS is pointing correctly' },
+  { id: 'ssl_provisioning', label: 'SSL Certificate', description: 'Provisioning secure certificate' },
+  { id: 'active', label: 'Domain Active', description: 'Your domain is live!' },
+];
+
+function getStepStatus(settings: DomainSettings | null): { [key: string]: 'completed' | 'current' | 'pending' } {
+  if (!settings?.custom_domain) {
+    return {
+      registered: 'pending',
+      dns_pending: 'pending',
+      dns_verified: 'pending',
+      ssl_provisioning: 'pending',
+      active: 'pending',
+    };
+  }
+
+  const dnsActive = settings.dns_status === 'active';
+  const sslActive = settings.ssl_status === 'active';
+
+  if (sslActive && dnsActive) {
+    return {
+      registered: 'completed',
+      dns_pending: 'completed',
+      dns_verified: 'completed',
+      ssl_provisioning: 'completed',
+      active: 'completed',
+    };
+  }
+
+  if (dnsActive && !sslActive) {
+    return {
+      registered: 'completed',
+      dns_pending: 'completed',
+      dns_verified: 'completed',
+      ssl_provisioning: 'current',
+      active: 'pending',
+    };
+  }
+
+  // DNS not yet verified
+  return {
+    registered: 'completed',
+    dns_pending: 'current',
+    dns_verified: 'pending',
+    ssl_provisioning: 'pending',
+    active: 'pending',
+  };
+}
+
+function formatTimestamp(isoString: string | undefined | null): string {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
 }
 
 export default function DomainSettingsPage() {
@@ -27,34 +106,13 @@ export default function DomainSettingsPage() {
   const netlifyUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://soursync.com';
   const platformDomain = netlifyUrl.replace('https://', '').replace('http://', '');
 
-  useEffect(() => {
-    if (company?.id) {
-      fetchSettings();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [company?.id]);
-
-  // Polling Effect for Status
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    const shouldPoll = settings?.custom_domain && 
-      (settings.dns_status !== 'active' || settings.ssl_status !== 'active');
-
-    if (shouldPoll) {
-      // Check every 10s
-      interval = setInterval(checkStatus, 10000);
-    }
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.custom_domain, settings?.dns_status, settings?.ssl_status]);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     if (!company?.id) return;
     
     try {
       const { data, error } = await supabase
         .from('website_settings')
-        .select('custom_domain, custom_domain_verified, ssl_status, dns_status, last_checked_at')
+        .select('custom_domain, custom_domain_verified, ssl_status, dns_status, last_checked_at, netlify_dns_records, netlify_domain_id, domain_registered_at, dns_verified_at, ssl_provisioned_at')
         .eq('company_id', company.id)
         .single();
 
@@ -63,24 +121,19 @@ export default function DomainSettingsPage() {
       if (data) {
         setSettings(data);
         setCustomDomain(data.custom_domain || '');
-        
-        // If pending, check status immediately
-        if (data.custom_domain && (data.dns_status !== 'active' || data.ssl_status !== 'active')) {
-            checkStatus();
-        }
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [company?.id]);
 
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     if (!company?.id || !settings?.custom_domain) return;
     setIsChecking(true);
     try {
-      const res = await fetch('/api/netlfy/check-domain', {
+      const res = await fetch('/api/netlify/check-domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: settings.custom_domain, companyId: company.id }),
@@ -92,28 +145,35 @@ export default function DomainSettingsPage() {
         return;
       }
       
-      const data = await res.json();
-      
-      // Update local state immediately
-      if (data.dns_status || data.ssl_status) {
-        setSettings(prev => prev ? { 
-          ...prev, 
-          dns_status: data.dns_status || prev.dns_status,
-          ssl_status: data.ssl_status || prev.ssl_status,
-          last_checked_at: data.checked_at || new Date().toISOString()
-        } : null);
-      }
-      
-      // Also refresh from database to ensure consistency
-      setTimeout(() => {
-        fetchSettings();
-      }, 1000);
+      // Refresh from database after check
+      await fetchSettings();
     } catch (e) {
       console.error('Status check failed', e);
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [company?.id, settings?.custom_domain, fetchSettings]);
+
+  useEffect(() => {
+    if (company?.id) {
+      fetchSettings();
+    }
+  }, [company?.id, fetchSettings]);
+
+  // Polling Effect for Status
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const shouldPoll = settings?.custom_domain && 
+      (settings.dns_status !== 'active' || settings.ssl_status !== 'active');
+
+    if (shouldPoll) {
+      // Initial check
+      checkStatus();
+      // Check every 10s
+      interval = setInterval(checkStatus, 10000);
+    }
+    return () => clearInterval(interval);
+  }, [settings?.custom_domain, settings?.dns_status, settings?.ssl_status, checkStatus]);
 
   const handleSave = async () => {
     if (!company?.id) return;
@@ -138,46 +198,28 @@ export default function DomainSettingsPage() {
         return;
       }
 
-      const { error } = await supabase
-        .from('website_settings')
-        .update({
-          custom_domain: cleanDomain || null,
-          custom_domain_verified: false,
-          ssl_status: 'pending',
-          dns_status: 'pending',
-        })
-        .eq('company_id', company.id);
+      // Register domain with Netlify API
+      const registerRes = await fetch('/api/netlify/register-domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: cleanDomain, companyId: company.id }),
+      });
 
-      if (error) {
-        if (error.code === '23505') {
-          setMessage({ type: 'error', text: 'This domain is already in use by another store' });
-        } else {
-          throw error;
-        }
-      } else {
-        // Add domain to Netlify automatically
-        try {
-          await fetch('/api/netlfy/add-domain', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ domain: cleanDomain }),
-          });
-        } catch (err) {
-          console.error('Failed to auto-configure Netlify:', err);
-        }
+      const registerData = await registerRes.json();
 
-        setMessage({ type: 'success', text: 'Domain saved! Follow the DNS instructions below.' });
-        setSettings(prev => prev ? { 
-            ...prev, 
-            custom_domain: cleanDomain || null, 
-            custom_domain_verified: false,
-            ssl_status: 'pending',
-            dns_status: 'pending'
-        } : null);
-        
-        // Trigger immediate check
-        setTimeout(checkStatus, 2000);
+      if (!registerRes.ok) {
+        setMessage({ type: 'error', text: registerData.error || 'Failed to register domain' });
+        setIsSaving(false);
+        return;
       }
+
+      setMessage({ type: 'success', text: 'Domain registered! Configure your DNS records below.' });
+      
+      // Refresh settings to get DNS records
+      await fetchSettings();
+      
+      // Trigger immediate status check
+      setTimeout(checkStatus, 2000);
     } catch (error) {
       console.error('Error saving settings:', error);
       setMessage({ type: 'error', text: 'Failed to save settings' });
@@ -204,12 +246,28 @@ export default function DomainSettingsPage() {
           custom_domain: null,
           custom_domain_verified: false,
           ssl_status: 'pending',
-          dns_status: 'pending'
+          dns_status: 'pending',
+          netlify_dns_records: [],
+          netlify_domain_id: null,
+          domain_registered_at: null,
+          dns_verified_at: null,
+          ssl_provisioned_at: null,
         })
         .eq('company_id', company.id);
 
       setCustomDomain('');
-      setSettings(prev => prev ? { ...prev, custom_domain: null, custom_domain_verified: false, ssl_status: 'pending', dns_status: 'pending' } : null);
+      setSettings(prev => prev ? { 
+        ...prev, 
+        custom_domain: null, 
+        custom_domain_verified: false, 
+        ssl_status: 'pending', 
+        dns_status: 'pending',
+        netlify_dns_records: [],
+        netlify_domain_id: undefined,
+        domain_registered_at: undefined,
+        dns_verified_at: undefined,
+        ssl_provisioned_at: undefined,
+      } : null);
       setMessage({ type: 'success', text: 'Custom domain removed' });
     } catch (error) {
       console.error('Error removing domain:', error);
@@ -218,6 +276,16 @@ export default function DomainSettingsPage() {
       setIsSaving(false);
     }
   };
+
+  // Get DNS records from settings or use defaults
+  const dnsRecords: DnsRecord[] = settings?.netlify_dns_records && settings.netlify_dns_records.length > 0
+    ? settings.netlify_dns_records
+    : [
+        { type: 'A', host: '@', value: '75.2.60.5' },
+        { type: 'CNAME', host: 'www', value: 'phenomenal-snickerdoodle-3977a7.netlify.app' },
+      ];
+
+  const stepStatuses = getStepStatus(settings);
 
   if (isLoading) {
     return (
@@ -274,7 +342,7 @@ export default function DomainSettingsPage() {
                 )}
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">Custom Domain</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 flex-wrap">
                     {settings.custom_domain}
                     
                     {/* Status Badges */}
@@ -314,6 +382,84 @@ export default function DomainSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Progress Steps - Only show when domain is set but not fully active */}
+      {settings?.custom_domain && settings.ssl_status !== 'active' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Setup Progress</h2>
+          
+          <div className="space-y-4">
+            {DOMAIN_STEPS.map((step, index) => {
+              const status = stepStatuses[step.id];
+              const isLast = index === DOMAIN_STEPS.length - 1;
+              
+              return (
+                <div key={step.id} className="relative flex gap-4">
+                  {/* Connector line */}
+                  {!isLast && (
+                    <div className={`absolute left-[15px] top-8 w-0.5 h-full -mb-4 ${
+                      status === 'completed' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
+                    }`} />
+                  )}
+                  
+                  {/* Step icon */}
+                  <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    status === 'completed' 
+                      ? 'bg-green-500 text-white' 
+                      : status === 'current'
+                        ? 'bg-cyan-500 text-white animate-pulse'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                  }`}>
+                    {status === 'completed' ? (
+                      <Check className="w-4 h-4" />
+                    ) : status === 'current' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Circle className="w-4 h-4" />
+                    )}
+                  </div>
+                  
+                  {/* Step content */}
+                  <div className="flex-1 pb-4">
+                    <p className={`text-sm font-medium ${
+                      status === 'completed' 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : status === 'current'
+                          ? 'text-cyan-600 dark:text-cyan-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      {step.label}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {step.description}
+                    </p>
+                    
+                    {/* Timestamps */}
+                    {step.id === 'registered' && settings.domain_registered_at && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatTimestamp(settings.domain_registered_at)}
+                      </p>
+                    )}
+                    {step.id === 'dns_verified' && settings.dns_verified_at && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        DNS Verified at {formatTimestamp(settings.dns_verified_at)}
+                      </p>
+                    )}
+                    {step.id === 'active' && settings.ssl_provisioned_at && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        SSL Secured at {formatTimestamp(settings.ssl_provisioned_at)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Custom Domain Configuration */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
@@ -390,80 +536,98 @@ export default function DomainSettingsPage() {
           
           <div className="space-y-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              To activate <strong>{settings.custom_domain}</strong>, add ONE of the following records to your domain provider:
+              Add the following DNS records at your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.):
             </p>
 
-            {/* Option 1: CNAME (Recommended) */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                Option 1: CNAME Record (Recommended)
-                <span className="text-xs font-normal text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Best for subdomains like www</span>
-              </h3>
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Type</p>
-                    <p className="font-mono font-bold text-gray-900 dark:text-white">CNAME</p>
+            {/* Dynamic DNS Records from Netlify */}
+            <div className="space-y-4">
+              {dnsRecords.map((record, index) => (
+                <div key={index} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                      record.type === 'A' 
+                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    }`}>
+                      {record.type}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {record.type === 'A' ? 'Root domain (@)' : 'Subdomain (www)'}
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Host</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono font-bold text-gray-900 dark:text-white">www</p>
-                      <button onClick={() => copyToClipboard('www', 'cname-name')} className="text-gray-400 hover:text-cyan-500">
-                        {copied === 'cname-name' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                      </button>
+                  
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Type</p>
+                      <p className="font-mono font-bold text-gray-900 dark:text-white">{record.type}</p>
                     </div>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Value</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono font-bold text-gray-900 dark:text-white text-xs truncate max-w-[150px]">phenomenal-snickerdoodle-3977a7.netlify.app</p>
-                      <button onClick={() => copyToClipboard('phenomenal-snickerdoodle-3977a7.netlify.app', 'cname-value')} className="text-gray-400 hover:text-cyan-500">
-                        {copied === 'cname-value' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                      </button>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Host / Name</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono font-bold text-gray-900 dark:text-white">{record.host}</p>
+                        <button 
+                          onClick={() => copyToClipboard(record.host, `host-${index}`)} 
+                          className="text-gray-400 hover:text-cyan-500"
+                        >
+                          {copied === `host-${index}` ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Value / Points to</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono font-bold text-gray-900 dark:text-white text-xs truncate max-w-[200px]" title={record.value}>
+                          {record.value}
+                        </p>
+                        <button 
+                          onClick={() => copyToClipboard(record.value, `value-${index}`)} 
+                          className="text-gray-400 hover:text-cyan-500 flex-shrink-0"
+                        >
+                          {copied === `value-${index}` ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
 
-            {/* Option 2: A Record */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                Option 2: A Record
-                <span className="text-xs font-normal text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Use for root domain (example.com)</span>
-              </h3>
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Type</p>
-                    <p className="font-mono font-bold text-gray-900 dark:text-white">A</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Host</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono font-bold text-gray-900 dark:text-white">@</p>
-                      <button onClick={() => copyToClipboard('@', 'a-name')} className="text-gray-400 hover:text-cyan-500">
-                        {copied === 'a-name' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Value</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono font-bold text-gray-900 dark:text-white">75.2.60.5</p>
-                      <button onClick={() => copyToClipboard('75.2.60.5', 'a-value')} className="text-gray-400 hover:text-cyan-500">
-                        {copied === 'a-value' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+              <p className="text-sm text-blue-700 dark:text-blue-400">
+                <strong>Tip:</strong> For root domain ({settings.custom_domain}), use the A record. 
+                For www.{settings.custom_domain}, use the CNAME record. 
+                You can set up both for full coverage.
+              </p>
             </div>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-              Note: DNS propagation can take from a few minutes to 24 hours. The status above will update automatically.
+            <p className="text-sm text-gray-500 dark:text-gray-400 italic flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              DNS propagation can take from a few minutes to 24 hours. We check automatically every 10 seconds.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Success State - Show when fully active */}
+      {settings?.custom_domain && settings.ssl_status === 'active' && settings.dns_status === 'active' && (
+        <div className="bg-gradient-to-r from-green-50 to-cyan-50 dark:from-green-900/20 dark:to-cyan-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-green-700 dark:text-green-400">
+                Domain Active & Secured
+              </h2>
+              <p className="text-sm text-green-600 dark:text-green-500">
+                Your custom domain <strong>{settings.custom_domain}</strong> is live with SSL encryption.
+              </p>
+              {settings.ssl_provisioned_at && (
+                <p className="text-xs text-green-500 dark:text-green-600 mt-1">
+                  SSL secured at {formatTimestamp(settings.ssl_provisioned_at)}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}

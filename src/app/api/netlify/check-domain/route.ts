@@ -47,7 +47,6 @@ export async function POST(request: Request) {
       // Check for Netlify headers to confirm it's pointing to our site
       const serverHeader = httpsRes.headers.get('server');
       const netlifyRequestId = httpsRes.headers.get('x-nf-request-id');
-      const middlewareRewrite = httpsRes.headers.get('x-middleware-rewrite');
 
       if (serverHeader?.toLowerCase().includes('netlify') || netlifyRequestId) {
         dnsActive = true;

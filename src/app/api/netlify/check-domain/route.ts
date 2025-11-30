@@ -6,17 +6,6 @@ const NETLIFY_API_ENDPOINT = 'https://api.netlify.com/api/v1';
 // SSL retry interval: 30 minutes
 const SSL_RETRY_INTERVAL_MS = 30 * 60 * 1000;
 
-interface NetlifyDomainStatus {
-  id?: string;
-  hostname?: string;
-  domain?: string;
-  dns_verified?: boolean;
-  ssl?: {
-    state: string;
-    status: string;
-  };
-}
-
 export async function POST(request: Request) {
   try {
     const { domain, companyId } = await request.json();
@@ -35,100 +24,119 @@ export async function POST(request: Request) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Clean domain
     const cleanDomain = domain.toLowerCase().trim();
+    const now = new Date();
 
-    // Step 1: Get domain status from Netlify API
-    // GET /sites/{site_id}/domains/{domain}
-    console.log(`Checking domain status for ${cleanDomain} via Netlify API...`);
-    
-    let domainStatus: NetlifyDomainStatus | null = null;
-    let dnsVerified = false;
-    let sslStatus = 'pending';
-    
+    console.log(`Checking domain status for ${cleanDomain}...`);
+
+    // ============================================
+    // STEP 1: Check DNS by making HTTP request to the domain
+    // This is the most reliable way to verify DNS is pointing to Netlify
+    // ============================================
+    let dnsActive = false;
+    let sslActive = false;
+
+    // Method 1: Try HTTPS first (checks both DNS and SSL)
     try {
-      const domainRes = await fetch(
-        `${NETLIFY_API_ENDPOINT}/sites/${siteId}/domains/${cleanDomain}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const httpsRes = await fetch(`https://${cleanDomain}`, {
+        method: 'HEAD',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
 
-      if (domainRes.ok) {
-        domainStatus = await domainRes.json();
-        dnsVerified = domainStatus?.dns_verified || false;
-        sslStatus = domainStatus?.ssl?.status || 'pending';
-        
-        console.log('Netlify domain status:', {
-          dns_verified: dnsVerified,
-          ssl_status: sslStatus,
-          ssl_state: domainStatus?.ssl?.state,
-        });
-      } else if (domainRes.status === 404) {
-        // Domain not registered with Netlify
-        console.log('Domain not found in Netlify - needs registration');
-        return NextResponse.json({
-          dns_status: 'not_registered',
-          ssl_status: 'pending',
-          message: 'Domain not registered with Netlify. Please save the domain first.',
-        });
-      } else {
-        console.error('Netlify API error:', domainRes.statusText);
+      // Check for Netlify headers to confirm it's pointing to our site
+      const serverHeader = httpsRes.headers.get('server');
+      const netlifyRequestId = httpsRes.headers.get('x-nf-request-id');
+      const middlewareRewrite = httpsRes.headers.get('x-middleware-rewrite');
+
+      if (serverHeader?.toLowerCase().includes('netlify') || netlifyRequestId) {
+        dnsActive = true;
+        sslActive = true; // HTTPS worked, so SSL is active
+        console.log(`✅ HTTPS check passed - DNS active, SSL active`);
       }
-    } catch (apiError) {
-      console.error('Error fetching domain status from Netlify:', apiError);
+    } catch (httpsError) {
+      console.log(`HTTPS check failed for ${cleanDomain}:`, httpsError instanceof Error ? httpsError.message : 'Unknown error');
     }
 
-    // Step 2: Map Netlify status to our status
-    const dnsStatus = dnsVerified ? 'active' : 'pending';
-    
-    // Map SSL status: Netlify uses "verified", "pending", "failed", etc.
-    let finalSslStatus = 'pending';
-    if (sslStatus === 'verified' || sslStatus === 'active') {
-      finalSslStatus = 'active';
-    } else if (sslStatus === 'failed') {
-      finalSslStatus = 'failed';
-    } else {
-      finalSslStatus = 'pending';
+    // Method 2: If HTTPS failed, try HTTP (DNS might be working but SSL not ready)
+    if (!dnsActive) {
+      try {
+        const httpRes = await fetch(`http://${cleanDomain}`, {
+          method: 'HEAD',
+          redirect: 'follow',
+          signal: AbortSignal.timeout(10000),
+        });
+
+        const serverHeader = httpRes.headers.get('server');
+        const netlifyRequestId = httpRes.headers.get('x-nf-request-id');
+
+        if (serverHeader?.toLowerCase().includes('netlify') || netlifyRequestId) {
+          dnsActive = true;
+          console.log(`✅ HTTP check passed - DNS active, SSL pending`);
+        }
+      } catch (httpError) {
+        console.log(`HTTP check failed for ${cleanDomain}:`, httpError instanceof Error ? httpError.message : 'Unknown error');
+      }
     }
 
-    // Step 3: Get current database state for retry logic
+    // Method 3: Check if domain is in Netlify's domain_aliases (as backup verification)
+    if (!dnsActive) {
+      try {
+        const siteRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (siteRes.ok) {
+          const siteData = await siteRes.json();
+          const aliases: string[] = siteData.domain_aliases || [];
+          
+          if (aliases.includes(cleanDomain) || aliases.includes(`www.${cleanDomain}`)) {
+            console.log(`Domain found in Netlify aliases, but HTTP check failed - DNS not propagated yet`);
+          } else {
+            console.log(`Domain not found in Netlify aliases`);
+          }
+        }
+      } catch (apiError) {
+        console.log('Netlify API check failed:', apiError);
+      }
+    }
+
+    // ============================================
+    // STEP 2: Get current database state
+    // ============================================
     const { data: currentSettings } = await supabase
       .from('website_settings')
-      .select('ssl_last_attempt_at, dns_verified_at, ssl_provisioned_at')
+      .select('ssl_last_attempt_at, dns_verified_at, ssl_provisioned_at, dns_status, ssl_status')
       .eq('company_id', companyId)
       .eq('custom_domain', cleanDomain)
       .single();
 
-    // Step 4: Handle SSL provisioning
+    // ============================================
+    // STEP 3: Trigger SSL provisioning if DNS is active but SSL is not
+    // ============================================
     let sslTriggered = false;
-    const now = new Date();
 
-    // If DNS is verified but SSL is not active, try to provision SSL
-    if (dnsVerified && finalSslStatus !== 'active') {
-      const lastAttempt = currentSettings?.ssl_last_attempt_at 
+    if (dnsActive && !sslActive) {
+      const lastAttempt = currentSettings?.ssl_last_attempt_at
         ? new Date(currentSettings.ssl_last_attempt_at)
         : null;
-      
-      const shouldRetry = !lastAttempt || 
+
+      const shouldRetry = !lastAttempt ||
         (now.getTime() - lastAttempt.getTime() > SSL_RETRY_INTERVAL_MS);
-      
-      // Also retry if status is failed
-      if (shouldRetry || finalSslStatus === 'failed') {
+
+      if (shouldRetry) {
         console.log('Triggering SSL provisioning...');
         try {
-          const sslRes = await fetch(
-            `${NETLIFY_API_ENDPOINT}/sites/${siteId}/ssl`,
-            {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          
+          const sslRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/ssl`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
           if (sslRes.ok) {
             sslTriggered = true;
-            console.log('SSL provisioning triggered successfully');
+            console.log('✅ SSL provisioning triggered');
           } else {
-            console.log('SSL provisioning response:', sslRes.status, sslRes.statusText);
+            console.log('SSL provisioning response:', sslRes.status);
           }
         } catch (sslError) {
           console.error('Error triggering SSL:', sslError);
@@ -136,19 +144,24 @@ export async function POST(request: Request) {
       }
     }
 
-    // Step 5: Prepare database update
+    // ============================================
+    // STEP 4: Prepare database update
+    // ============================================
+    const dnsStatus = dnsActive ? 'active' : 'pending';
+    const sslStatus = sslActive ? 'active' : 'pending';
+
     const updateData: Record<string, unknown> = {
       dns_status: dnsStatus,
-      ssl_status: finalSslStatus,
+      ssl_status: sslStatus,
       last_checked_at: now.toISOString(),
     };
 
     // Track verification timestamps
-    if (dnsVerified && !currentSettings?.dns_verified_at) {
+    if (dnsActive && !currentSettings?.dns_verified_at) {
       updateData.dns_verified_at = now.toISOString();
     }
 
-    if (finalSslStatus === 'active' && !currentSettings?.ssl_provisioned_at) {
+    if (sslActive && !currentSettings?.ssl_provisioned_at) {
       updateData.ssl_provisioned_at = now.toISOString();
       updateData.custom_domain_verified = true;
     }
@@ -157,7 +170,9 @@ export async function POST(request: Request) {
       updateData.ssl_last_attempt_at = now.toISOString();
     }
 
-    // Step 6: Update database
+    // ============================================
+    // STEP 5: Update database
+    // ============================================
     const { error } = await supabase
       .from('website_settings')
       .update(updateData)
@@ -169,17 +184,20 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    // Step 7: Return status
+    console.log(`Domain check complete: DNS=${dnsStatus}, SSL=${sslStatus}`);
+
+    // ============================================
+    // STEP 6: Return status
+    // ============================================
     return NextResponse.json({
       dns_status: dnsStatus,
-      ssl_status: finalSslStatus,
-      dns_verified: dnsVerified,
+      ssl_status: sslStatus,
+      dns_verified: dnsActive,
+      ssl_active: sslActive,
       ssl_triggered: sslTriggered,
       checked_at: now.toISOString(),
-      dns_verified_at: dnsVerified ? (currentSettings?.dns_verified_at || now.toISOString()) : null,
-      ssl_provisioned_at: finalSslStatus === 'active' 
-        ? (currentSettings?.ssl_provisioned_at || now.toISOString()) 
-        : null,
+      dns_verified_at: dnsActive ? (currentSettings?.dns_verified_at || now.toISOString()) : null,
+      ssl_provisioned_at: sslActive ? (currentSettings?.ssl_provisioned_at || now.toISOString()) : null,
     });
 
   } catch (error: unknown) {
@@ -189,7 +207,7 @@ export async function POST(request: Request) {
   }
 }
 
-// GET endpoint for quick status check without database update
+// GET endpoint for quick status check
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -199,34 +217,49 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing domain parameter' }, { status: 400 });
     }
 
-    const siteId = process.env.NETLIFY_SITE_ID;
-    const token = process.env.NETLIFY_ACCESS_TOKEN;
+    const cleanDomain = domain.toLowerCase().trim();
+    let dnsActive = false;
+    let sslActive = false;
 
-    if (!siteId || !token) {
-      return NextResponse.json({ error: 'Netlify configuration missing' }, { status: 500 });
-    }
+    // Quick HTTP check
+    try {
+      const httpsRes = await fetch(`https://${cleanDomain}`, {
+        method: 'HEAD',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(5000),
+      });
 
-    const domainRes = await fetch(
-      `${NETLIFY_API_ENDPOINT}/sites/${siteId}/domains/${domain}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const serverHeader = httpsRes.headers.get('server');
+      const netlifyRequestId = httpsRes.headers.get('x-nf-request-id');
 
-    if (!domainRes.ok) {
-      if (domainRes.status === 404) {
-        return NextResponse.json({ 
-          dns_verified: false, 
-          ssl_status: 'not_registered' 
-        });
+      if (serverHeader?.toLowerCase().includes('netlify') || netlifyRequestId) {
+        dnsActive = true;
+        sslActive = true;
       }
-      throw new Error(`Netlify API error: ${domainRes.statusText}`);
-    }
+    } catch {
+      // Try HTTP
+      try {
+        const httpRes = await fetch(`http://${cleanDomain}`, {
+          method: 'HEAD',
+          redirect: 'follow',
+          signal: AbortSignal.timeout(5000),
+        });
 
-    const data = await domainRes.json();
+        const serverHeader = httpRes.headers.get('server');
+        const netlifyRequestId = httpRes.headers.get('x-nf-request-id');
+
+        if (serverHeader?.toLowerCase().includes('netlify') || netlifyRequestId) {
+          dnsActive = true;
+        }
+      } catch {
+        // DNS not working
+      }
+    }
 
     return NextResponse.json({
-      dns_verified: data.dns_verified || false,
-      ssl_status: data.ssl?.status || 'pending',
-      ssl_state: data.ssl?.state || 'unknown',
+      domain: cleanDomain,
+      dns_active: dnsActive,
+      ssl_active: sslActive,
     });
 
   } catch (error: unknown) {
@@ -235,4 +268,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

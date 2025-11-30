@@ -23,22 +23,82 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Check DNS
+    // 1. Check DNS - Use multiple methods for reliability
     let dnsStatus = 'pending';
     try {
-      // Check CNAME (for subdomains) or A (for root)
-      // Simple logic: if it resolves to Netlify, it's good.
-      const isRoot = domain.split('.').length === 2; // e.g. example.com
-      
-      if (isRoot) {
-        const ips: string[] = await resolve4(domain).catch(() => []);
-        if (ips.includes('75.2.60.5')) {
+      // Method 1: Check if domain is accessible and pointing to Netlify
+      // Try to fetch the domain and check if it returns a Netlify response
+      try {
+        const domainCheck = await fetch(`https://${domain}`, { 
+          method: 'HEAD',
+          redirect: 'follow',
+          signal: AbortSignal.timeout(5000) // 5 second timeout
+        });
+        
+        // If we get a response (even if it's an error), DNS is likely configured
+        // Check if it's a Netlify-hosted response by checking headers
+        const serverHeader = domainCheck.headers.get('server');
+        const xNetlifyHeader = domainCheck.headers.get('x-nf-request-id');
+        
+        if (domainCheck.status !== 0 && (serverHeader?.includes('Netlify') || xNetlifyHeader)) {
+          dnsStatus = 'active';
+        } else if (domainCheck.status < 500) {
+          // If we get any non-server-error response, DNS is likely working
+          // The domain is resolving, even if SSL isn't ready yet
           dnsStatus = 'active';
         }
-      } else {
-        const cnames: string[] = await resolveCname(domain).catch(() => []);
-        if (cnames.some(c => c.includes('netlify.app'))) {
-          dnsStatus = 'active';
+      } catch (fetchError) {
+        // If fetch fails, try DNS resolution as fallback
+        console.log('HTTP check failed, trying DNS resolution:', fetchError);
+        
+        // Method 2: Try DNS resolution (may not work in serverless, but worth trying)
+        try {
+          const isRoot = !domain.includes('.') || domain.split('.').filter((p: string) => p).length <= 2;
+          
+          if (isRoot) {
+            const ips: string[] = await resolve4(domain).catch(() => []);
+            // Netlify's IP addresses
+            const netlifyIPs = ['75.2.60.5', '75.2.60.6', '75.2.60.7'];
+            if (ips.some(ip => netlifyIPs.includes(ip))) {
+              dnsStatus = 'active';
+            }
+          } else {
+            const cnames: string[] = await resolveCname(domain).catch(() => []);
+            if (cnames.some(c => c.includes('netlify.app') || c.includes('netlify'))) {
+              dnsStatus = 'active';
+            }
+          }
+        } catch (dnsError) {
+          console.log('DNS resolution also failed:', dnsError);
+        }
+      }
+      
+      // Method 3: Check Netlify API to see if domain is properly configured
+      if (dnsStatus === 'pending') {
+        try {
+          const siteRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const site = await siteRes.json();
+          
+          // If domain is in aliases and site is published, DNS is likely active
+          if (site.domain_aliases?.includes(domain) && site.published_deploy) {
+            // Try one more HTTP check with longer timeout
+            try {
+              const finalCheck = await fetch(`http://${domain}`, { 
+                method: 'HEAD',
+                redirect: 'follow',
+                signal: AbortSignal.timeout(10000)
+              });
+              if (finalCheck.status < 500) {
+                dnsStatus = 'active';
+              }
+            } catch {
+              // If this fails, keep as pending
+            }
+          }
+        } catch (apiError) {
+          console.log('Netlify API check failed:', apiError);
         }
       }
     } catch (e) {

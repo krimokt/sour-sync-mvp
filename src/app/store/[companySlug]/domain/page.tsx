@@ -85,14 +85,33 @@ export default function DomainSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: settings.custom_domain, companyId: company.id }),
       });
-      const data = await res.json();
-      if (data.dns_status) {
-        setSettings(prev => prev ? { ...prev, ...data } : null);
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Status check failed:', errorData);
+        return;
       }
+      
+      const data = await res.json();
+      
+      // Update local state immediately
+      if (data.dns_status || data.ssl_status) {
+        setSettings(prev => prev ? { 
+          ...prev, 
+          dns_status: data.dns_status || prev.dns_status,
+          ssl_status: data.ssl_status || prev.ssl_status,
+          last_checked_at: data.checked_at || new Date().toISOString()
+        } : null);
+      }
+      
+      // Also refresh from database to ensure consistency
+      setTimeout(() => {
+        fetchSettings();
+      }, 1000);
     } catch (e) {
       console.error('Status check failed', e);
     } finally {
-        setIsChecking(false);
+      setIsChecking(false);
     }
   };
 

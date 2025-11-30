@@ -80,7 +80,7 @@ const AppHeader: React.FC = () => {
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
         <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 lg:py-4">
           <button
-            className="items-center justify-center w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-[#0f7aff] hover:border-[#0f7aff]/30 dark:hover:text-[#0f7aff] dark:hover:border-[#0f7aff]/30 shadow-sm lg:flex hidden"
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-[#0f7aff] hover:border-[#0f7aff]/30 dark:hover:text-[#0f7aff] dark:hover:border-[#0f7aff]/30 shadow-sm lg:flex hidden"
             onClick={handleToggle}
             aria-label="Toggle Sidebar"
           >
@@ -101,39 +101,31 @@ const AppHeader: React.FC = () => {
             )}
           </button>
 
-          <Link href="/" className="flex items-center lg:hidden">
+          <Link href="/" className="flex items-center flex-shrink-0 lg:hidden min-w-0">
             <Image
               width={154}
               height={32}
-              className="dark:hidden"
+              className="dark:hidden h-7 sm:h-8 w-auto max-w-[140px] sm:max-w-[154px]"
               src="/images/logo/soursync-logo.svg"
               alt="Soursync Logo"
+              priority
               unoptimized
             />
             <Image
               width={154}
               height={32}
-              className="hidden dark:block"
+              className="hidden dark:block h-7 sm:h-8 w-auto max-w-[140px] sm:max-w-[154px]"
               src="/images/logo/soursync-logo.svg"
               alt="Soursync Logo"
-              unoptimized
-            />
-          </Link>
-          
-          {/* Desktop Logo */}
-          <Link href="/" className="hidden lg:flex items-center">
-            <Image
-              width={154}
-              height={32}
-              src="/images/logo/soursync-logo.svg"
-              alt="Soursync Logo"
+              priority
               unoptimized
             />
           </Link>
 
           <button
             onClick={toggleApplicationMenu}
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-[#0f7aff] hover:border-[#0f7aff]/30 dark:hover:text-[#0f7aff] dark:hover:border-[#0f7aff]/30 shadow-sm lg:hidden"
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-[#0f7aff] hover:border-[#0f7aff]/30 dark:hover:text-[#0f7aff] dark:hover:border-[#0f7aff]/30 shadow-sm lg:hidden flex-shrink-0"
+            aria-label="Open Menu"
           >
             <svg
               width="24"
@@ -151,8 +143,8 @@ const AppHeader: React.FC = () => {
             </svg>
           </button>
 
-          <div className="hidden lg:flex items-center gap-4 flex-1">
-            <form className="group flex-1 max-w-md">
+          <div className="hidden lg:block">
+            <form className="group">
               <div className="relative">
                 <span className="absolute -translate-y-1/2 left-4 top-1/2 pointer-events-none z-10">
                   <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 group-focus-within:text-[#06b6d4] transition-colors" />
@@ -161,7 +153,7 @@ const AppHeader: React.FC = () => {
                   ref={inputRef}
                   type="text"
                   placeholder="Search or type command..."
-                  className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 backdrop-blur-sm py-2.5 pl-11 pr-20 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm hover:shadow-md focus:border-[#06b6d4] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 dark:focus:ring-[#06b6d4]/30 dark:focus:border-[#06b6d4] transition-all duration-200"
+                  className="h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 backdrop-blur-sm py-2.5 pl-11 pr-20 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm hover:shadow-md focus:border-[#06b6d4] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 dark:focus:ring-[#06b6d4]/30 dark:focus:border-[#06b6d4] xl:w-[450px] transition-all duration-200"
                 />
 
                 <button 
@@ -173,34 +165,6 @@ const AppHeader: React.FC = () => {
                 </button>
               </div>
             </form>
-            
-            {/* Navigation Menu */}
-            <nav className="hidden xl:flex items-center gap-1">
-              <Link
-                href="/dashboard-home"
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/store"
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
-              >
-                Stores
-              </Link>
-              <Link
-                href="/quotation"
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
-              >
-                Quotations
-              </Link>
-              <Link
-                href="/order"
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
-              >
-                Orders
-              </Link>
-            </nav>
           </div>
         </div>
         <div

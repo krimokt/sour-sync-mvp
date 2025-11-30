@@ -3,27 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const NETLIFY_API_ENDPOINT = 'https://api.netlify.com/api/v1';
 
-interface NetlifyDnsRecord {
-  type: string;
-  hostname: string;
-  value: string;
-  ttl?: number;
-  priority?: number;
-}
-
-interface NetlifyDomainResponse {
-  id: string;
-  domain: string;
-  hostname: string;
-  dns_zone_id?: string;
-  ssl?: {
-    state: string;
-    status: string;
-  };
-  dns_verified?: boolean;
-  required_dns_records?: NetlifyDnsRecord[];
-}
-
 export async function POST(request: Request) {
   try {
     const { domain, companyId } = await request.json();
@@ -62,84 +41,93 @@ export async function POST(request: Request) {
       .replace(/^www\./, '')
       .replace(/\/+$/, '');
 
-    // Step 1: Register domain with Netlify
-    // POST to /sites/{site_id}/domains
-    console.log(`Registering domain ${cleanDomain} with Netlify...`);
-    
-    const registerRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/domains`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        hostname: cleanDomain,
-      }),
+    console.log(`Registering domain ${cleanDomain} with Netlify site ${siteId}...`);
+
+    // Step 1: Fetch current site configuration to get existing domain_aliases
+    const siteRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
-    let domainData: NetlifyDomainResponse;
+    if (!siteRes.ok) {
+      const errorData = await siteRes.json().catch(() => ({}));
+      console.error('Failed to fetch site:', siteRes.status, errorData);
+      return NextResponse.json({ 
+        error: 'Failed to fetch site configuration',
+        details: { code: siteRes.status, message: errorData.message || siteRes.statusText }
+      }, { status: siteRes.status });
+    }
+
+    const siteData = await siteRes.json();
+    const currentAliases: string[] = siteData.domain_aliases || [];
+    const siteName = siteData.name || siteId;
+
+    console.log('Current domain aliases:', currentAliases);
+
+    // Step 2: Add the new domain and www variant to aliases (if not already present)
+    const domainsToAdd = [cleanDomain, `www.${cleanDomain}`];
+    const newAliases = [...currentAliases];
     
-    if (!registerRes.ok) {
-      const errorData = await registerRes.json().catch(() => ({}));
+    for (const d of domainsToAdd) {
+      if (!newAliases.includes(d)) {
+        newAliases.push(d);
+      }
+    }
+
+    // Step 3: Update site with new domain_aliases using PATCH
+    if (newAliases.length > currentAliases.length) {
+      console.log('Adding new aliases:', domainsToAdd);
       
-      // If domain already exists (409 Conflict), fetch its details instead
-      if (registerRes.status === 409 || errorData.code === 'domain_already_exists') {
-        console.log('Domain already registered, fetching existing data...');
-        
-        const existingRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/domains/${cleanDomain}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        if (!existingRes.ok) {
-          throw new Error(`Failed to fetch existing domain: ${existingRes.statusText}`);
-        }
-        
-        domainData = await existingRes.json();
-      } else {
-        console.error('Netlify domain registration error:', errorData);
+      const updateRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          domain_aliases: newAliases,
+        }),
+      });
+
+      if (!updateRes.ok) {
+        const errorData = await updateRes.json().catch(() => ({}));
+        console.error('Failed to update site aliases:', updateRes.status, errorData);
         return NextResponse.json({ 
           error: errorData.message || 'Failed to register domain with Netlify',
           details: errorData
-        }, { status: registerRes.status });
+        }, { status: updateRes.status });
       }
+
+      console.log('Domain aliases updated successfully');
     } else {
-      domainData = await registerRes.json();
+      console.log('Domain already registered in aliases');
     }
 
-    console.log('Netlify domain response:', JSON.stringify(domainData, null, 2));
-
-    // Step 2: Extract DNS records
-    // Netlify returns required_dns_records or we construct them from known values
-    let dnsRecords: Array<{type: string; host: string; value: string}> = [];
-    
-    if (domainData.required_dns_records && domainData.required_dns_records.length > 0) {
-      // Use records from Netlify API
-      dnsRecords = domainData.required_dns_records.map(record => ({
-        type: record.type,
-        host: record.hostname === cleanDomain ? '@' : record.hostname.replace(`.${cleanDomain}`, ''),
-        value: record.value,
-      }));
-    } else {
-      // Construct standard Netlify DNS records
-      // For root domain: A record pointing to Netlify's load balancer
-      // For www: CNAME to the Netlify site
-      const netlifySiteName = siteId.includes('.') ? siteId : `${siteId}.netlify.app`;
-      
-      dnsRecords = [
-        {
-          type: 'A',
-          host: '@',
-          value: '75.2.60.5', // Netlify's primary load balancer IP
-        },
-        {
-          type: 'CNAME',
-          host: 'www',
-          value: netlifySiteName,
-        },
-      ];
+    // Step 4: Trigger SSL provisioning
+    try {
+      await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/ssl`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('SSL provisioning triggered');
+    } catch (sslErr) {
+      console.warn('SSL provision trigger failed (expected if DNS not ready):', sslErr);
     }
 
-    // Step 3: Save to database
+    // Step 5: Construct DNS records
+    const dnsRecords = [
+      {
+        type: 'A',
+        host: '@',
+        value: '75.2.60.5', // Netlify's primary load balancer IP
+      },
+      {
+        type: 'CNAME',
+        host: 'www',
+        value: `${siteName}.netlify.app`,
+      },
+    ];
+
+    // Step 6: Save to database
     const { error: dbError } = await supabase
       .from('website_settings')
       .update({
@@ -148,7 +136,7 @@ export async function POST(request: Request) {
         dns_status: 'pending',
         ssl_status: 'pending',
         netlify_dns_records: dnsRecords,
-        netlify_domain_id: domainData.id || null,
+        netlify_domain_id: null,
         domain_registered_at: new Date().toISOString(),
         dns_verified_at: null,
         ssl_provisioned_at: null,
@@ -161,14 +149,11 @@ export async function POST(request: Request) {
       throw dbError;
     }
 
-    // Step 4: Return success with DNS records
+    // Step 7: Return success with DNS records
     return NextResponse.json({
       success: true,
       domain: cleanDomain,
-      netlify_domain_id: domainData.id,
       dns_records: dnsRecords,
-      dns_verified: domainData.dns_verified || false,
-      ssl_status: domainData.ssl?.status || 'pending',
       message: 'Domain registered successfully. Please configure your DNS records.',
     });
 
@@ -196,25 +181,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Netlify configuration missing' }, { status: 500 });
     }
 
-    const res = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/domains/${domain}`, {
+    // Fetch site to check if domain is in aliases
+    const siteRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!res.ok) {
-      if (res.status === 404) {
-        return NextResponse.json({ error: 'Domain not found in Netlify' }, { status: 404 });
-      }
-      throw new Error(`Netlify API error: ${res.statusText}`);
+    if (!siteRes.ok) {
+      throw new Error(`Netlify API error: ${siteRes.statusText}`);
     }
 
-    const data = await res.json();
+    const siteData = await siteRes.json();
+    const aliases: string[] = siteData.domain_aliases || [];
+    const isRegistered = aliases.includes(domain) || aliases.includes(`www.${domain}`);
 
     return NextResponse.json({
-      domain: data.hostname || data.domain,
-      dns_verified: data.dns_verified || false,
-      ssl_status: data.ssl?.status || 'pending',
-      ssl_state: data.ssl?.state || 'unknown',
-      required_dns_records: data.required_dns_records || [],
+      domain,
+      registered: isRegistered,
+      ssl_enabled: siteData.ssl || false,
+      site_name: siteData.name,
     });
 
   } catch (error: unknown) {
@@ -223,4 +207,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

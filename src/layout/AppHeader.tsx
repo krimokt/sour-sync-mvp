@@ -3,23 +3,18 @@ import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
-import { useStore } from "@/context/StoreContext";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState ,useEffect,useRef} from "react";
-import { PanelLeft, PanelLeftOpen, X, Search, Bell, Maximize, Minimize, LayoutDashboard, Package, Send, Truck, CreditCard, Globe, Link2, Settings, Menu, ChevronDown } from "lucide-react";
+import { PanelLeft, PanelLeftOpen, X, Search, Bell, Maximize, Minimize } from "lucide-react";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(false);
-  const [isNavMenuOpen, setIsNavMenuOpen] = useState(false);
 
   const { isExpanded, isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
-  const { company } = useStore();
-  const pathname = usePathname();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -106,20 +101,33 @@ const AppHeader: React.FC = () => {
             )}
           </button>
 
-          <Link href="/" className="lg:hidden">
+          <Link href="/" className="flex items-center lg:hidden">
             <Image
               width={154}
               height={32}
               className="dark:hidden"
-              src="./images/logo/logo.svg"
-              alt="Logo"
+              src="/images/logo/soursync-logo.svg"
+              alt="Soursync Logo"
+              unoptimized
             />
             <Image
               width={154}
               height={32}
               className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
-              alt="Logo"
+              src="/images/logo/soursync-logo.svg"
+              alt="Soursync Logo"
+              unoptimized
+            />
+          </Link>
+          
+          {/* Desktop Logo */}
+          <Link href="/" className="hidden lg:flex items-center">
+            <Image
+              width={154}
+              height={32}
+              src="/images/logo/soursync-logo.svg"
+              alt="Soursync Logo"
+              unoptimized
             />
           </Link>
 
@@ -144,60 +152,6 @@ const AppHeader: React.FC = () => {
           </button>
 
           <div className="hidden lg:flex items-center gap-4 flex-1">
-            {/* Navigation Menu */}
-            {company && (
-              <div className="relative">
-                <button
-                  onClick={() => setIsNavMenuOpen(!isNavMenuOpen)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-[#06b6d4]/30 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-all duration-200 shadow-sm"
-                >
-                  <Menu className="w-4 h-4" />
-                  <span className="text-sm font-medium">Menu</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isNavMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {isNavMenuOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setIsNavMenuOpen(false)}
-                    />
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg z-50 py-2">
-                      {[
-                        { icon: LayoutDashboard, name: 'Dashboard', path: `/store/${company.slug}` },
-                        { icon: Package, name: 'Products', path: `/store/${company.slug}/products` },
-                        { icon: Send, name: 'Quotations', path: `/store/${company.slug}/quotations` },
-                        { icon: Truck, name: 'Shipment Tracking', path: `/store/${company.slug}/shipping` },
-                        { icon: CreditCard, name: 'Payments', path: `/store/${company.slug}/payments` },
-                        { icon: Globe, name: 'Website Builder', path: `/store/${company.slug}/website` },
-                        { icon: Link2, name: 'Domain', path: `/store/${company.slug}/domain` },
-                        { icon: Settings, name: 'Settings', path: `/store/${company.slug}/settings` },
-                      ].map((item) => {
-                        const Icon = item.icon;
-                        const isActive = pathname === item.path || (item.path !== `/store/${company.slug}` && pathname.startsWith(item.path));
-                        return (
-                          <Link
-                            key={item.path}
-                            href={item.path}
-                            onClick={() => setIsNavMenuOpen(false)}
-                            className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                              isActive
-                                ? 'bg-[#06b6d4]/10 text-[#06b6d4] dark:bg-[#06b6d4]/20 dark:text-[#06b6d4]'
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                            }`}
-                          >
-                            <Icon className="w-4 h-4" />
-                            <span>{item.name}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Search Bar */}
             <form className="group flex-1 max-w-md">
               <div className="relative">
                 <span className="absolute -translate-y-1/2 left-4 top-1/2 pointer-events-none z-10">
@@ -219,50 +173,42 @@ const AppHeader: React.FC = () => {
                 </button>
               </div>
             </form>
+            
+            {/* Navigation Menu */}
+            <nav className="hidden xl:flex items-center gap-1">
+              <Link
+                href="/dashboard-home"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/store"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
+              >
+                Stores
+              </Link>
+              <Link
+                href="/quotation"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
+              >
+                Quotations
+              </Link>
+              <Link
+                href="/order"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#06b6d4] dark:hover:text-[#06b6d4] transition-colors"
+              >
+                Orders
+              </Link>
+            </nav>
           </div>
         </div>
         <div
           className={`${
             isApplicationMenuOpen ? "flex" : "hidden"
-          } flex-col lg:flex-row items-start lg:items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
-          {/* Mobile Navigation Menu */}
-          {company && (
-            <nav className="w-full lg:hidden border-b border-gray-200 dark:border-gray-800 pb-4 mb-4">
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { icon: LayoutDashboard, name: 'Dashboard', path: `/store/${company.slug}` },
-                  { icon: Package, name: 'Products', path: `/store/${company.slug}/products` },
-                  { icon: Send, name: 'Quotations', path: `/store/${company.slug}/quotations` },
-                  { icon: Truck, name: 'Shipping', path: `/store/${company.slug}/shipping` },
-                  { icon: CreditCard, name: 'Payments', path: `/store/${company.slug}/payments` },
-                  { icon: Globe, name: 'Website', path: `/store/${company.slug}/website` },
-                  { icon: Link2, name: 'Domain', path: `/store/${company.slug}/domain` },
-                  { icon: Settings, name: 'Settings', path: `/store/${company.slug}/settings` },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isActive = pathname === item.path || (item.path !== `/store/${company.slug}` && pathname.startsWith(item.path));
-                  return (
-                    <Link
-                      key={item.path}
-                      href={item.path}
-                      onClick={() => setApplicationMenuOpen(false)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        isActive
-                          ? 'bg-[#06b6d4]/10 text-[#06b6d4] dark:bg-[#06b6d4]/20 dark:text-[#06b6d4]'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </nav>
-          )}
-
-          <div className="flex items-center gap-2 2xsm:gap-3 w-full lg:w-auto justify-between lg:justify-start">
+          <div className="flex items-center gap-2 2xsm:gap-3">
             {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
             {/* <!-- Dark Mode Toggler --> */}

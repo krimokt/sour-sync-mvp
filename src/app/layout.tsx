@@ -16,26 +16,34 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Soursync",
-    default: "Soursync | Global Sourcing OS",
+    template: "%s | Soursync Global Management",
+    default: "Soursync Global Management | Streamline Your Global Sourcing Operations",
   },
-  description: "The All-In-One Operating System for Global Sourcing. Manage quotations, logistics, and your B2B storefront instantly.",
+  description: "Soursync Global Management - The comprehensive platform for managing global sourcing, supply chains, and B2B operations. Streamline quotations, logistics, inventory, and multi-tenant storefronts with enterprise-grade tools.",
+  keywords: ["global sourcing", "supply chain management", "B2B platform", "logistics", "quotation management", "multi-tenant SaaS", "international trade"],
+  authors: [{ name: "Soursync" }],
+  creator: "Soursync",
+  publisher: "Soursync",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://soursync.com"),
   icons: {
-    icon: "/images/logo/soursync-logo.svg",
-    shortcut: "/images/logo/soursync-logo.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/images/logo/soursync-logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/images/logo/soursync-logo.svg",
   },
   openGraph: {
-    title: "Soursync | Global Sourcing OS",
-    description: "The All-In-One Operating System for Global Sourcing. Manage quotations, logistics, and your B2B storefront instantly.",
+    title: "Soursync Global Management | Streamline Your Global Sourcing Operations",
+    description: "The comprehensive platform for managing global sourcing, supply chains, and B2B operations. Streamline quotations, logistics, inventory, and multi-tenant storefronts with enterprise-grade tools.",
     url: "https://soursync.com",
-    siteName: "Soursync",
+    siteName: "Soursync Global Management",
     images: [
       {
-        url: "/images/logo/soursync-logo.svg", // Ideally this should be a 1200x630 png
-        width: 800,
-        height: 600,
-        alt: "Soursync Logo",
+        url: "/images/logo/soursync-logo.svg",
+        width: 1200,
+        height: 630,
+        alt: "Soursync Global Management Logo",
       },
     ],
     locale: "en_US",
@@ -43,9 +51,20 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Soursync | Global Sourcing OS",
-    description: "The All-In-One Operating System for Global Sourcing.",
+    title: "Soursync Global Management | Streamline Your Global Sourcing Operations",
+    description: "The comprehensive platform for managing global sourcing, supply chains, and B2B operations.",
     images: ["/images/logo/soursync-logo.svg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

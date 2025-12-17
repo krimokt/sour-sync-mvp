@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ShoppingCart, X, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import Link from 'next/link';
 import Button from '@/components/ui/button/Button';
 import CheckoutCartModal from '@/components/products/CheckoutCartModal';
 

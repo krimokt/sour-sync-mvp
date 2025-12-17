@@ -93,7 +93,7 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function ClientQuotationsPage() {
-  const { company, client, profile } = useClient();
+  const { company, client } = useClient();
   const [quotations, setQuotations] = useState<QuotationData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -579,7 +579,10 @@ export default function ClientQuotationsPage() {
           fetchData(); // Refresh quotations after creating
         }}
         allowedCountries={company?.quotation_countries as string[] | null | undefined}
-        enabledFields={(company as any)?.quotation_input_fields as string[] | null | undefined}
+        enabledFields={
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ((company as any)?.quotation_input_fields as string[] | null | undefined)
+        }
       />
 
       {/* View Quotation Modal */}

@@ -97,6 +97,7 @@ export async function GET(
           : payment.metadata;
         
         if (metadata.cart_items && Array.isArray(metadata.cart_items)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           cartItems = metadata.cart_items.map((item: any) => ({
             product_id: item.product_id,
             product_name: item.product_name || 'Product',

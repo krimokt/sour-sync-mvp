@@ -563,7 +563,7 @@ export default function PaymentSettings({ companyId, companySlug }: PaymentSetti
             </div>
 
             <div>
-              <Label>RIB (Relevé d'Identité Bancaire)</Label>
+              <Label>RIB (Relevé d&apos;Identité Bancaire)</Label>
               <Input
                 type="text"
                 value={formData.rib}
@@ -666,7 +666,7 @@ export default function PaymentSettings({ companyId, companySlug }: PaymentSetti
       <div className="space-y-4">
         {accounts.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            No bank accounts added yet. Click "Add Bank Account" to get started.
+            No bank accounts added yet. Click &quot;Add Bank Account&quot; to get started.
           </div>
         ) : (
           accounts.map((account) => (
@@ -960,7 +960,7 @@ export default function PaymentSettings({ companyId, companySlug }: PaymentSetti
         <div className="space-y-4">
           {wallets.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              No crypto wallets added yet. Click "Add Crypto Wallet" to get started.
+              No crypto wallets added yet. Click &quot;Add Crypto Wallet&quot; to get started.
             </div>
           ) : (
             wallets.map((wallet) => (

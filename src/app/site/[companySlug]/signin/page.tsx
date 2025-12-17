@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { LogIn, UserPlus, ArrowRight } from 'lucide-react';
 
@@ -20,7 +20,6 @@ interface ClientSignInPageProps {
 }
 
 export default function ClientSignInPage({ params }: ClientSignInPageProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<'signin' | 'signup'>(
     searchParams.get('mode') === 'signup' ? 'signup' : 'signin'
@@ -172,7 +171,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
           body: JSON.stringify({ email, password }),
         });
 
-        const loginData = await loginResponse.json();
+        await loginResponse.json();
 
         if (!loginResponse.ok) {
           // Signup succeeded but login failed - user can manually login

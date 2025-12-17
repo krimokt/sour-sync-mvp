@@ -182,6 +182,7 @@ export async function PATCH(
             tracking_number: trackingNumber,
             status: 'processing',
             location: location,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             receiver_name: receiverName || (payment as any).payer_name || null,
             receiver_phone: receiverPhone || null,
             receiver_address: receiverAddress || null,
@@ -194,6 +195,7 @@ export async function PATCH(
         }
       } else {
         // Update existing shipping record with metadata and tracking number if needed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updateData: any = {};
         
         if (!existingShipping.metadata || !existingShipping.payment_id) {

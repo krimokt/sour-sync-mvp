@@ -54,6 +54,7 @@ export async function PATCH(
     }
 
     // Verify payment belongs to this company (from metadata)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const paymentMetadata = payment.metadata as any;
     if (paymentMetadata?.company_id !== company.id) {
       return NextResponse.json({ error: 'Payment not found for this company' }, { status: 404 });
@@ -62,6 +63,7 @@ export async function PATCH(
     // Update payment status
     const { data: updatedPayment, error: updateError } = await supabaseAdmin
       .from('payments')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .update({ status } as any)
       .eq('id', id)
       .select()
@@ -89,6 +91,7 @@ export async function PATCH(
           quotation_id: paymentMetadata.quotation_id,
           status: 'processing',
           location: quotation?.destination_city || 'Processing',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
       if (shippingError) {

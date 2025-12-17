@@ -88,7 +88,6 @@ export async function POST(
       city,
       country,
       phone,
-      is_default,
     } = body;
 
     if (!full_name || !address_line_1 || !city || !country) {

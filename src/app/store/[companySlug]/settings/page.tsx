@@ -233,7 +233,7 @@ export default function SettingsPage() {
   // Build countries list
   const countries = useMemo(() => {
     const displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
-    let countryList: CountryData[] = countryCodes
+    const countryList: CountryData[] = countryCodes
       .map((code) => {
         try {
           const name = displayNames.of(code);

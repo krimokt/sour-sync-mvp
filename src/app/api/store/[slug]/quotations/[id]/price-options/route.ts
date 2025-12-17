@@ -39,6 +39,7 @@ export async function PATCH(
     }
 
     // Optimized: Prepare update data - only process fields that are provided
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dataToUpdate: any = {
       updated_at: new Date().toISOString(),
     };

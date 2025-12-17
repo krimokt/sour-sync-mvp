@@ -188,6 +188,7 @@ export default function ClientShippingPage() {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const parseMetadata = (metadata: any) => {
     if (!metadata) return null;
     if (typeof metadata === 'string') {
@@ -249,7 +250,7 @@ export default function ClientShippingPage() {
               <Package className="h-6 w-6 text-gray-400" />
             </div>
             <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">No Shipments Found</h3>
-            <p className="text-gray-500 dark:text-gray-400">You don't have any shipments yet.</p>
+            <p className="text-gray-500 dark:text-gray-400">You don&apos;t have any shipments yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -306,7 +307,7 @@ export default function ClientShippingPage() {
                           className={`cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 ${
                             isExpanded ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                           }`}
-                          // @ts-ignore - TableRow onClick is needed for expand functionality
+                          // @ts-expect-error - TableRow onClick is needed for expand functionality
                           onClick={(e: React.MouseEvent) => {
                             if ((e.target as HTMLElement).closest('button')) return;
                             toggleShipmentExpansion(shipment.id);

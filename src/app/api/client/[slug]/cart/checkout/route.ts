@@ -67,6 +67,7 @@ export async function POST(
       .eq('user_id', user.id)
       .maybeSingle();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items = (cart as any)?.items || [];
 
     if (!cart || items.length === 0) {
@@ -74,7 +75,9 @@ export async function POST(
     }
 
     // Compute totals
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalQuantity = items.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalPrice = items.reduce((sum: number, item: any) => {
       const p = Number(item.product?.price ?? item.price_at_add ?? 0);
       return sum + p * Number(item.quantity || 0);
@@ -142,16 +145,19 @@ export async function POST(
       .toString()
       .padStart(4, '0')}`;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const productNameSummary = items
       .slice(0, 3)
       .map((it: any) => `${it.product?.name || 'Product'} x${it.quantity}`)
       .join(', ');
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const images: string[] = items
       .map((it: any) => (Array.isArray(it.product?.images) ? it.product.images[0] : null))
       .filter(Boolean);
 
     const cartSummary = JSON.stringify(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       items.map((it: any) => ({
         product_id: it.product_id,
         name: it.product?.name,
@@ -213,6 +219,7 @@ export async function POST(
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cartItemsData = items.map((it: any) => ({
       product_id: it.product_id,
       product_name: it.product?.name || 'Product',
@@ -241,6 +248,7 @@ export async function POST(
           payment_method_type: payment_method_type,
           payment_method_id: payment_method_id,
         },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
       .select()
       .single();
@@ -254,6 +262,7 @@ export async function POST(
     const { error: clearError } = await supabaseAdmin
       .from('cart_items')
       .delete()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .eq('cart_id', (cart as any).id);
 
     if (clearError) {

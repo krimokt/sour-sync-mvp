@@ -231,6 +231,7 @@ export async function POST(
           payment_method_type: payment_method_type,
           payment_method_id: payment_method_id,
         },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
       .select()
       .single();

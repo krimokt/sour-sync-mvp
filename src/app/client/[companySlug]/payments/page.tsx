@@ -11,7 +11,7 @@ import { useClient } from '@/context/ClientContext';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import StatCard from '@/components/common/StatCard';
 import CompanyPaymentMethods from '@/components/payment/CompanyPaymentMethods';
-import { List, DollarSign, CheckCircle, Clock, X, Upload, Image as ImageIcon, Package, Eye, MapPin, Building2, CreditCard, FileText, Info, Copy, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { List, DollarSign, CheckCircle, Clock, X, Upload, Package, Eye, MapPin, Building2, CreditCard, FileText, Info, Copy, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -96,6 +96,7 @@ const PaymentMethodDetailsSection = ({
   referenceNumber: string;
 }) => {
   const { company } = useClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -420,6 +421,7 @@ const PaymentMethodDetailsSection = ({
 // Delivery Address Component
 const DeliveryAddressSection = ({ addressId, companyId }: { addressId: string; companyId: string }) => {
   const { client } = useClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [address, setAddress] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -550,6 +552,7 @@ export default function ClientPaymentsPage() {
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
   const [isReplacing, setIsReplacing] = useState(false);
   const replaceFileInputRef = React.useRef<HTMLInputElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [invoicePreview, setInvoicePreview] = useState<any>(null);
   const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
   const [isLoadingInvoicePreview, setIsLoadingInvoicePreview] = useState(false);
@@ -579,6 +582,7 @@ export default function ClientPaymentsPage() {
       }
 
       // Filter by company_id (check both column and metadata)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let filteredPayments = (allPayments || []).filter((p: any) => {
         // First check if company_id column exists and matches
         if (p.company_id && p.company_id === company.id) {
@@ -604,6 +608,7 @@ export default function ClientPaymentsPage() {
 
       // Apply status filter
       if (selectedStatus !== 'All') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         filteredPayments = filteredPayments.filter((p: any) => {
           const status = p.status?.toLowerCase();
           if (selectedStatus === 'pending') return status === 'pending';
@@ -627,6 +632,7 @@ export default function ClientPaymentsPage() {
         .select('status, amount, company_id, metadata')
         .eq('user_id', client.user_id);
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const metricsData = (allMetricsData || []).filter((p: any) => {
         // First check company_id column
         if (p.company_id && p.company_id === company.id) {
@@ -779,6 +785,7 @@ export default function ClientPaymentsPage() {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const parseMetadata = (metadata: any) => {
     if (!metadata) return null;
     if (typeof metadata === 'string') {
@@ -821,6 +828,7 @@ export default function ClientPaymentsPage() {
         .update({ 
           payment_proof_url: urlData.publicUrl,
           updated_at: new Date().toISOString()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .eq('id', uploadPaymentId);
 
@@ -914,6 +922,7 @@ export default function ClientPaymentsPage() {
         .update({ 
           payment_proof_url: urlData.publicUrl,
           updated_at: new Date().toISOString()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .eq('id', viewReplaceProof.paymentId);
 
@@ -1010,7 +1019,7 @@ export default function ClientPaymentsPage() {
               <CreditCard className="h-6 w-6 text-gray-400" />
             </div>
             <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">No Payments Found</h3>
-            <p className="text-gray-500 dark:text-gray-400">You haven't made any payments yet.</p>
+            <p className="text-gray-500 dark:text-gray-400">You haven&apos;t made any payments yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -1067,7 +1076,7 @@ export default function ClientPaymentsPage() {
                       className={`cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 ${
                         isExpanded ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }`}
-                      // @ts-ignore - TableRow onClick is needed for expand functionality
+                      // @ts-expect-error - TableRow onClick is needed for expand functionality
                       onClick={(e: React.MouseEvent) => {
                         // Don't toggle if clicking on the expand button
                         if ((e.target as HTMLElement).closest('button')) return;
@@ -1318,6 +1327,7 @@ export default function ClientPaymentsPage() {
       {/* Payment Detail Modal */}
       {selectedPayment && (() => {
         // Parse metadata if it's a string
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let metadata: any = selectedPayment.metadata;
         if (typeof metadata === 'string') {
           try {
@@ -2024,6 +2034,7 @@ export default function ClientPaymentsPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           {invoicePreview.items.map((item: any, index: number) => (
                             <tr key={index}>
                               <td className="px-4 py-3 text-xs text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800">{item.product_name}</td>

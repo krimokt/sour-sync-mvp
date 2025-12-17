@@ -92,7 +92,6 @@ export default function QuotationsPage() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isPriceOptionsModalOpen, setIsPriceOptionsModalOpen] = useState(false);
   const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!company?.id) {
@@ -690,7 +689,7 @@ function PriceOptionsEditModal({ isOpen, onClose, quotationId, onSave }: PriceOp
           const fileExt = file.name.split('.').pop() || 'jpg';
           const fileName = `quotation-${quotationId}/option${optionNumber}/${Date.now()}-${index}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-          const { error: uploadError, data } = await supabase.storage
+          const { error: uploadError } = await supabase.storage
             .from('price_option_images')
             .upload(fileName, file, {
               cacheControl: '3600',

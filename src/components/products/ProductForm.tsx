@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Product, ProductInsert, ProductVariant, VariantGroup, VariantValue, PriceTier, Category } from '@/types/database';
 import ImageUploader from './ImageUploader';
-import { Plus, X, Package, DollarSign, Layers, Tag, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { Plus, X, Package, DollarSign, Layers, Tag, CheckCircle2 } from 'lucide-react';
 
 interface ProductFormProps {
   product?: Product;
@@ -63,20 +63,6 @@ export default function ProductForm({ product, companyId, companySlug }: Product
     if (data) setCategories(data);
   };
 
-  // Legacy variant functions (keeping for backward compatibility)
-  const addVariant = () => {
-    setVariants([...variants, { name: '', value: '', price_adjustment: 0 }]);
-  };
-
-  const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
-    const newVariants = [...variants];
-    newVariants[index] = { ...newVariants[index], [field]: value };
-    setVariants(newVariants);
-  };
-
-  const removeVariant = (index: number) => {
-    setVariants(variants.filter((_, i) => i !== index));
-  };
 
   // New variant group functions (Alibaba-style)
   const addVariantGroup = () => {

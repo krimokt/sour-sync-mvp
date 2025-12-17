@@ -14,7 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { useStore } from '@/context/StoreContext';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import StatCard from '@/components/common/StatCard';
-import { List, DollarSign, CheckCircle, Clock, X, ChevronDown, ChevronUp, Package, Eye, Loader2, FileText, Building2, CreditCard, Info, Upload, MapPin, Copy, Download } from 'lucide-react';
+import { List, DollarSign, CheckCircle, Clock, X, ChevronDown, ChevronUp, Package, Eye, Loader2, FileText, Building2, CreditCard, Info, Upload, MapPin, Download } from 'lucide-react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -705,7 +705,7 @@ export default function PaymentsPage() {
                       className={`cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 ${
                         isExpanded ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }`}
-                      // @ts-ignore - TableRow onClick is needed for expand functionality
+                      // @ts-expect-error - TableRow onClick is needed for expand functionality
                       onClick={(e: React.MouseEvent) => {
                         if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('select')) return;
                         togglePaymentExpansion(payment.id);
@@ -963,11 +963,6 @@ export default function PaymentsPage() {
 
         const cartItems = (metadata?.cart_items || []) as CartItem[];
         const cartTotal = cartItems.reduce((sum: number, item: CartItem) => sum + item.total_price, 0);
-        
-        // Normalize payment_proof_url - handle old bucket names (payment_proofs -> payment-proofs)
-        const proofUrl = selectedPayment.payment_proof_url 
-          ? selectedPayment.payment_proof_url.replace('/payment_proofs/', '/payment-proofs/')
-          : null;
 
         return (
           <Dialog open={selectedPayment !== null} onOpenChange={() => setSelectedPayment(null)}>

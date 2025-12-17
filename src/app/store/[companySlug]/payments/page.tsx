@@ -593,7 +593,7 @@ export default function PaymentsPage() {
       const element = invoicePreviewRef.current;
       
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [10, 10, 10, 10] as [number, number, number, number],
         filename: `invoice-${invoicePreview.payment.reference_number || paymentId.slice(0, 8)}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
@@ -619,7 +619,8 @@ export default function PaymentsPage() {
         }
       };
 
-      await html2pdf().set(opt).from(element).save();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await html2pdf().set(opt as any).from(element).save();
       
       toast.success('Invoice downloaded successfully', { id: 'invoice-download' });
     } catch (error) {

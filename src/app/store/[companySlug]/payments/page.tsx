@@ -747,7 +747,7 @@ export default function PaymentsPage() {
               {payments.map((payment) => {
                 const isExpanded = expandedPayments.has(payment.id);
                 const metadata = parseMetadata(payment.metadata);
-                const cartItems = metadata?.cart_items || [];
+                const cartItems: CartItem[] = Array.isArray(metadata?.cart_items) ? metadata.cart_items as CartItem[] : [];
 
                 return (
                   <React.Fragment key={payment.id}>

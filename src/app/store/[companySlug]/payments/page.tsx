@@ -1072,9 +1072,12 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {metadata && typeof metadata === 'object' && typeof metadata.address_id === 'string' && company?.id && (
-                    <DeliveryAddressSection addressId={metadata.address_id} companyId={company.id} />
-                  )}
+                  {(() => {
+                    const addressId = typeof metadata?.address_id === 'string' ? metadata.address_id : null;
+                    return addressId && company?.id ? (
+                      <DeliveryAddressSection addressId={addressId} companyId={company.id} />
+                    ) : null;
+                  })()}
 
                   {/* Cart Items */}
                   {cartItems.length > 0 && (

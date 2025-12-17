@@ -95,6 +95,8 @@ interface ClientAddress {
   address_line_1: string | null;
   address_line_2: string | null;
   city: string;
+  state: string | null;
+  postal_code: string | null;
   country: string;
   phone: string | null;
   is_default: boolean;

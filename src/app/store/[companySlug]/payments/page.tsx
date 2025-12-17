@@ -1013,6 +1013,8 @@ export default function PaymentsPage() {
         const cartItems: CartItem[] = Array.isArray(metadata?.cart_items) ? metadata.cart_items as CartItem[] : [];
         const cartTotal = cartItems.reduce((sum: number, item: CartItem) => sum + item.total_price, 0);
         const addressId: string | null = typeof metadata?.address_id === 'string' ? metadata.address_id : null;
+        const hasValidAddressId: boolean = addressId !== null;
+        const hasValidCompany: boolean = Boolean(company !== null && company?.id !== undefined);
 
         return (
           <Dialog open={selectedPayment !== null} onOpenChange={() => setSelectedPayment(null)}>
@@ -1073,9 +1075,10 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {addressId !== null && company?.id && (
+                  {/* @ts-ignore */}
+                  {hasValidAddressId && hasValidCompany && addressId && company?.id ? (
                     <DeliveryAddressSection addressId={addressId} companyId={company.id} />
-                  )}
+                  ) : null}
 
                   {/* Cart Items */}
                   {cartItems.length > 0 && (

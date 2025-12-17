@@ -8,9 +8,10 @@ import { Search, ShoppingBag, User, Menu, Phone, Mail } from 'lucide-react';
 interface HeaderSectionProps {
   data: HeaderData;
   themeColor: string;
+  companySlug?: string;
 }
 
-export default function HeaderSection({ data, themeColor }: HeaderSectionProps) {
+export default function HeaderSection({ data, themeColor, companySlug }: HeaderSectionProps) {
   const menuStyle = data.menuStyle || 'minimal';
   const isSticky = data.stickyHeader;
 
@@ -59,7 +60,9 @@ export default function HeaderSection({ data, themeColor }: HeaderSectionProps) 
       )}
       {data.ctaText && (
         <Link 
-          href={data.ctaLink || '#'}
+          href={data.ctaLink?.startsWith('/') && companySlug && !data.ctaLink.startsWith('/site/') 
+            ? `/site/${companySlug}${data.ctaLink}` 
+            : data.ctaLink || '#'}
           className="hidden md:inline-flex px-5 py-2 rounded-full text-sm font-medium text-white transition-transform hover:scale-105"
           style={{ backgroundColor: themeColor }}
         >
@@ -176,6 +179,7 @@ export default function HeaderSection({ data, themeColor }: HeaderSectionProps) 
     </header>
   );
 }
+
 
 
 

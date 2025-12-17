@@ -208,6 +208,7 @@ export interface BankAccount {
   bank_name: string;
   account_name: string;
   account_number: string | null;
+  rib: string | null;
   iban: string | null;
   swift_code: string | null;
   routing_number: string | null;
@@ -215,6 +216,22 @@ export interface BankAccount {
   branch_address: string | null;
   currency: string;
   instructions: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CryptoWallet {
+  id: string;
+  company_id: string;
+  wallet_name: string;
+  wallet_address: string;
+  cryptocurrency: string;
+  network: string | null;
+  qr_code_url: string | null;
+  image_url: string | null;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -294,6 +311,7 @@ export interface CheckoutResponse {
   client_secret?: string; // For Stripe
   error?: string;
 }
+
 
 
 

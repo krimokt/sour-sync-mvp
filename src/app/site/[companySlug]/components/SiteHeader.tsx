@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { LogIn, X } from 'lucide-react';
 
 interface Company {
   name: string;
@@ -18,8 +20,47 @@ interface SiteHeaderProps {
 }
 
 export default function SiteHeader({ company }: SiteHeaderProps) {
+  const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const themeColor = company.website_settings?.theme_color || '#3B82F6';
+
+  // Auto-open login modal if login query param is present
+  useEffect(() => {
+    if (searchParams.get('login') === 'true') {
+      setIsLoginModalOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/client/${company.slug}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Redirect to client dashboard
+      window.location.href = `/client/${company.slug}`;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setIsLoading(false);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -64,11 +105,18 @@ export default function SiteHeader({ company }: SiteHeaderProps) {
             </Link>
             <Link 
               href={`/site/${company.slug}/products`}
-              className="px-4 py-2 rounded-lg text-white transition-colors"
-              style={{ backgroundColor: themeColor }}
+              className="text-gray-600 hover:text-gray-900 transition-colors"
             >
               Browse Catalog
             </Link>
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              className="px-4 py-2 rounded-lg text-white transition-colors flex items-center gap-2"
+              style={{ backgroundColor: themeColor }}
+            >
+              <LogIn className="w-4 h-4" />
+              Client Login
+            </button>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -106,19 +154,94 @@ export default function SiteHeader({ company }: SiteHeaderProps) {
               </Link>
               <Link 
                 href={`/site/${company.slug}/products`}
-                className="px-4 py-2 rounded-lg text-white text-center transition-colors"
-                style={{ backgroundColor: themeColor }}
+                className="text-gray-600 hover:text-gray-900 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Browse Catalog
               </Link>
+              <button
+                onClick={() => {
+                  setIsLoginModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="px-4 py-2 rounded-lg text-white text-center transition-colors flex items-center justify-center gap-2"
+                style={{ backgroundColor: themeColor }}
+              >
+                <LogIn className="w-4 h-4" />
+                Client Login
+              </button>
             </div>
           </nav>
+        )}
+
+        {/* Login Modal */}
+        {isLoginModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Client Login</h2>
+                <button
+                  onClick={() => setIsLoginModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                    {error}
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0"
+                    style={{ focusRingColor: themeColor }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0"
+                    style={{ focusRingColor: themeColor }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  {isLoading ? 'Logging in...' : 'Login'}
+                </button>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </header>
   );
 }
+
 
 
 

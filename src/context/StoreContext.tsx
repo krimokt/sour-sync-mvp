@@ -15,6 +15,8 @@ export interface Company {
   plan: 'starter' | 'pro' | 'enterprise';
   status: 'active' | 'suspended' | 'cancelled';
   custom_domain: string | null;
+  quotation_countries?: string[] | null;
+  quotation_input_fields?: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -93,6 +95,7 @@ export function useProfile() {
   }
   return profile;
 }
+
 
 
 

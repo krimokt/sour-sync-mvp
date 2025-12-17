@@ -30,14 +30,16 @@ export async function PUT(
       .from('bank_accounts')
       .update({
         bank_name: body.bank_name,
-        account_name: body.account_name,
+        account_name: body.account_name || body.bank_name,
         account_number: body.account_number || null,
+        rib: body.rib || null,
         iban: body.iban || null,
         swift_code: body.swift_code || null,
         routing_number: body.routing_number || null,
         branch_name: body.branch_name || null,
         currency: body.currency || 'USD',
         instructions: body.instructions || null,
+        image_url: body.image_url || null,
         is_active: body.is_active,
         updated_at: new Date().toISOString(),
       })
@@ -93,6 +95,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
+
 
 
 

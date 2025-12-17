@@ -598,7 +598,7 @@ function CheckoutPageContent() {
       // Upload the file to Supabase Storage
       const fileName = `payment_proof_${currentPaymentId}_${new Date().getTime()}.${file.name.split(".").pop()}`
       const { error: uploadError } = await supabase.storage
-        .from("payment_proofs")
+        .from("payment-proofs")
         .upload(fileName, file)
 
       if (uploadError) {
@@ -614,7 +614,7 @@ function CheckoutPageContent() {
 
       // Get the public URL
       const { data: urlData } = supabase.storage
-        .from("payment_proofs")
+        .from("payment-proofs")
         .getPublicUrl(fileName)
 
       // Update the payment record with the proof URL

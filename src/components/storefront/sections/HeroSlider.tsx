@@ -8,9 +8,10 @@ import { HeroSliderData } from '@/types/website';
 interface HeroSliderProps {
   data: HeroSliderData;
   themeColor?: string;
+  companySlug?: string;
 }
 
-export default function HeroSlider({ data, themeColor = '#000000' }: HeroSliderProps) {
+export default function HeroSlider({ data, themeColor = '#000000', companySlug }: HeroSliderProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = data.slides || [];
 
@@ -98,7 +99,9 @@ export default function HeroSlider({ data, themeColor = '#000000' }: HeroSliderP
             }`}>
               {slide.buttonText && (
                 <Link
-                  href={slide.buttonLink || '#'}
+                  href={slide.buttonLink?.startsWith('/') && companySlug && !slide.buttonLink.startsWith('/site/') 
+                    ? `/site/${companySlug}${slide.buttonLink}` 
+                    : slide.buttonLink || '#'}
                   className="inline-flex items-center px-8 py-4 rounded-full text-base font-medium transition-all duration-300 hover:scale-105 shadow-lg"
                   style={{ 
                     backgroundColor: isBackgroundImage ? '#ffffff' : themeColor,
@@ -111,7 +114,9 @@ export default function HeroSlider({ data, themeColor = '#000000' }: HeroSliderP
               
               {slide.secondaryButtonText && (
                 <Link
-                  href={slide.secondaryButtonLink || '#'}
+                  href={slide.secondaryButtonLink?.startsWith('/') && companySlug && !slide.secondaryButtonLink.startsWith('/site/') 
+                    ? `/site/${companySlug}${slide.secondaryButtonLink}` 
+                    : slide.secondaryButtonLink || '#'}
                   className={`inline-flex items-center px-8 py-4 rounded-full text-base font-medium transition-all duration-300 border-2 ${
                     isBackgroundImage 
                       ? 'border-white text-white hover:bg-white hover:text-gray-900' 

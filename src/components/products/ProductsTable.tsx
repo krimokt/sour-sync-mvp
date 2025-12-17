@@ -9,10 +9,11 @@ import { supabase } from '@/lib/supabase';
 interface ProductsTableProps {
   products: Product[];
   companySlug: string;
-  onRefresh: () => void;
+  onRefresh?: () => void;
+  isReadOnly?: boolean;
 }
 
-export default function ProductsTable({ products, companySlug, onRefresh }: ProductsTableProps) {
+export default function ProductsTable({ products, companySlug, onRefresh, isReadOnly = false }: ProductsTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (productId: string) => {
@@ -65,17 +66,21 @@ export default function ProductsTable({ products, companySlug, onRefresh }: Prod
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No products yet</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by adding your first product.</p>
-        <Link
-          href={`/store/${companySlug}/products/new`}
-          className="inline-flex items-center px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Product
-        </Link>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No products available</h3>
+        <p className="text-gray-500 dark:text-gray-400 mb-4">
+          {isReadOnly ? 'No products are currently available.' : 'Get started by adding your first product.'}
+        </p>
+        {!isReadOnly && (
+          <Link
+            href={`/store/${companySlug}/products/new`}
+            className="inline-flex items-center px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Product
+          </Link>
+        )}
       </div>
     );
   }
@@ -101,9 +106,11 @@ export default function ProductsTable({ products, companySlug, onRefresh }: Prod
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Actions
-              </th>
+              {!isReadOnly && (
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -164,34 +171,43 @@ export default function ProductsTable({ products, companySlug, onRefresh }: Prod
                   {product.category || '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => handleTogglePublish(product)}
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                      product.is_published
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'
-                    }`}
-                  >
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    product.is_published
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                  }`}>
                     {product.is_published ? 'Published' : 'Draft'}
-                  </button>
+                  </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link
-                      href={`/store/${companySlug}/products/${product.id}`}
-                      className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      disabled={deletingId === product.id}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
-                    >
-                      {deletingId === product.id ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
-                </td>
+                {!isReadOnly && (
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleTogglePublish(product)}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                          product.is_published
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'
+                        }`}
+                      >
+                        {product.is_published ? 'Published' : 'Draft'}
+                      </button>
+                      <Link
+                        href={`/store/${companySlug}/products/${product.id}`}
+                        className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        disabled={deletingId === product.id}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
+                      >
+                        {deletingId === product.id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -200,6 +216,7 @@ export default function ProductsTable({ products, companySlug, onRefresh }: Prod
     </div>
   );
 }
+
 
 
 

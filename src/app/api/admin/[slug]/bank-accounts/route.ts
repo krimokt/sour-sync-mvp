@@ -61,20 +61,35 @@ export async function POST(
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
+    // Check limit of 4 bank accounts
+    const { count } = await supabase
+      .from('bank_accounts')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', company.id);
+
+    if (count && count >= 4) {
+      return NextResponse.json(
+        { error: 'Maximum of 4 bank accounts allowed per company' },
+        { status: 400 }
+      );
+    }
+
     // Create bank account
     const { data: account, error } = await supabase
       .from('bank_accounts')
       .insert({
         company_id: company.id,
         bank_name: body.bank_name,
-        account_name: body.account_name,
+        account_name: body.account_name || body.bank_name,
         account_number: body.account_number || null,
+        rib: body.rib || null,
         iban: body.iban || null,
         swift_code: body.swift_code || null,
         routing_number: body.routing_number || null,
         branch_name: body.branch_name || null,
         currency: body.currency || 'USD',
         instructions: body.instructions || null,
+        image_url: body.image_url || null,
         is_active: body.is_active ?? true,
       })
       .select()

@@ -113,7 +113,8 @@ export default function RenderSection({ section, themeColor, companyId, companyS
       return (
         <HeaderSection 
           data={data as unknown as HeaderData} 
-          themeColor={themeColor} 
+          themeColor={themeColor}
+          companySlug={companySlug}
         />
       );
 
@@ -121,7 +122,8 @@ export default function RenderSection({ section, themeColor, companyId, companyS
       return (
         <HeroSlider 
           data={data as unknown as HeroSliderData} 
-          themeColor={themeColor} 
+          themeColor={themeColor}
+          companySlug={companySlug}
         />
       );
 

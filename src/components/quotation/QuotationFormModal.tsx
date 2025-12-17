@@ -39,12 +39,36 @@ const mapShippingMethodToDbValue = (method: string): string => {
 
 // Helper function to get emoji flag from country code
 const getCountryEmoji = (countryCode: string): string => {
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
+  try {
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt(0));
+    
+    return String.fromCodePoint(...codePoints);
+  } catch (error) {
+    return '🏳️'; // Default flag emoji on error
+  }
+};
+
+// Function to determine region based on country code
+const getRegionForCountry = (code: string): string => {
+  const europeCountries = ["AL", "AD", "AT", "BY", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE", "FO", "FI", "FR", "DE", "GI", "GR", "HU", "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MK", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "PT", "RO", "RU", "SM", "RS", "SK", "SI", "ES", "SE", "CH", "UA", "GB", "VA"];
+  const asiaCountries = ["AF", "AM", "AZ", "BH", "BD", "BT", "BN", "KH", "CN", "CY", "GE", "HK", "IN", "ID", "IR", "IQ", "IL", "JP", "JO", "KZ", "KW", "KG", "LA", "LB", "MO", "MY", "MV", "MN", "MM", "NP", "KP", "OM", "PK", "PS", "PH", "QA", "SA", "SG", "KR", "LK", "SY", "TW", "TJ", "TH", "TR", "TM", "AE", "UZ", "VN", "YE"];
+  const africaCountries = ["DZ", "AO", "BJ", "BW", "BF", "BI", "CV", "CM", "CF", "TD", "KM", "CD", "CG", "CI", "DJ", "EG", "GQ", "ER", "SZ", "ET", "GA", "GM", "GH", "GN", "GW", "KE", "LS", "LR", "LY", "MG", "MW", "ML", "MR", "MU", "MA", "MZ", "NA", "NE", "NG", "RW", "ST", "SN", "SC", "SL", "SO", "ZA", "SS", "SD", "TZ", "TG", "TN", "UG", "ZM", "ZW"];
+  const northAmericaCountries = ["AG", "BS", "BB", "BZ", "CA", "CR", "CU", "DM", "DO", "SV", "GD", "GT", "HT", "HN", "JM", "MX", "NI", "PA", "KN", "LC", "VC", "TT", "US"];
+  const southAmericaCountries = ["AR", "BO", "BR", "CL", "CO", "EC", "GY", "PY", "PE", "SR", "UY", "VE"];
+  const oceaniaCountries = ["AU", "FJ", "KI", "MH", "FM", "NR", "NZ", "PW", "PG", "WS", "SB", "TO", "TV", "VU"];
   
-  return String.fromCodePoint(...codePoints);
+  const upperCode = code.toUpperCase();
+  if (europeCountries.includes(upperCode)) return "Europe";
+  if (asiaCountries.includes(upperCode)) return "Asia";
+  if (africaCountries.includes(upperCode)) return "Africa";
+  if (northAmericaCountries.includes(upperCode)) return "North America";
+  if (southAmericaCountries.includes(upperCode)) return "South America";
+  if (oceaniaCountries.includes(upperCode)) return "Oceania";
+  
+  return "Other";
 };
 
 // Type for country data
@@ -77,13 +101,59 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
   });
   
   useEffect(() => {
-    // Generate country list from country codes
-    const countryList: CountryData[] = countryCodes.map((code) => ({
-      code: code.toLowerCase(),
-      name: new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code,
-      emoji: getCountryEmoji(code),
-      region: getRegionForCountry(code)
-    }));
+    // Generate country list from country codes with error handling
+    const countryList: CountryData[] = countryCodes
+      .map((code) => {
+        try {
+          // Filter out subdivision codes (codes with hyphens like "GB-ENG", "ES-CT")
+          if (code.includes('-')) {
+            return null;
+          }
+          
+          // Validate it's a 2-letter country code
+          if (code.length !== 2) {
+            return null;
+          }
+          
+          const displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
+          const name = displayNames.of(code.toUpperCase());
+          
+          // Skip if DisplayNames returns null or the code itself (invalid)
+          if (!name || name === code.toUpperCase()) {
+            return null;
+          }
+          
+          // Try to get emoji and region, but handle errors gracefully
+          let emoji = '';
+          let region = '';
+          
+          try {
+            emoji = getCountryEmoji(code);
+          } catch (error) {
+            console.warn(`Failed to get emoji for ${code}:`, error);
+            emoji = '🏳️'; // Default flag emoji
+          }
+          
+          try {
+            region = getRegionForCountry(code);
+          } catch (error) {
+            console.warn(`Failed to get region for ${code}:`, error);
+            region = 'Unknown';
+          }
+          
+          return {
+            code: code.toLowerCase(),
+            name: name,
+            emoji: emoji,
+            region: region
+          };
+        } catch (error) {
+          // Skip invalid country codes
+          console.warn(`Invalid country code: ${code}`, error);
+          return null;
+        }
+      })
+      .filter((country): country is CountryData => country !== null);
     
     // Sort countries by name
     countryList.sort((a: CountryData, b: CountryData) => a.name.localeCompare(b.name));
@@ -100,26 +170,6 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     );
   }, [countries, searchQuery]);
   
-  // Function to determine region based on country code
-  // This is a simplified version, in a real app you'd use a more accurate mapping
-  const getRegionForCountry = (code: string): string => {
-    const europeCountries = ["AL", "AD", "AT", "BY", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE", "FO", "FI", "FR", "DE", "GI", "GR", "HU", "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MK", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "PT", "RO", "RU", "SM", "RS", "SK", "SI", "ES", "SE", "CH", "UA", "GB", "VA"];
-    const asiaCountries = ["AF", "AM", "AZ", "BH", "BD", "BT", "BN", "KH", "CN", "CY", "GE", "HK", "IN", "ID", "IR", "IQ", "IL", "JP", "JO", "KZ", "KW", "KG", "LA", "LB", "MO", "MY", "MV", "MN", "MM", "NP", "KP", "OM", "PK", "PS", "PH", "QA", "SA", "SG", "KR", "LK", "SY", "TW", "TJ", "TH", "TR", "TM", "AE", "UZ", "VN", "YE"];
-    const africaCountries = ["DZ", "AO", "BJ", "BW", "BF", "BI", "CV", "CM", "CF", "TD", "KM", "CD", "CG", "CI", "DJ", "EG", "GQ", "ER", "SZ", "ET", "GA", "GM", "GH", "GN", "GW", "KE", "LS", "LR", "LY", "MG", "MW", "ML", "MR", "MU", "MA", "MZ", "NA", "NE", "NG", "RW", "ST", "SN", "SC", "SL", "SO", "ZA", "SS", "SD", "TZ", "TG", "TN", "UG", "ZM", "ZW"];
-    const northAmericaCountries = ["AG", "BS", "BB", "BZ", "CA", "CR", "CU", "DM", "DO", "SV", "GD", "GT", "HT", "HN", "JM", "MX", "NI", "PA", "KN", "LC", "VC", "TT", "US"];
-    const southAmericaCountries = ["AR", "BO", "BR", "CL", "CO", "EC", "GY", "PY", "PE", "SR", "UY", "VE"];
-    const oceaniaCountries = ["AU", "FJ", "KI", "MH", "FM", "NR", "NZ", "PW", "PG", "WS", "SB", "TO", "TV", "VU"];
-    
-    if (europeCountries.includes(code)) return "Europe";
-    if (asiaCountries.includes(code)) return "Asia";
-    if (africaCountries.includes(code)) return "Africa";
-    if (northAmericaCountries.includes(code)) return "North America";
-    if (southAmericaCountries.includes(code)) return "South America";
-    if (oceaniaCountries.includes(code)) return "Oceania";
-    
-    return "Other";
-  };
-
   // Get country region
   const getCountryRegion = (countryCode: string) => {
     const country = countries.find(c => c.code === countryCode);

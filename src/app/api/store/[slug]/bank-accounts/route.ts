@@ -9,39 +9,45 @@ const supabase = createClient(
 // Get active bank accounts for a store (public)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
+    
     // Get company
     const { data: company } = await supabase
       .from('companies')
       .select('id')
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .single();
 
     if (!company) {
       return NextResponse.json({ error: 'Store not found' }, { status: 404 });
     }
 
-    // Get active bank accounts
-    const { data: accounts, error } = await supabase
+    // Get active bank accounts (get all up to 4)
+    const { data: accounts, error, count } = await supabase
       .from('bank_accounts')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('company_id', company.id)
       .eq('is_active', true)
-      .order('sort_order');
+      .order('sort_order')
+      .limit(4); // Explicitly set limit to 4
 
     if (error) {
       console.error('Error fetching bank accounts:', error);
       return NextResponse.json({ error: 'Failed to fetch bank accounts' }, { status: 500 });
     }
 
-    return NextResponse.json({ accounts });
+    console.log(`[Bank Accounts API] Company: ${company.id}, Found: ${accounts?.length || 0} accounts, Count: ${count}`);
+    
+    return NextResponse.json({ accounts: accounts || [] });
   } catch (error) {
     console.error('Bank accounts GET error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
+
 
 
 

@@ -7,14 +7,25 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState ,useEffect,useRef} from "react";
 import { PanelLeft, PanelLeftOpen, X, Search, Bell, Maximize, Minimize } from "lucide-react";
+import { usePathname } from "next/navigation";
+import ClientCartDropdown from "@/components/cart/ClientCartDropdown";
 
-const AppHeader: React.FC = () => {
+interface AppHeaderProps {
+  companySlug?: string;
+}
+
+const AppHeader: React.FC<AppHeaderProps> = ({ companySlug }) => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(false);
 
   const { isExpanded, isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const pathname = usePathname();
+  
+  // Detect if we're on a client route
+  const isClientRoute = pathname?.startsWith('/client/');
+  const clientCompanySlug = companySlug || (isClientRoute ? pathname.split('/')[2] : null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -176,6 +187,11 @@ const AppHeader: React.FC = () => {
             {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
             {/* <!-- Dark Mode Toggler --> */}
+
+            {/* <!-- Cart Dropdown (Client routes only) --> */}
+            {clientCompanySlug && (
+              <ClientCartDropdown companySlug={clientCompanySlug} />
+            )}
 
             {/* <!-- Fullscreen Toggle --> */}
             <button

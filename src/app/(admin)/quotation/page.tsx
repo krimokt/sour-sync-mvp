@@ -2,12 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import React from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import Button from "@/components/ui/button/Button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
@@ -31,29 +25,7 @@ interface QuotationMetrics {
   rejected: number;
 }
 
-interface CustomTableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
-  className?: string;
-  children: React.ReactNode;
-  colSpan?: number;
-  isHeader?: boolean;
-}
-
-const TableCell = ({ className, children, colSpan, isHeader, ...props }: CustomTableCellProps) => {
-  if (isHeader) {
-    return (
-      <th className={className} colSpan={colSpan} {...props}>
-        {children}
-      </th>
-    );
-  }
-  return (
-    <td className={className} colSpan={colSpan} {...props}>
-      {children}
-    </td>
-  );
-};
-
-// Update the UserInfo interface
+// UserInfo interface
 interface UserInfo {
   email: string;
   fullName: string;
@@ -528,93 +500,65 @@ export default function QuotationPage() {
 
       {/* Quotation Table */}
       <div className="col-span-12">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="max-w-full overflow-x-auto">
-            <div className="min-w-[1102px]">
-              <Table>
-                <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-                  <TableRow>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      ID
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Product
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Service Type
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Quantity
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Date
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Status
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Price
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      User
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Actions
-                    </TableCell>
-                  </TableRow>
-                </TableHeader>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1000px]">
+              <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    ID
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    Product
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    Service Type
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    Quantity
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    Date
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    Status
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    Price
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    User
+                  </th>
+                  <th className="px-4 py-4 font-semibold text-gray-700 text-left text-sm dark:text-gray-200">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
 
-                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                   {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
+                    <tr>
+                      <td colSpan={9} className="text-center py-8">
                         <div className="flex items-center justify-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E88E5] dark:border-blue-400"></div>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ) : quotations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <tr>
+                      <td colSpan={9} className="text-center py-8 text-gray-500 dark:text-gray-400">
                         No quotations found
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ) : (
                     quotations.map((item, index) => (
-                      <TableRow key={`quotation-${item.quotation_id || index}-${index}`}>
-                        <TableCell className="px-5 py-4 sm:px-6 text-start text-gray-700 dark:text-gray-300">
+                      <tr key={`quotation-${item.quotation_id || index}-${index}`} className="transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 py-4 text-left text-gray-700 dark:text-gray-300 text-sm">
                           {item.quotation_id}
-                        </TableCell>
-                        <TableCell className="px-5 py-4 sm:px-6 text-start">
+                        </td>
+                        <td className="px-4 py-4 text-left">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 overflow-hidden rounded-lg">
+                            <div className="w-10 h-10 flex-shrink-0 overflow-hidden rounded-lg">
                               {item.product?.image ? (
                                 isValidImageUrl(item.product.image) ? (
                                   <Image
@@ -625,23 +569,21 @@ export default function QuotationPage() {
                                     className="object-cover w-full h-full"
                                     onError={(e) => {
                                       const target = e.target as HTMLImageElement;
-                                      target.src = '/images/placeholder.png'; // Make sure to have this placeholder image in your public folder
+                                      target.src = '/images/placeholder.png';
                                     }}
                                   />
                                 ) : (
-                                  <div className="flex flex-col items-center justify-center w-full h-40 bg-gray-200 text-gray-500 rounded">
-                                    <span style={{fontSize: '2rem'}}>📷</span>
-                                    <span>No Photo Uploaded</span>
+                                  <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-500 rounded">
+                                    <span>📷</span>
                                   </div>
                                 )
                               ) : (
                                 <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                                   <svg
-                                    className="w-6 h-6 text-gray-400 dark:text-gray-600"
+                                    className="w-5 h-5 text-gray-400 dark:text-gray-600"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
                                   >
                                     <path
                                       strokeLinecap="round"
@@ -654,25 +596,27 @@ export default function QuotationPage() {
                               )}
                             </div>
                             <div>
-                              <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                              <span className="block font-medium text-gray-800 text-sm dark:text-white/90">
                                 {item.product.name}
                               </span>
-                              <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                                {item.product.category}
-                              </span>
+                              {item.product.category && (
+                                <span className="block text-gray-500 text-xs dark:text-gray-400">
+                                  {item.product.category}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell className="px-5 py-4 text-gray-700 text-start text-theme-sm dark:text-white/90">
+                        </td>
+                        <td className="px-4 py-4 text-gray-700 text-left text-sm dark:text-white/90">
                           {item.service_type || '-'}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        </td>
+                        <td className="px-4 py-4 text-gray-600 text-left text-sm dark:text-gray-400">
                           {item.quantity}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        </td>
+                        <td className="px-4 py-4 text-gray-600 text-left text-sm dark:text-gray-400">
                           {item.date ? new Date(item.date).toLocaleDateString() : "No date"}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-start">
+                        </td>
+                        <td className="px-4 py-4 text-left">
                           <Badge
                             color={
                               item.status === "Approved"
@@ -691,11 +635,11 @@ export default function QuotationPage() {
                           >
                             {item.status}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        </td>
+                        <td className="px-4 py-4 text-gray-600 text-left text-sm dark:text-gray-400">
                           {item.price}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        </td>
+                        <td className="px-4 py-4 text-gray-600 text-left text-sm dark:text-gray-400">
                           {item.user ? (
                             <div className="flex flex-col">
                               <span className="font-medium text-gray-700 dark:text-gray-300">{item.user.fullName || 'Unknown'}</span>
@@ -715,8 +659,8 @@ export default function QuotationPage() {
                               </div>
                             </div>
                           ) : 'N/A'}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        </td>
+                        <td className="px-4 py-4 text-left">
                           <Button
                             variant="outline"
                             size="sm"
@@ -725,18 +669,17 @@ export default function QuotationPage() {
                           >
                             Edit
                           </Button>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     ))
                   )}
-                </TableBody>
-              </Table>
-            </div>
+                </tbody>
+            </table>
           </div>
 
           {/* Pagination */}
           {!isLoading && quotations.length > 0 && (
-            <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-white/[0.05]">
+            <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-
                 {Math.min(currentPage * ITEMS_PER_PAGE, metrics.total)} of {metrics.total} items

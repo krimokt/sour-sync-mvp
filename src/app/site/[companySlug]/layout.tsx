@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { cache } from 'react';
 
 // Create a public Supabase client for fetching company data
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,9 +15,9 @@ const supabase = createClient(
   supabaseAnonKey || ''
 );
 
-async function getCompany(slug: string) {
-  console.log('[Site Layout] Fetching company with slug:', slug);
-  
+// Use React's cache to deduplicate requests within the same render pass
+// This ensures generateMetadata and SiteLayout share the same fetch
+const getCompany = cache(async (slug: string) => {
   try {
     const { data, error } = await supabase
       .from('companies')
@@ -35,13 +36,12 @@ async function getCompany(slug: string) {
       return null;
     }
     
-    console.log('[Site Layout] Company found:', data?.name);
     return data;
   } catch (err) {
     console.error('[Site Layout] Exception fetching company:', err);
     return null;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: { companySlug: string } }) {
   const company = await getCompany(params.companySlug);

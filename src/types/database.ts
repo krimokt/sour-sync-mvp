@@ -46,7 +46,10 @@ export interface Product {
   stock: number;
   category: string | null;
   images: string[];
-  variants: ProductVariant[];
+  variants: ProductVariant[]; // Legacy format
+  variant_groups?: VariantGroup[]; // New Alibaba-style format
+  moq?: number; // Global MOQ (Minimum Order Quantity)
+  price_tiers?: PriceTier[];
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -62,14 +65,42 @@ export interface ProductInsert {
   stock?: number;
   category?: string | null;
   images?: string[];
-  variants?: ProductVariant[];
+  variants?: ProductVariant[]; // Legacy format
+  variant_groups?: VariantGroup[]; // New Alibaba-style format
+  moq?: number; // Global MOQ
+  price_tiers?: PriceTier[];
   is_published?: boolean;
 }
 
+// New variant structure matching Alibaba model
+export interface VariantValue {
+  id: string;
+  name: string; // e.g., "Black", "White", "S", "M", "L"
+  images?: string[]; // Optional images for this specific value
+  moq?: number; // Optional MOQ for this specific value
+}
+
+export interface VariantGroup {
+  id: string;
+  name: string; // e.g., "Color", "Size", "Material", "Voltage", "Packaging"
+  values: VariantValue[];
+}
+
+// Legacy support - keeping old interface for backward compatibility
 export interface ProductVariant {
   name: string;
   value: string;
   price_adjustment?: number;
+}
+
+export interface PriceTier {
+  id?: string;
+  product_id?: string;
+  variant_id?: string | null;
+  min_qty: number;
+  max_qty: number | null;
+  base_price: number;
+  sort_order?: number;
 }
 
 // Category types

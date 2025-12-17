@@ -241,7 +241,7 @@ layer(base);
 }
 
 @utility menu-item-icon-inactive {
-  @apply text-gray-500 group-hover:text-[#0f7aff] dark:text-gray-400 dark:group-hover:text-[#0f7aff];
+  @apply text-[#667085] group-hover:text-[#0f7aff] dark:text-gray-400 dark:group-hover:text-[#0f7aff];
 }
 
 @utility menu-item-arrow {
@@ -366,6 +366,41 @@ layer(base);
   @keyframes testimonialIn {
     from { opacity: 0; filter: blur(10px); transform: translateY(20px) scale(0.9); }
     to { opacity: 1; filter: blur(0px); transform: translateY(0px) scale(1); }
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes successPulse {
+    0%, 100% {
+      transform: scale(1.2);
+      opacity: 0.3;
+    }
+    50% {
+      transform: scale(1.4);
+      opacity: 0.1;
+    }
+  }
+
+  @keyframes checkDraw {
+    from {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      opacity: 0;
+    }
+    to {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
   }
 
   .animate-element {
@@ -703,3 +738,4 @@ layer(base);
     border-color: var(--btn-border);
   }
 }
+

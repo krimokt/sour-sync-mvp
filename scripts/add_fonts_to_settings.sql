@@ -9,3 +9,4 @@ ADD COLUMN IF NOT EXISTS accent_color TEXT DEFAULT '#06b6d4';
 
 
 
+

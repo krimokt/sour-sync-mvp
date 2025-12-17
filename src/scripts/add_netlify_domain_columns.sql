@@ -26,3 +26,4 @@ COMMENT ON COLUMN website_settings.dns_verified_at IS 'When DNS was verified by 
 COMMENT ON COLUMN website_settings.ssl_provisioned_at IS 'When SSL certificate was successfully provisioned';
 COMMENT ON COLUMN website_settings.ssl_last_attempt_at IS 'Last SSL provisioning attempt (for retry logic)';
 
+

@@ -14,6 +14,7 @@ const alwaysPublicPatterns = [
   /^\/payment-info/, // Public payment info page
   /^\/payment-details/, // Public payment details page
   /^\/site\//, // Public company websites
+  /^\/dashboard-client$/, // Client dashboard (handled by page)
 ];
 
 // Legacy dashboard routes (keep for backward compatibility during migration)
@@ -88,7 +89,7 @@ export async function middleware(req: NextRequest) {
   
   // ----- CUSTOM DOMAIN ROUTING -----
   // Check if this is a custom domain (client's own domain like mycompany.com)
-  if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/')) {
+  if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/') && !path.startsWith('/client/')) {
     try {
       // Create Supabase client to look up custom domain
       const supabase = createMiddlewareClient({ req, res });
@@ -102,11 +103,18 @@ export async function middleware(req: NextRequest) {
         .single();
       
       if (settings?.companies) {
-        // Found company with this custom domain - rewrite to /site/[companySlug]
-        // Handle companies as array (from join) or single object
+        // Found company with this custom domain
         const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
         const company = companies[0] as { slug: string } | undefined;
         if (company?.slug) {
+          // Handle /dashboard-client route
+          if (path === '/dashboard-client' || path.startsWith('/dashboard-client/')) {
+            const url = req.nextUrl.clone();
+            url.pathname = `/dashboard-client`;
+            return NextResponse.rewrite(url);
+          }
+          
+          // Rewrite other paths to /site/[companySlug]
           const url = req.nextUrl.clone();
           url.pathname = `/site/${company.slug}${path}`;
           return NextResponse.rewrite(url);
@@ -118,9 +126,50 @@ export async function middleware(req: NextRequest) {
     // If custom domain not found, continue to show 404 or default page
   }
   
-  // ----- SUBDOMAIN ROUTING FOR PUBLIC WEBSITES -----
+  // ----- SUBDOMAIN ROUTING -----
   const subdomain = getSubdomain(hostname);
-  if (subdomain && !path.startsWith('/store/') && !path.startsWith('/site/')) {
+  
+  // Handle subdomain routing for /client/* paths
+  if (subdomain && (path.startsWith('/client/') || path === '/client')) {
+    const pathParts = path.split('/').filter(Boolean);
+    // pathParts will be ['client', 'companySlug', ...rest] or just ['client']
+    
+    // If path is just /client or /client/, use subdomain as companySlug
+    if (path === '/client' || path === '/client/') {
+      const url = req.nextUrl.clone();
+      url.pathname = `/client/${subdomain}`;
+      return NextResponse.rewrite(url);
+    }
+    
+    // If path has companySlug, check if it matches subdomain
+    if (pathParts.length >= 2 && pathParts[0] === 'client') {
+      const pathCompanySlug = pathParts[1];
+      
+      // If the subdomain matches the companySlug in the path, rewrite to ensure consistency
+      if (pathCompanySlug === subdomain) {
+        // Rewrite to use subdomain as companySlug (in case of any path variations)
+        const restOfPath = pathParts.length > 2 ? '/' + pathParts.slice(2).join('/') : '';
+        const url = req.nextUrl.clone();
+        url.pathname = `/client/${subdomain}${restOfPath}`;
+        return NextResponse.rewrite(url);
+      }
+    }
+  }
+  
+  // Handle subdomain routing for public websites (/site/*)
+  // IMPORTANT: do NOT rewrite app routes like /dashboard-client on subdomains.
+  // Example desired:
+  // - http://whitesourcing.localhost:3000/dashboard-client  (should stay /dashboard-client)
+  if (
+    subdomain &&
+    !path.startsWith('/store/') &&
+    !path.startsWith('/site/') &&
+    !path.startsWith('/client/') &&
+    !(path === '/dashboard-client' || path.startsWith('/dashboard-client/')) &&
+    !path.startsWith('/api/') &&
+    !path.startsWith('/_next/') &&
+    !path.startsWith('/images/')
+  ) {
     // Rewrite subdomain requests to /site/[companySlug] path
     const url = req.nextUrl.clone();
     url.pathname = `/site/${subdomain}${path}`;
@@ -141,6 +190,26 @@ export async function middleware(req: NextRequest) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
+    // ----- CLIENT ROUTES (/client/*) -----
+    // These are protected and require client authentication
+    if (path.startsWith('/client/')) {
+      if (!session) {
+        // Extract company slug from path
+        const pathParts = path.split('/');
+        const companySlug = pathParts[2];
+        if (companySlug) {
+          const redirectUrl = new URL(`/site/${companySlug}?login=true`, req.url);
+          return NextResponse.redirect(redirectUrl);
+        }
+        // Redirect to signin with return URL
+        const redirectUrl = new URL('/signin', req.url);
+        redirectUrl.searchParams.set('redirect', path);
+        return NextResponse.redirect(redirectUrl);
+      }
+      // User is authenticated - let the layout handle client verification
+      return res;
+    }
 
     // ----- STORE ROUTES (/store/*) -----
     // These are protected and require authentication

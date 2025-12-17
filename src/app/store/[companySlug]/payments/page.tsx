@@ -88,6 +88,7 @@ const TableCell = ({ className, children, colSpan, isHeader, ...props }: CustomT
 
 // Delivery Address Component for Store Side
 const DeliveryAddressSection = ({ addressId, companyId }: { addressId: string; companyId: string }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [address, setAddress] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -225,6 +226,7 @@ export default function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentData | null>(null);
   const [selectedProofUrl, setSelectedProofUrl] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [invoicePreview, setInvoicePreview] = useState<any>(null);
   const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
   const [isLoadingInvoicePreview, setIsLoadingInvoicePreview] = useState(false);
@@ -266,6 +268,7 @@ export default function PaymentsPage() {
         .update({ 
           payment_proof_url: urlData.publicUrl,
           updated_at: new Date().toISOString()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .eq('id', selectedPayment.id);
 
@@ -410,6 +413,7 @@ export default function PaymentsPage() {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const parseMetadata = (metadata: any) => {
     if (!metadata) return null;
     if (typeof metadata === 'string') {
@@ -949,6 +953,7 @@ export default function PaymentsPage() {
       {/* Payment Detail Modal */}
       {selectedPayment && (() => {
         // Parse metadata if it's a string
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let metadata: any = selectedPayment.metadata;
         if (typeof metadata === 'string') {
           try {
@@ -1405,6 +1410,7 @@ export default function PaymentsPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                          {/* eslint-disable @typescript-eslint/no-explicit-any */}
                           {invoicePreview.items.map((item: any, index: number) => (
                             <tr key={index}>
                               <td className="px-4 py-3 text-xs text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800">{item.product_name}</td>

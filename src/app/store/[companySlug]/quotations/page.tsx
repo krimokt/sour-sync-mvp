@@ -521,12 +521,14 @@ function PriceOptionsEditModal({ isOpen, onClose, quotationId, onSave }: PriceOp
       };
 
       // Build update data object - only include non-empty fields
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {
         updated_at: new Date().toISOString(),
         status: 'Approved',
       };
 
       // Helper to add field only if it has a value
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const addField = (key: string, value: any) => {
         if (value !== null && value !== undefined && value !== '') {
           updateData[key] = value;
@@ -591,6 +593,7 @@ function PriceOptionsEditModal({ isOpen, onClose, quotationId, onSave }: PriceOp
         setTimeout(() => {
           alert('Price options saved successfully!');
         }, 100);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (fetchError: any) {
         clearTimeout(timeoutId);
         if (fetchError.name === 'AbortError') {
@@ -750,6 +753,7 @@ function PriceOptionsEditModal({ isOpen, onClose, quotationId, onSave }: PriceOp
       }
     })();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const newImages = currentImages.filter((_: any, i: number) => i !== index);
     setFormData({ ...formData, [fieldKey]: JSON.stringify(newImages) });
   };

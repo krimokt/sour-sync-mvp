@@ -764,7 +764,8 @@ export default function ClientPaymentsPage() {
       };
 
       // Generate and download PDF
-      await html2pdf().set(opt).from(element).save();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await html2pdf().set(opt as any).from(element).save();
       
       toast.success('Invoice downloaded successfully', { id: 'invoice-download' });
     } catch (error) {

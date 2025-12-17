@@ -28,7 +28,8 @@ export default function ProductForm({ product, companyId, companySlug }: Product
   const [stock, setStock] = useState(product?.stock?.toString() || '0');
   const [category, setCategory] = useState(product?.category || '');
   const [images, setImages] = useState<string[]>(product?.images || []);
-  const [variants, setVariants] = useState<ProductVariant[]>(product?.variants || []);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [variants] = useState<ProductVariant[]>(product?.variants || []);
   const [variantGroups, setVariantGroups] = useState<VariantGroup[]>(product?.variant_groups || []);
   const [moq, setMoq] = useState<number | undefined>(product?.moq);
   const [priceTiers, setPriceTiers] = useState<PriceTier[]>(product?.price_tiers || []);

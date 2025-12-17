@@ -145,14 +145,14 @@ export async function POST(
       .toString()
       .padStart(4, '0')}`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const productNameSummary = items
       .slice(0, 3)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((it: any) => `${it.product?.name || 'Product'} x${it.quantity}`)
       .join(', ');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const images: string[] = items
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((it: any) => (Array.isArray(it.product?.images) ? it.product.images[0] : null))
       .filter(Boolean);
 

@@ -5,6 +5,7 @@ import {
   Table, 
   TableBody, 
   TableCell, 
+  TableHead,
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
@@ -1626,48 +1627,41 @@ export default function ShipmentTrackingPage() {
                 {/* Table Header */}
                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
-                    <TableCell
-                      isHeader
+                    <TableHead
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
                       Tracking Number
-                    </TableCell>
-                    <TableCell
-                      isHeader
+                    </TableHead>
+                    <TableHead
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
                       Product
-                    </TableCell>
-                    <TableCell
-                      isHeader
+                    </TableHead>
+                    <TableHead
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
                       Destination
-                    </TableCell>
-                    <TableCell
-                      isHeader
+                    </TableHead>
+                    <TableHead
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
                       Current Location
-                    </TableCell>
-                    <TableCell
-                      isHeader
+                    </TableHead>
+                    <TableHead
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
                       Status
-                    </TableCell>
-                    <TableCell
-                      isHeader
+                    </TableHead>
+                    <TableHead
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
                       Dates
-                    </TableCell>
-                    <TableCell
-                      isHeader
+                    </TableHead>
+                    <TableHead
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
                       Actions
-                    </TableCell>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
 

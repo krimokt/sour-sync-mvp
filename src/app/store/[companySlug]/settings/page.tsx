@@ -575,7 +575,10 @@ export default function SettingsPage() {
           <QuotationSettings 
             companyId={company.id} 
             initialCountries={(company.quotation_countries as string[]) || []}
-            initialInputFields={((company as any).quotation_input_fields as string[]) || ['product_name', 'product_url', 'quantity', 'product_images', 'variant_specs', 'notes']}
+            initialInputFields={
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ((company as any).quotation_input_fields as string[]) || ['product_name', 'product_url', 'quantity', 'product_images', 'variant_specs', 'notes']
+            }
           />
         </div>
       )}

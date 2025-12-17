@@ -1,4 +1,4 @@
-import { Outfit } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Metadata } from "next";
 
@@ -9,9 +9,18 @@ import { Toaster as UIToaster } from "@/components/ui/toaster";
 import { Toaster } from "sonner";
 import { SupabaseProvider } from '@/context/SupabaseProvider'
 
-const outfit = Outfit({
+// Self-hosted Outfit font
+const outfit = localFont({
+  src: [
+    {
+      path: "../../public/fonts/outfit/Outfit[wght].woff2",
+      weight: "100 900",
+      style: "normal",
+    },
+  ],
   variable: "--font-outfit-sans",
-  subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
 });
 
 export const metadata: Metadata = {

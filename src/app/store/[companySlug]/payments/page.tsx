@@ -1073,9 +1073,9 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {addressId !== null && company?.id ? (
+                  {addressId !== null && company?.id && (
                     <DeliveryAddressSection addressId={addressId} companyId={company.id} />
-                  ) : null}
+                  )}
 
                   {/* Cart Items */}
                   {cartItems.length > 0 && (

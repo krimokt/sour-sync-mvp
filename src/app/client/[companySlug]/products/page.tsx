@@ -73,7 +73,7 @@ export default function ClientProductsPage() {
 
   if (!company) return null;
 
-  const handleOrderProduct = (productId: string, quantity: number) => {
+  const handleOrderProduct = async (productId: string, quantity: number): Promise<void> => {
     // Open checkout modal instead of directly ordering
     setCheckoutQuantity(quantity);
     setIsModalOpen(false); // Close product detail modal

@@ -1,4 +1,3 @@
-import localFont from "next/font/local";
 import "./globals.css";
 import { Metadata } from "next";
 
@@ -9,19 +8,9 @@ import { Toaster as UIToaster } from "@/components/ui/toaster";
 import { Toaster } from "sonner";
 import { SupabaseProvider } from '@/context/SupabaseProvider'
 
-// Self-hosted Outfit font
-const outfit = localFont({
-  src: [
-    {
-      path: "../../public/fonts/outfit/Outfit[wght].woff2",
-      weight: "100 900",
-      style: "normal",
-    },
-  ],
-  variable: "--font-outfit-sans",
-  display: "swap",
-  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-});
+// Using system fonts to avoid network dependency during build
+// Outfit font can be self-hosted later if needed
+const outfitVariable = "--font-outfit-sans";
 
 export const metadata: Metadata = {
   title: {
@@ -84,7 +73,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} dark:bg-gray-900`}>
+      <body className={`${outfitVariable} dark:bg-gray-900`}>
         <ThemeProvider>
           <AuthProvider>
             <SupabaseProvider>

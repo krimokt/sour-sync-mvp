@@ -1016,9 +1016,9 @@ export default function PaymentsPage() {
         const hasValidAddressId: boolean = addressId !== null;
         const hasValidCompany: boolean = Boolean(company !== null && company?.id !== undefined);
         
-        const deliveryAddressSection = hasValidAddressId && hasValidCompany && addressId && company?.id ? (
+        const deliveryAddressSection: React.ReactNode = (hasValidAddressId && hasValidCompany && addressId && company?.id ? (
           <DeliveryAddressSection addressId={addressId} companyId={company.id} />
-        ) : null;
+        ) : null) as React.ReactNode;
 
         return (
           <Dialog open={selectedPayment !== null} onOpenChange={() => setSelectedPayment(null)}>
@@ -1079,7 +1079,6 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {/* @ts-expect-error - TypeScript type inference issue with conditional JSX rendering */}
                   {deliveryAddressSection as React.ReactNode}
 
                   {/* Cart Items */}

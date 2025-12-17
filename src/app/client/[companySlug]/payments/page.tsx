@@ -1077,7 +1077,6 @@ export default function ClientPaymentsPage() {
                       className={`cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 ${
                         isExpanded ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }`}
-                      // @ts-expect-error - TableRow onClick is needed for expand functionality
                       onClick={(e: React.MouseEvent) => {
                         // Don't toggle if clicking on the expand button
                         if ((e.target as HTMLElement).closest('button')) return;

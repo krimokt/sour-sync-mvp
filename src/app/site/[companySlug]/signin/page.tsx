@@ -315,7 +315,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 dark:bg-gray-700 dark:text-white"
-                  style={{ focusRingColor: themeColor }}
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
                 />
               </div>
 
@@ -330,7 +330,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 dark:bg-gray-700 dark:text-white"
-                  style={{ focusRingColor: themeColor }}
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
                 />
               </div>
 
@@ -366,7 +366,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
                   onChange={(e) => setFullName(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 dark:bg-gray-700 dark:text-white"
-                  style={{ focusRingColor: themeColor }}
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
                 />
               </div>
 
@@ -381,7 +381,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 dark:bg-gray-700 dark:text-white"
-                  style={{ focusRingColor: themeColor }}
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
                 />
               </div>
 
@@ -396,7 +396,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
                   onChange={(e) => setCompanyName(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 dark:bg-gray-700 dark:text-white"
-                  style={{ focusRingColor: themeColor }}
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
                 />
               </div>
 
@@ -412,7 +412,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
                   required
                   minLength={8}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 dark:bg-gray-700 dark:text-white"
-                  style={{ focusRingColor: themeColor }}
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Must be at least 8 characters

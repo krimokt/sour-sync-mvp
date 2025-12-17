@@ -996,7 +996,7 @@ export default function PaymentsPage() {
       </div>
 
       {/* Payment Detail Modal */}
-      {selectedPayment && (() => {
+      {selectedPayment && ((): React.ReactElement => {
         // Parse metadata if it's a string
         let metadata: Record<string, unknown> = parseMetadata(selectedPayment.metadata) || {};
         if (typeof metadata === 'string') {

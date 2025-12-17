@@ -86,10 +86,25 @@ const TableCell = ({ className, children, colSpan, isHeader, ...props }: CustomT
   );
 };
 
+interface ClientAddress {
+  id: string;
+  user_id: string;
+  company_id: string;
+  full_name: string | null;
+  company_name: string | null;
+  address_line_1: string | null;
+  address_line_2: string | null;
+  city: string;
+  country: string;
+  phone: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Delivery Address Component for Store Side
 const DeliveryAddressSection = ({ addressId, companyId }: { addressId: string; companyId: string }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [address, setAddress] = useState<any>(null);
+  const [address, setAddress] = useState<ClientAddress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -226,8 +241,34 @@ export default function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentData | null>(null);
   const [selectedProofUrl, setSelectedProofUrl] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [invoicePreview, setInvoicePreview] = useState<any>(null);
+  interface InvoiceItem {
+    product_id?: string;
+    product_name: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    image?: string;
+  }
+
+  interface InvoicePreview {
+    payment: {
+      currency: string;
+      amount: number;
+      reference_number: string;
+      [key: string]: unknown;
+    };
+    company: {
+      name: string;
+      logo_url?: string;
+      email?: string;
+      phone?: string;
+      address?: string;
+      [key: string]: unknown;
+    };
+    items: InvoiceItem[];
+  }
+
+  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
   const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
   const [isLoadingInvoicePreview, setIsLoadingInvoicePreview] = useState(false);
   const invoicePreviewRef = useRef<HTMLDivElement>(null);
@@ -268,8 +309,7 @@ export default function PaymentsPage() {
         .update({ 
           payment_proof_url: urlData.publicUrl,
           updated_at: new Date().toISOString()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+        })
         .eq('id', selectedPayment.id);
 
       if (updateError) {
@@ -413,8 +453,7 @@ export default function PaymentsPage() {
     });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const parseMetadata = (metadata: any) => {
+  const parseMetadata = (metadata: unknown): Record<string, unknown> | null => {
     if (!metadata) return null;
     if (typeof metadata === 'string') {
       try {
@@ -953,8 +992,7 @@ export default function PaymentsPage() {
       {/* Payment Detail Modal */}
       {selectedPayment && (() => {
         // Parse metadata if it's a string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let metadata: any = selectedPayment.metadata;
+        let metadata: Record<string, unknown> = parseMetadata(selectedPayment.metadata) || {};
         if (typeof metadata === 'string') {
           try {
             metadata = JSON.parse(metadata);
@@ -1410,8 +1448,7 @@ export default function PaymentsPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {/* eslint-disable @typescript-eslint/no-explicit-any */}
-                          {invoicePreview.items.map((item: any, index: number) => (
+                          {invoicePreview.items.map((item: InvoiceItem, index: number) => (
                             <tr key={index}>
                               <td className="px-4 py-3 text-xs text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800">{item.product_name}</td>
                               <td className="px-3 py-3 text-xs text-center text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">{item.quantity}</td>

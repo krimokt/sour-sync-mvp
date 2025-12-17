@@ -4,6 +4,24 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types/supabase';
 
+interface CartItemWithProduct {
+  id: string;
+  product_id: string;
+  quantity: number;
+  price_at_add: number;
+  product: {
+    id: string;
+    name: string;
+    price: number | null;
+    images: string[] | null;
+  } | null;
+}
+
+interface CartWithItems {
+  id: string;
+  items?: CartItemWithProduct[];
+}
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -67,18 +85,16 @@ export async function POST(
       .eq('user_id', user.id)
       .maybeSingle();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const items = (cart as any)?.items || [];
+    const cartData = cart as unknown as CartWithItems;
+    const items: CartItemWithProduct[] = cartData?.items || [];
 
     if (!cart || items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
     // Compute totals
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalQuantity = items.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalPrice = items.reduce((sum: number, item: any) => {
+    const totalQuantity = items.reduce((sum: number, item: CartItemWithProduct) => sum + Number(item.quantity || 0), 0);
+    const totalPrice = items.reduce((sum: number, item: CartItemWithProduct) => {
       const p = Number(item.product?.price ?? item.price_at_add ?? 0);
       return sum + p * Number(item.quantity || 0);
     }, 0);
@@ -147,18 +163,15 @@ export async function POST(
 
     const productNameSummary = items
       .slice(0, 3)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((it: any) => `${it.product?.name || 'Product'} x${it.quantity}`)
+      .map((it: CartItemWithProduct) => `${it.product?.name || 'Product'} x${it.quantity}`)
       .join(', ');
 
     const images: string[] = items
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((it: any) => (Array.isArray(it.product?.images) ? it.product.images[0] : null))
-      .filter(Boolean);
+      .map((it: CartItemWithProduct) => (Array.isArray(it.product?.images) ? it.product.images[0] : null))
+      .filter(Boolean) as string[];
 
     const cartSummary = JSON.stringify(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      items.map((it: any) => ({
+      items.map((it: CartItemWithProduct) => ({
         product_id: it.product_id,
         name: it.product?.name,
         quantity: it.quantity,
@@ -219,8 +232,7 @@ export async function POST(
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cartItemsData = items.map((it: any) => ({
+    const cartItemsData = items.map((it: CartItemWithProduct) => ({
       product_id: it.product_id,
       product_name: it.product?.name || 'Product',
       quantity: it.quantity,
@@ -248,8 +260,7 @@ export async function POST(
           payment_method_type: payment_method_type,
           payment_method_id: payment_method_id,
         },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
+      })
       .select()
       .single();
 
@@ -262,8 +273,7 @@ export async function POST(
     const { error: clearError } = await supabaseAdmin
       .from('cart_items')
       .delete()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .eq('cart_id', (cart as any).id);
+      .eq('cart_id', cartData.id);
 
     if (clearError) {
       console.error('Error clearing cart:', clearError);

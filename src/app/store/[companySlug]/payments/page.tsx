@@ -459,12 +459,16 @@ export default function PaymentsPage() {
     if (!metadata) return null;
     if (typeof metadata === 'string') {
       try {
-        return JSON.parse(metadata);
+        const parsed = JSON.parse(metadata);
+        return typeof parsed === 'object' && parsed !== null ? parsed as Record<string, unknown> : null;
       } catch (e) {
         return null;
       }
     }
-    return metadata;
+    if (typeof metadata === 'object' && metadata !== null) {
+      return metadata as Record<string, unknown>;
+    }
+    return null;
   };
 
   const handleStatusUpdate = async (paymentId: string, newStatus: string) => {

@@ -1010,7 +1010,7 @@ export default function PaymentsPage() {
           metadata = {};
         }
 
-        const cartItems = (metadata?.cart_items || []) as CartItem[];
+        const cartItems: CartItem[] = Array.isArray(metadata?.cart_items) ? metadata.cart_items as CartItem[] : [];
         const cartTotal = cartItems.reduce((sum: number, item: CartItem) => sum + item.total_price, 0);
 
         return (
@@ -1072,7 +1072,7 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {metadata && typeof metadata === 'object' && metadata.address_id && company?.id && (
+                  {metadata && typeof metadata === 'object' && typeof metadata.address_id === 'string' && company?.id && (
                     <DeliveryAddressSection addressId={metadata.address_id} companyId={company.id} />
                   )}
 

@@ -578,11 +578,6 @@ export default function ClientQuotationsPage() {
           setIsCreateModalOpen(false);
           fetchData(); // Refresh quotations after creating
         }}
-        allowedCountries={company?.quotation_countries as string[] | null | undefined}
-        enabledFields={
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ((company as any)?.quotation_input_fields as string[] | null | undefined)
-        }
       />
 
       {/* View Quotation Modal */}

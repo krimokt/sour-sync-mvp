@@ -1080,7 +1080,7 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {deliveryAddressElement}
+                  {(deliveryAddressElement) as React.ReactNode}
 
                   {/* Cart Items */}
                   {cartItems.length > 0 && (

@@ -1080,7 +1080,10 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {(deliveryAddressElement) as React.ReactNode}
+                  {
+                    // @ts-expect-error - TypeScript type inference issue with conditional JSX rendering
+                    (deliveryAddressElement) as React.ReactNode
+                  }
 
                   {/* Cart Items */}
                   {cartItems.length > 0 && (

@@ -1016,9 +1016,10 @@ export default function PaymentsPage() {
         const hasValidAddressId: boolean = addressId !== null;
         const hasValidCompany: boolean = Boolean(company !== null && company?.id !== undefined);
         
-        const deliveryAddressSection: React.ReactNode = (hasValidAddressId && hasValidCompany && addressId && company?.id ? (
-          <DeliveryAddressSection addressId={addressId} companyId={company.id} />
-        ) : null) as React.ReactNode;
+        let deliveryAddressElement: React.ReactNode = null;
+        if (hasValidAddressId && hasValidCompany && addressId && company?.id) {
+          deliveryAddressElement = <DeliveryAddressSection addressId={addressId} companyId={company.id} /> as React.ReactNode;
+        }
 
         return (
           <Dialog open={selectedPayment !== null} onOpenChange={() => setSelectedPayment(null)}>
@@ -1079,7 +1080,7 @@ export default function PaymentsPage() {
                   </div>
 
                   {/* Delivery Address */}
-                  {deliveryAddressSection as React.ReactNode}
+                  {deliveryAddressElement}
 
                   {/* Cart Items */}
                   {cartItems.length > 0 && (

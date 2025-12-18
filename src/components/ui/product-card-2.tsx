@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 // Interface for the component's props for type-safety and clarity
-export interface ProductCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ProductCardProps extends Omit<React.ComponentPropsWithoutRef<typeof motion.div>, "children"> {
   imageUrl: string;
   name: string;
   tagline: string;
@@ -129,6 +129,7 @@ const ProductCard = React.forwardRef<HTMLDivElement, ProductCardProps>(
 ProductCard.displayName = "ProductCard";
 
 export { ProductCard };
+
 
 
 

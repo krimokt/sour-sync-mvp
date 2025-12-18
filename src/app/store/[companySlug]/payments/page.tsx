@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import React from 'react';
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -14,10 +14,12 @@ import { supabase } from '@/lib/supabase';
 import { useStore } from '@/context/StoreContext';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import StatCard from '@/components/common/StatCard';
-import { List, DollarSign, CheckCircle, Clock, X, ChevronDown, ChevronUp, Package, Eye, Loader2, FileText, Building2, CreditCard, Info, Upload, MapPin, Download } from 'lucide-react';
+import { List, DollarSign, CheckCircle, Clock, X, ChevronDown, ChevronUp, Package, Eye, Loader2, FileText, Building2, CreditCard, Info, Upload, Download } from 'lucide-react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { DeliveryAddressSlot } from '@/components/payment/DeliveryAddressSlot';
+import { InvoiceProductsTable } from '@/components/payment/InvoiceProductsTable';
 
 const ITEMS_PER_PAGE = 10;
 const STATUS_OPTIONS = ['All', 'pending', 'approved', 'rejected', 'completed', 'failed'] as const;
@@ -86,150 +88,6 @@ const TableCell = ({ className, children, colSpan, isHeader, ...props }: CustomT
   );
 };
 
-interface ClientAddress {
-  id: string;
-  user_id: string;
-  company_id: string;
-  full_name: string | null;
-  company_name: string | null;
-  address_line_1: string | null;
-  address_line_2: string | null;
-  city: string;
-  state: string | null;
-  postal_code: string | null;
-  country: string;
-  phone: string | null;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-// Delivery Address Component for Store Side
-const DeliveryAddressSection = ({ addressId, companyId }: { addressId: string; companyId: string }) => {
-  const [address, setAddress] = useState<ClientAddress | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAddress = async () => {
-      if (!addressId || !companyId) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('client_addresses')
-          .select('*')
-          .eq('id', addressId)
-          .eq('company_id', companyId)
-          .single();
-
-        if (!error && data) {
-          setAddress(data);
-        }
-      } catch (err) {
-        console.error('Error fetching address:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAddress();
-  }, [addressId, companyId]);
-
-  if (isLoading) {
-    return (
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
-          <div className="p-1.5 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
-            <MapPin className="w-4 h-4 text-white" />
-          </div>
-          Delivery Address
-        </h3>
-        <p className="text-sm text-gray-500">Loading address...</p>
-      </div>
-    );
-  }
-
-  if (!address) {
-    return (
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
-          <div className="p-1.5 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
-            <MapPin className="w-4 h-4 text-white" />
-          </div>
-          Delivery Address
-        </h3>
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700 p-4">
-          <p className="text-sm text-gray-500">Address ID: <span className="font-mono text-xs">{addressId}</span></p>
-          <p className="text-sm text-gray-500 mt-2 italic">Address details not found</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Build address lines
-  const addressLines = [
-    address.address_line_1,
-    address.address_line_2,
-  ].filter(Boolean).join(', ');
-
-  const locationParts = [
-    address.city,
-    address.state,
-    address.postal_code,
-  ].filter(Boolean);
-
-  return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
-        <div className="p-1.5 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
-          <MapPin className="w-4 h-4 text-white" />
-        </div>
-        Delivery Address
-      </h3>
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700 p-4 space-y-2">
-        {address.full_name && (
-          <div>
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Name:</span>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white mt-0.5">{address.full_name}</p>
-          </div>
-        )}
-        {address.company_name && (
-          <div>
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Company:</span>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{address.company_name}</p>
-          </div>
-        )}
-        {addressLines && (
-          <div>
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Address:</span>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{addressLines}</p>
-          </div>
-        )}
-        {locationParts.length > 0 && (
-          <div>
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Location:</span>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{locationParts.join(', ')}</p>
-          </div>
-        )}
-        {address.country && (
-          <div>
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Country:</span>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white mt-0.5">{address.country}</p>
-          </div>
-        )}
-        {address.phone && (
-          <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Phone:</span>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{address.phone}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export default function PaymentsPage() {
   const { company } = useStore();
   const [payments, setPayments] = useState<PaymentData[]>([]);
@@ -274,6 +132,10 @@ export default function PaymentsPage() {
   const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
   const [isLoadingInvoicePreview, setIsLoadingInvoicePreview] = useState(false);
   const invoicePreviewRef = useRef<HTMLDivElement>(null);
+
+  // Typed helpers for rendering invoice preview sections without inline narrowing producing `unknown`.
+  const invoiceItems: InvoiceItem[] = Array.isArray(invoicePreview?.items) ? invoicePreview.items : [];
+  const invoiceSubtotal = invoiceItems.reduce((sum, item) => sum + (item.total_price || 0), 0);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -633,7 +495,6 @@ export default function PaymentsPage() {
     <>
       <PageBreadcrumb pageTitle="Payments" />
 
-      {/* Metrics Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
         <StatCard
           title="Total Payments"
@@ -658,7 +519,6 @@ export default function PaymentsPage() {
         />
       </div>
 
-      {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-4 items-center">
         <div className="flex gap-2">
           {STATUS_OPTIONS.map((status) => (
@@ -677,7 +537,6 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900/50 overflow-hidden">
         {error ? (
           <div className="p-12 text-center">
@@ -886,7 +745,6 @@ export default function PaymentsPage() {
                       <TableRow className="bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-800">
                         <TableCell colSpan={7} className="px-0 py-0">
                           <div className="p-6 bg-white dark:bg-gray-900">
-                            {/* Invoice-style Table */}
                             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                               <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -969,7 +827,6 @@ export default function PaymentsPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 p-4 border-t border-gray-200 dark:border-gray-800">
             <Button
@@ -995,7 +852,6 @@ export default function PaymentsPage() {
         )}
       </div>
 
-      {/* Payment Detail Modal */}
       {selectedPayment && ((): React.ReactElement => {
         // Parse metadata if it's a string
         let metadata: Record<string, unknown> = parseMetadata(selectedPayment.metadata) || {};
@@ -1010,17 +866,12 @@ export default function PaymentsPage() {
           metadata = {};
         }
 
-        const cartItems: CartItem[] = Array.isArray(metadata?.cart_items) ? metadata.cart_items as CartItem[] : [];
+        const cartItems: CartItem[] = Array.isArray(metadata?.cart_items) ? (metadata.cart_items as CartItem[]) : [];
         const cartTotal = cartItems.reduce((sum: number, item: CartItem) => sum + item.total_price, 0);
         const addressId: string | null = typeof metadata?.address_id === 'string' ? metadata.address_id : null;
-        const hasValidAddressId: boolean = addressId !== null;
-        const hasValidCompany: boolean = Boolean(company !== null && company?.id !== undefined);
-        
-        let deliveryAddressElement: React.ReactNode = null;
-        if (hasValidAddressId && hasValidCompany && addressId && company?.id) {
-          deliveryAddressElement = <DeliveryAddressSection addressId={addressId} companyId={company.id} /> as React.ReactNode;
-        }
 
+        const companyId: string | null = typeof company?.id === 'string' ? company.id : null;
+        
         return (
           <Dialog open={selectedPayment !== null} onOpenChange={() => setSelectedPayment(null)}>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 p-0 border-0 shadow-2xl">
@@ -1040,7 +891,6 @@ export default function PaymentsPage() {
                 </DialogHeader>
 
                 <div className="px-6 py-6 space-y-6">
-                  {/* Payment Information */}
                   <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide">Payment Information</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -1079,13 +929,8 @@ export default function PaymentsPage() {
                     </div>
                   </div>
 
-                  {/* Delivery Address */}
-                  {
-                    // @ts-expect-error - TypeScript type inference issue with conditional JSX rendering
-                    (deliveryAddressElement) as React.ReactNode
-                  }
+                  <DeliveryAddressSlot addressId={addressId} companyId={companyId} />
 
-                  {/* Cart Items */}
                   {cartItems.length > 0 && (
                     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide">
@@ -1131,28 +976,26 @@ export default function PaymentsPage() {
                     </div>
                   )}
 
-                  {/* Order Information */}
-                  {metadata && typeof metadata === 'object' && (metadata.quotation_id || metadata.company_id) && (
+                  {((typeof metadata.quotation_id === 'string') || (typeof metadata.company_id === 'string')) ? (
                     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide">Order Information</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {metadata.quotation_id && (
+                        {typeof metadata.quotation_id === 'string' ? (
                           <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Quotation ID</p>
                             <p className="font-mono text-sm font-medium text-gray-900 dark:text-white">{metadata.quotation_id}</p>
                           </div>
-                        )}
-                        {metadata.company_id && (
+                        ) : null}
+                        {typeof metadata.company_id === 'string' ? (
                           <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Company ID</p>
                             <p className="font-mono text-xs font-medium text-gray-700 dark:text-gray-300 break-all">{metadata.company_id}</p>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
-                  {/* Upload Payment Proof Section */}
                   {selectedPayment && (selectedPayment.status === 'pending' || selectedPayment.status === 'Pending') && !selectedPayment.payment_proof_url && (
                     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide">Upload Payment Proof</h3>
@@ -1209,7 +1052,6 @@ export default function PaymentsPage() {
                     </div>
                   )}
 
-                  {/* Payment Proof Uploaded */}
                   {selectedPayment && selectedPayment.payment_proof_url && (
                     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
@@ -1251,7 +1093,6 @@ export default function PaymentsPage() {
         );
       })()}
 
-      {/* Payment Proof Only Modal */}
       {selectedProofUrl && (
         <Dialog open={selectedProofUrl !== null} onOpenChange={() => setSelectedProofUrl(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 p-0 border-0 shadow-2xl">
@@ -1354,7 +1195,6 @@ export default function PaymentsPage() {
         </Dialog>
       )}
 
-      {/* Invoice Preview Modal */}
       <Dialog open={isInvoicePreviewOpen} onOpenChange={setIsInvoicePreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 p-0 border-0 shadow-2xl">
           <div className="bg-white dark:bg-gray-900">
@@ -1362,9 +1202,9 @@ export default function PaymentsPage() {
               <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center justify-between">
                 <span>Invoice Preview</span>
                 <div className="flex items-center gap-2">
-                  {invoicePreview && (
+                  {invoicePreview && typeof invoicePreview.payment.id === 'string' && (
                     <button
-                      onClick={() => handleDownloadInvoice(invoicePreview.payment.id)}
+                      onClick={() => handleDownloadInvoice(invoicePreview.payment.id as string)}
                       className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2"
                     >
                       <Download className="w-4 h-4" />
@@ -1400,10 +1240,9 @@ export default function PaymentsPage() {
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {/* Header */}
                   <div className="flex items-start justify-between border-b border-gray-200 dark:border-gray-700 pb-4 mb-3">
                     <div className="flex items-start gap-4 flex-1">
-                      {invoicePreview.company.logo_url && (
+                      {invoicePreview.company.logo_url && typeof invoicePreview.company.logo_url === 'string' && (
                         <img
                           src={invoicePreview.company.logo_url}
                           alt={invoicePreview.company.name}
@@ -1415,13 +1254,13 @@ export default function PaymentsPage() {
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                           {invoicePreview.company.name}
                         </h2>
-                        {invoicePreview.company.email && (
+                        {invoicePreview.company.email && typeof invoicePreview.company.email === 'string' && (
                           <p className="text-xs text-gray-600 dark:text-gray-400">Email: {invoicePreview.company.email}</p>
                         )}
-                        {invoicePreview.company.phone && (
+                        {invoicePreview.company.phone && typeof invoicePreview.company.phone === 'string' && (
                           <p className="text-xs text-gray-600 dark:text-gray-400">Phone: {invoicePreview.company.phone}</p>
                         )}
-                        {invoicePreview.company.address && (
+                        {invoicePreview.company.address && typeof invoicePreview.company.address === 'string' && (
                           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{invoicePreview.company.address}</p>
                         )}
                       </div>
@@ -1431,67 +1270,38 @@ export default function PaymentsPage() {
                       <div className="space-y-1 text-xs">
                         <p className="font-semibold text-gray-900 dark:text-white">Invoice Details</p>
                         <p className="text-gray-600 dark:text-gray-400">Invoice #: {invoicePreview.payment.reference_number}</p>
-                        <p className="text-gray-600 dark:text-gray-400">Date: {invoicePreview.payment.date}</p>
-                        <p className="text-gray-600 dark:text-gray-400">Payment Method: {invoicePreview.payment.payment_method}</p>
+                        {typeof invoicePreview.payment.date === 'string' && (
+                          <p className="text-gray-600 dark:text-gray-400">Date: {invoicePreview.payment.date}</p>
+                        )}
+                        {typeof invoicePreview.payment.payment_method === 'string' && (
+                          <p className="text-gray-600 dark:text-gray-400">Payment Method: {invoicePreview.payment.payment_method}</p>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Bill To */}
-                  {(invoicePreview.payment.payer_name || invoicePreview.payment.payer_email) && (
+                  {((typeof invoicePreview.payment.payer_name === 'string' && invoicePreview.payment.payer_name) || 
+                    (typeof invoicePreview.payment.payer_email === 'string' && invoicePreview.payment.payer_email)) && (
                     <div className="border-b border-gray-200 dark:border-gray-700 pb-3 mb-4">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Bill To:</h3>
-                      {invoicePreview.payment.payer_name && (
+                      {typeof invoicePreview.payment.payer_name === 'string' && invoicePreview.payment.payer_name && (
                         <p className="text-sm text-gray-700 dark:text-gray-300">{invoicePreview.payment.payer_name}</p>
                       )}
-                      {invoicePreview.payment.payer_email && (
+                      {typeof invoicePreview.payment.payer_email === 'string' && invoicePreview.payment.payer_email && (
                         <p className="text-sm text-gray-700 dark:text-gray-300">{invoicePreview.payment.payer_email}</p>
                       )}
                     </div>
                   )}
 
-                  {/* Products Table */}
-                  {invoicePreview.items && invoicePreview.items.length > 0 ? (
-                    <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-3">
-                      <table className="w-full" style={{ fontSize: '11px', borderCollapse: 'collapse' }}>
-                        <thead>
-                          <tr className="bg-gray-50 dark:bg-gray-700/50">
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '45%' }}>PRODUCT</th>
-                            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '15%' }}>QUANTITY</th>
-                            <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '20%' }}>UNIT PRICE</th>
-                            <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '20%' }}>TOTAL</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {invoicePreview.items.map((item: InvoiceItem, index: number) => (
-                            <tr key={index}>
-                              <td className="px-4 py-3 text-xs text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800">{item.product_name}</td>
-                              <td className="px-3 py-3 text-xs text-center text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">{item.quantity}</td>
-                              <td className="px-3 py-3 text-xs text-right text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
-                                {invoicePreview.payment.currency} {item.unit_price.toFixed(2)}
-                              </td>
-                              <td className="px-3 py-3 text-xs text-right font-medium text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800">
-                                {invoicePreview.payment.currency} {item.total_price.toFixed(2)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
-                      <p className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">No items in this invoice</p>
-                    </div>
-                  )}
+                  <InvoiceProductsTable items={invoiceItems} currency={invoicePreview.payment.currency} />
 
-                  {/* Totals */}
-                  <div className="flex justify-end mb-3">
+                    <div className="flex justify-end mb-3">
                     <div className="w-64 space-y-2">
-                      {invoicePreview.items && invoicePreview.items.length > 0 && (
+                      {invoiceItems.length > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600 dark:text-gray-400 font-medium">Subtotal:</span>
                           <span className="text-gray-900 dark:text-white">
-                            {invoicePreview.payment.currency} {invoicePreview.subtotal.toFixed(2)}
+                            {invoicePreview.payment.currency} {invoiceSubtotal.toFixed(2)}
                           </span>
                         </div>
                       )}
@@ -1504,17 +1314,15 @@ export default function PaymentsPage() {
                     </div>
                   </div>
 
-                  {/* Notes */}
-                  {invoicePreview.payment.payment_notes && (
+                  {(typeof invoicePreview.payment.payment_notes === 'string' && invoicePreview.payment.payment_notes.length > 0) ? (
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
                       <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Notes:</h3>
                       <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                         {invoicePreview.payment.payment_notes}
                       </p>
                     </div>
-                  )}
+                  ) : null}
 
-                  {/* Footer */}
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2 text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       This is an automatically generated invoice.

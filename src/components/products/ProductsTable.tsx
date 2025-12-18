@@ -27,7 +27,7 @@ export default function ProductsTable({ products, companySlug, onRefresh, isRead
         .eq('id', productId);
 
       if (error) throw error;
-      onRefresh();
+      onRefresh?.();
     } catch (error) {
       console.error('Error deleting product:', error);
       alert('Failed to delete product');
@@ -44,7 +44,7 @@ export default function ProductsTable({ products, companySlug, onRefresh, isRead
         .eq('id', product.id);
 
       if (error) throw error;
-      onRefresh();
+      onRefresh?.();
     } catch (error) {
       console.error('Error updating product:', error);
       alert('Failed to update product');

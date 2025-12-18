@@ -700,7 +700,6 @@ export default function ShippingPage() {
                       className={`cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 ${
                         isExpanded ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }`}
-                      // @ts-expect-error - TableRow onClick is needed for expand functionality
                       onClick={(e: React.MouseEvent) => {
                         if ((e.target as HTMLElement).closest('button')) return;
                         toggleShipmentExpansion(shipment.id);

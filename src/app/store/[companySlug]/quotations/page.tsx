@@ -593,7 +593,11 @@ function PriceOptionsEditModal({ isOpen, onClose, quotationId, onSave }: PriceOp
         }, 100);
       } catch (fetchError: unknown) {
         clearTimeout(timeoutId);
-        if (fetchError.name === 'AbortError') {
+        const errorName =
+          fetchError && typeof fetchError === 'object' && 'name' in fetchError
+            ? (fetchError as { name?: unknown }).name
+            : null;
+        if (errorName === 'AbortError') {
           throw new Error('Request timed out. Please try again.');
         }
         throw fetchError;

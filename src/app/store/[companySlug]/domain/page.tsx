@@ -119,8 +119,31 @@ export default function DomainSettingsPage() {
       if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
-        setSettings(data);
-        setCustomDomain(data.custom_domain || '');
+        const typedData = data as {
+          custom_domain?: string | null;
+          custom_domain_verified?: boolean | null;
+          ssl_status?: string | null;
+          dns_status?: string | null;
+          last_checked_at?: string | null;
+          netlify_dns_records?: unknown;
+          netlify_domain_id?: string | null;
+          domain_registered_at?: string | null;
+          dns_verified_at?: string | null;
+          ssl_provisioned_at?: string | null;
+        };
+        setSettings({
+          custom_domain: typedData.custom_domain ?? null,
+          custom_domain_verified: typedData.custom_domain_verified ?? false,
+          ...(typedData.ssl_status != null && { ssl_status: typedData.ssl_status }),
+          ...(typedData.dns_status != null && { dns_status: typedData.dns_status }),
+          ...(typedData.last_checked_at != null && { last_checked_at: typedData.last_checked_at }),
+          ...(typedData.netlify_dns_records != null && { netlify_dns_records: typedData.netlify_dns_records as DnsRecord[] }),
+          ...(typedData.netlify_domain_id != null && { netlify_domain_id: typedData.netlify_domain_id }),
+          ...(typedData.domain_registered_at != null && { domain_registered_at: typedData.domain_registered_at }),
+          ...(typedData.dns_verified_at != null && { dns_verified_at: typedData.dns_verified_at }),
+          ...(typedData.ssl_provisioned_at != null && { ssl_provisioned_at: typedData.ssl_provisioned_at }),
+        } as DomainSettings);
+        setCustomDomain(typedData.custom_domain || '');
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -240,8 +263,10 @@ export default function DomainSettingsPage() {
 
     setIsSaving(true);
     try {
-      await supabase
-        .from('website_settings')
+      await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('website_settings') as any
+      )
         .update({
           custom_domain: null,
           custom_domain_verified: false,

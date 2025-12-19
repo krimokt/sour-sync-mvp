@@ -178,8 +178,10 @@ export default function SettingsPage() {
     setMessage(null);
     
     try {
-      const { error } = await supabase
-        .from('companies')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('companies') as any
+      )
         .update({
           name: companyName,
           country,
@@ -207,8 +209,10 @@ export default function SettingsPage() {
     setMessage(null);
     
     try {
-      const { error } = await supabase
-        .from('profiles')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('profiles') as any
+      )
         .update({
           full_name: fullName,
           phone,

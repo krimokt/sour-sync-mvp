@@ -52,10 +52,24 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
           cache: 'no-store',
         });
 
+        // Check if response is ok before parsing JSON
+        if (!res.ok) {
+          const errorText = await res.text();
+          let errorMessage = 'Failed to load company';
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error || errorMessage;
+          } catch {
+            // If JSON parsing fails, use the text or default message
+            errorMessage = errorText || errorMessage;
+          }
+          throw new Error(errorMessage);
+        }
+
         const json = await res.json();
 
-        if (!res.ok || !json?.company) {
-          throw new Error(json?.error || 'Failed to load company');
+        if (!json?.company) {
+          throw new Error(json?.error || 'Company data not found');
         }
 
         const data = json.company as Company;
@@ -69,6 +83,8 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         }
       } catch (err) {
         console.error('Error fetching company:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error('Company fetch error details:', errorMessage);
         setCompanyLoadError(
           'Unable to load company branding. You can still sign in / sign up.'
         );

@@ -102,9 +102,10 @@ export async function middleware(req: NextRequest) {
         .eq('custom_domain', hostWithoutPort)
         .single();
       
-      if (settings?.companies) {
+      const typedSettings = settings as { company_id?: string; companies?: { slug: string } | { slug: string }[] } | null;
+      if (typedSettings?.companies) {
         // Found company with this custom domain
-        const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
+        const companies = Array.isArray(typedSettings.companies) ? typedSettings.companies : [typedSettings.companies];
         const company = companies[0] as { slug: string } | undefined;
         if (company?.slug) {
           // Handle /dashboard-client route

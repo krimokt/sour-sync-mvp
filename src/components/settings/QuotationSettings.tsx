@@ -137,8 +137,10 @@ export default function QuotationSettings({ companyId, initialCountries = [], in
     setMessage(null);
     
     try {
-      const { error } = await supabase
-        .from('companies')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('companies') as any
+      )
         .update({
           quotation_countries: selectedCountries,
           quotation_input_fields: selectedInputFields

@@ -142,11 +142,12 @@ export default function QuotationsPage() {
         .eq('company_id', company.id);
 
       if (metricsData) {
+        const typedMetricsData = metricsData as Array<{ status?: string | null }>;
         setMetrics({
-          total: metricsData.length,
-          approved: metricsData.filter((q) => q.status === 'Approved').length,
-          pending: metricsData.filter((q) => q.status === 'Pending').length,
-          rejected: metricsData.filter((q) => q.status === 'Rejected').length,
+          total: typedMetricsData.length,
+          approved: typedMetricsData.filter((q) => q.status === 'Approved').length,
+          pending: typedMetricsData.filter((q) => q.status === 'Pending').length,
+          rejected: typedMetricsData.filter((q) => q.status === 'Rejected').length,
         });
       }
     } catch (err) {
@@ -454,8 +455,9 @@ function PriceOptionsEditModal({ isOpen, onClose, quotationId, onSave }: PriceOp
       if (error) throw error;
 
       if (data) {
+        const typedData = data as { quantity?: number | string | null; [key: string]: unknown };
         // Get quantity from quotation
-        const quotationQuantity = data.quantity ? Number(data.quantity) : 0;
+        const quotationQuantity = typedData.quantity ? Number(typedData.quantity) : 0;
         setQuantity(quotationQuantity);
 
         // Parse image fields - they might be JSON arrays or single URLs
@@ -470,29 +472,29 @@ function PriceOptionsEditModal({ isOpen, onClose, quotationId, onSave }: PriceOp
         };
 
         setFormData({
-          title_option1: data.title_option1 || '',
-          total_price_option1: data.total_price_option1 || '',
-          price_per_unit_option1: data.price_per_unit_option1 || '',
-          delivery_time_option1: data.delivery_time_option1 || '',
-          description_option1: data.description_option1 || '',
-          image_option1: JSON.stringify(parseImages(data.image_option1)),
-          price_description_option1: data.price_description_option1 || '',
-          title_option2: data.title_option2 || '',
-          total_price_option2: data.total_price_option2 || '',
-          price_per_unit_option2: data.price_per_unit_option2 || '',
-          delivery_time_option2: data.delivery_time_option2 || '',
-          description_option2: data.description_option2 || '',
-          image_option2: JSON.stringify(parseImages(data.image_option2)),
-          price_description_option2: data.price_description_option2 || '',
-          title_option3: data.title_option3 || '',
-          total_price_option3: data.total_price_option3 || '',
-          price_per_unit_option3: data.price_per_unit_option3 || '',
-          delivery_time_option3: data.delivery_time_option3 || '',
-          description_option3: data.description_option3 || '',
-          image_option3: JSON.stringify(parseImages(data.image_option3)),
-          price_description_option3: data.price_description_option3 || '',
-          selected_option: data.selected_option?.toString() || '',
-          quotation_fees: data.quotation_fees || '',
+          title_option1: (typedData.title_option1 as string | null | undefined) || '',
+          total_price_option1: (typedData.total_price_option1 as string | null | undefined) || '',
+          price_per_unit_option1: (typedData.price_per_unit_option1 as string | null | undefined) || '',
+          delivery_time_option1: (typedData.delivery_time_option1 as string | null | undefined) || '',
+          description_option1: (typedData.description_option1 as string | null | undefined) || '',
+          image_option1: JSON.stringify(parseImages(typedData.image_option1 as string | null | undefined)),
+          price_description_option1: (typedData.price_description_option1 as string | null | undefined) || '',
+          title_option2: (typedData.title_option2 as string | null | undefined) || '',
+          total_price_option2: (typedData.total_price_option2 as string | null | undefined) || '',
+          price_per_unit_option2: (typedData.price_per_unit_option2 as string | null | undefined) || '',
+          delivery_time_option2: (typedData.delivery_time_option2 as string | null | undefined) || '',
+          description_option2: (typedData.description_option2 as string | null | undefined) || '',
+          image_option2: JSON.stringify(parseImages(typedData.image_option2 as string | null | undefined)),
+          price_description_option2: (typedData.price_description_option2 as string | null | undefined) || '',
+          title_option3: (typedData.title_option3 as string | null | undefined) || '',
+          total_price_option3: (typedData.total_price_option3 as string | null | undefined) || '',
+          price_per_unit_option3: (typedData.price_per_unit_option3 as string | null | undefined) || '',
+          delivery_time_option3: (typedData.delivery_time_option3 as string | null | undefined) || '',
+          description_option3: (typedData.description_option3 as string | null | undefined) || '',
+          image_option3: JSON.stringify(parseImages(typedData.image_option3 as string | null | undefined)),
+          price_description_option3: (typedData.price_description_option3 as string | null | undefined) || '',
+          selected_option: (typedData.selected_option as number | null | undefined)?.toString() || '',
+          quotation_fees: (typedData.quotation_fees as string | null | undefined) || '',
         });
       }
     } catch (error) {

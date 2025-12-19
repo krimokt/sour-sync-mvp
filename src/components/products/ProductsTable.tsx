@@ -38,8 +38,10 @@ export default function ProductsTable({ products, companySlug, onRefresh, isRead
 
   const handleTogglePublish = async (product: Product) => {
     try {
-      const { error } = await supabase
-        .from('products')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('products') as any
+      )
         .update({ is_published: !product.is_published })
         .eq('id', product.id);
 

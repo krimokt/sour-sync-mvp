@@ -13,7 +13,8 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
     .eq('slug', params.companySlug)
     .single();
 
-  if (!company) return <div>Company not found</div>;
+  const typedCompany = company as { id: string } | null;
+  if (!typedCompany) return <div>Company not found</div>;
   
   // Fetch Clients
   const { data: clients } = await supabase
@@ -22,8 +23,23 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
       *,
       profile:profiles!user_id (first_name, last_name, email, avatar_url)
     `)
-    .eq('company_id', company.id)
+    .eq('company_id', typedCompany.id)
     .order('created_at', { ascending: false });
+
+  const typedClients = (clients || []) as Array<{
+    id: string;
+    company_name?: string | null;
+    tax_id?: string | null;
+    status?: string | null;
+    created_at?: string;
+    [key: string]: unknown;
+    profile?: {
+      first_name?: string | null;
+      last_name?: string | null;
+      email?: string | null;
+      avatar_url?: string | null;
+    } | null;
+  }>;
 
   return (
     <div className="space-y-6">
@@ -58,7 +74,7 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {clients?.map((client) => (
+              {typedClients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -97,7 +113,7 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(client.created_at).toLocaleDateString()}
+                    {client.created_at ? new Date(client.created_at).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <a href="#" className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300">Edit</a>

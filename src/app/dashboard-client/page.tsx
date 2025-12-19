@@ -22,8 +22,9 @@ export default async function DashboardClientPage() {
       .eq('custom_domain', hostWithoutPort)
       .single();
 
-    if (settings?.companies) {
-      const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
+    const typedSettings1 = settings as { company_id?: string; companies?: { slug: string } | { slug: string }[] } | null;
+    if (typedSettings1?.companies) {
+      const companies = Array.isArray(typedSettings1.companies) ? typedSettings1.companies : [typedSettings1.companies];
       companySlug = companies[0]?.slug || null;
     }
     
@@ -76,8 +77,9 @@ export default async function DashboardClientPage() {
       .eq('custom_domain', hostWithoutPort)
       .single();
 
-    if (settings?.companies) {
-      const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
+    const typedSettings3 = settings as { company_id?: string; companies?: { slug: string } | { slug: string }[] } | null;
+    if (typedSettings3?.companies) {
+      const companies = Array.isArray(typedSettings3.companies) ? typedSettings3.companies : [typedSettings3.companies];
       companySlug = companies[0]?.slug || null;
     }
     
@@ -106,8 +108,9 @@ export default async function DashboardClientPage() {
       .eq('custom_domain', hostWithoutPort)
       .single();
 
-    if (settings?.companies) {
-      const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
+    const typedSettings4 = settings as { company_id?: string; companies?: { slug: string } | { slug: string }[] } | null;
+    if (typedSettings4?.companies) {
+      const companies = Array.isArray(typedSettings4.companies) ? typedSettings4.companies : [typedSettings4.companies];
       companySlug = companies[0]?.slug || null;
     }
     
@@ -141,8 +144,9 @@ export default async function DashboardClientPage() {
     .eq('custom_domain', hostWithoutPort)
     .single();
 
-  if (settings?.companies) {
-    const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
+  const typedSettings5 = settings as { company_id?: string; companies?: { slug: string } | { slug: string }[] } | null;
+  if (typedSettings5?.companies) {
+    const companies = Array.isArray(typedSettings5.companies) ? typedSettings5.companies : [typedSettings5.companies];
     const company = companies[0] as { slug: string } | undefined;
     
     // Check if user is a client of this company

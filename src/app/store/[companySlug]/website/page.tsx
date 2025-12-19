@@ -15,14 +15,15 @@ export default async function WebsiteBuilderPage({ params }: { params: { company
     .eq('slug', params.companySlug)
     .single();
 
-  if (!company) return (
+  const typedCompany = company as { id: string; slug: string; settings?: WebsiteSettings | WebsiteSettings[] | null } | null;
+  if (!typedCompany) return (
     <div className="flex items-center justify-center h-screen bg-[#1a1a1a] text-white">
       <p>Company not found</p>
     </div>
   );
 
   // Handle potential array return from relation
-  const settingsData = company.settings;
+  const settingsData = typedCompany.settings;
   const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData;
   
   if (!settings) return (
@@ -44,8 +45,8 @@ export default async function WebsiteBuilderPage({ params }: { params: { company
   return (
     <div className="h-screen -m-6 overflow-hidden">
       <ShopifyBuilder 
-        companyId={company.id}
-        companySlug={company.slug}
+        companyId={typedCompany.id}
+        companySlug={typedCompany.slug}
         initialSettings={settings as WebsiteSettings}
       />
     </div>

@@ -80,7 +80,8 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
         .order('created_at', { ascending: true });
         
       if (data) {
-        const mappedPages = data.map(p => ({ ...p, content: p.content || [] }));
+        const typedData = data as Array<{ content?: unknown; [key: string]: unknown }>;
+        const mappedPages = typedData.map(p => ({ ...p, content: p.content || [] })) as WebsitePage[];
         setPages(mappedPages);
       }
     };
@@ -177,14 +178,20 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     
     try {
-      const { data, error } = await supabase.from('website_pages').insert({
-        company_id: companyId,
-        title,
-        slug,
-        content: [],
-        type: 'custom',
-        is_published: false
-      }).select().single();
+      const { data, error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('website_pages') as any
+      )
+        .insert({
+          company_id: companyId,
+          title,
+          slug,
+          content: [],
+          type: 'custom',
+          is_published: false
+        })
+        .select()
+        .single();
       
       if (error) throw error;
       
@@ -420,8 +427,10 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('website_settings')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('website_settings') as any
+      )
         .update({ 
           homepage_layout_draft: layout,
           primary_color: themeColors.primary,
@@ -447,8 +456,10 @@ export default function ShopifyBuilder({ companyId, companySlug, initialSettings
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      const { error } = await supabase
-        .from('website_settings')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('website_settings') as any
+      )
         .update({ 
           homepage_layout_draft: layout, 
           homepage_layout_published: layout,

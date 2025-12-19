@@ -57,10 +57,12 @@ If you prefer to keep your current DNS provider:
 ## Step 4: Environment Variables
 
 Make sure your Netlify environment variables are set:
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL` (your Supabase project URL)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (your Supabase anon/public key)
+- `SUPABASE_SERVICE_ROLE_KEY` (your Supabase service role key - **required for API routes**)
 - Any other required environment variables
+
+**Important:** The `SUPABASE_SERVICE_ROLE_KEY` is critical for the company branding API to work. Without it, you'll see "Unable to load company branding" errors on signin/signup pages.
 
 ## Troubleshooting
 

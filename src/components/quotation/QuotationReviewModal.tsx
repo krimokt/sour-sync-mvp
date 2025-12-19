@@ -106,45 +106,65 @@ export default function QuotationReviewModal({ isOpen, onClose, quotation }: Quo
 
       if (error) throw error;
 
+      const typedData = data as {
+        title_option1?: string | null;
+        total_price_option1?: string | null;
+        description_option1?: string | null;
+        delivery_time_option1?: string | null;
+        image_option1?: string | null;
+        title_option2?: string | null;
+        total_price_option2?: string | null;
+        description_option2?: string | null;
+        delivery_time_option2?: string | null;
+        image_option2?: string | null;
+        title_option3?: string | null;
+        total_price_option3?: string | null;
+        description_option3?: string | null;
+        delivery_time_option3?: string | null;
+        image_option3?: string | null;
+        selected_option?: number | null;
+        [key: string]: unknown;
+      };
+
       // Build price options array
       const options: PriceOption[] = [];
       
-      if (data.title_option1 || data.total_price_option1) {
+      if (typedData.title_option1 || typedData.total_price_option1) {
         options.push({
           id: 1,
-          title: data.title_option1 || 'Option 1',
-          price: data.total_price_option1 || '0',
-          description: data.description_option1,
-          deliveryTime: data.delivery_time_option1,
-          image: data.image_option1,
+          title: typedData.title_option1 || 'Option 1',
+          price: typedData.total_price_option1 || '0',
+          description: typedData.description_option1 || undefined,
+          deliveryTime: typedData.delivery_time_option1 || undefined,
+          image: typedData.image_option1 || undefined,
         });
       }
       
-      if (data.title_option2 || data.total_price_option2) {
+      if (typedData.title_option2 || typedData.total_price_option2) {
         options.push({
           id: 2,
-          title: data.title_option2 || 'Option 2',
-          price: data.total_price_option2 || '0',
-          description: data.description_option2,
-          deliveryTime: data.delivery_time_option2,
-          image: data.image_option2,
+          title: typedData.title_option2 || 'Option 2',
+          price: typedData.total_price_option2 || '0',
+          description: typedData.description_option2 || undefined,
+          deliveryTime: typedData.delivery_time_option2 || undefined,
+          image: typedData.image_option2 || undefined,
         });
       }
       
-      if (data.title_option3 || data.total_price_option3) {
+      if (typedData.title_option3 || typedData.total_price_option3) {
         options.push({
           id: 3,
-          title: data.title_option3 || 'Option 3',
-          price: data.total_price_option3 || '0',
-          description: data.description_option3,
-          deliveryTime: data.delivery_time_option3,
-          image: data.image_option3,
+          title: typedData.title_option3 || 'Option 3',
+          price: typedData.total_price_option3 || '0',
+          description: typedData.description_option3 || undefined,
+          deliveryTime: typedData.delivery_time_option3 || undefined,
+          image: typedData.image_option3 || undefined,
         });
       }
 
       setPriceOptions(options);
-      if (data.selected_option) {
-        setSelectedOption(data.selected_option);
+      if (typedData.selected_option) {
+        setSelectedOption(typedData.selected_option);
       }
       setShowPriceOptions(true);
     } catch (error) {
@@ -161,8 +181,10 @@ export default function QuotationReviewModal({ isOpen, onClose, quotation }: Quo
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('quotations')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('quotations') as any
+      )
         .update({
           selected_option: selectedOption,
           status: 'Approved',

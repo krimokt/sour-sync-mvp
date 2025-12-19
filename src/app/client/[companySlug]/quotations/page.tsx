@@ -180,11 +180,12 @@ export default function ClientQuotationsPage() {
         .eq('user_id', client.user_id);
 
       if (metricsData) {
+        const typedMetricsData = metricsData as Array<{ status?: string | null }>;
         setMetrics({
-          total: metricsData.length,
-          approved: metricsData.filter((q) => q.status?.toLowerCase() === 'approved').length,
-          pending: metricsData.filter((q) => q.status?.toLowerCase() === 'pending').length,
-          rejected: metricsData.filter((q) => q.status?.toLowerCase() === 'rejected').length,
+          total: typedMetricsData.length,
+          approved: typedMetricsData.filter((q) => q.status?.toLowerCase() === 'approved').length,
+          pending: typedMetricsData.filter((q) => q.status?.toLowerCase() === 'pending').length,
+          rejected: typedMetricsData.filter((q) => q.status?.toLowerCase() === 'rejected').length,
         });
       }
     } catch (err) {

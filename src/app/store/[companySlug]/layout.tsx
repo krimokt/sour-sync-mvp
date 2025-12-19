@@ -32,6 +32,8 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
     notFound();
   }
 
+  const typedCompany = company as { id: string; [key: string]: unknown };
+
   // 3. Get user's profile and verify they belong to this company
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
@@ -44,20 +46,23 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
     redirect('/signup?step=profile');
   }
 
+  const typedProfile = profile as { company_id?: string | null; [key: string]: unknown };
+
   // 4. Verify user belongs to this company
-  if (profile.company_id !== company.id) {
+  if (typedProfile.company_id !== typedCompany.id) {
     // User doesn't belong to this company
     // Check if they have any company
-    if (profile.company_id) {
+    if (typedProfile.company_id) {
       // Get their actual company and redirect there
       const { data: userCompany } = await supabase
         .from('companies')
         .select('slug')
-        .eq('id', profile.company_id)
+        .eq('id', typedProfile.company_id)
         .single();
 
-      if (userCompany) {
-        redirect(`/store/${userCompany.slug}`);
+      const typedUserCompany = userCompany as { slug: string } | null;
+      if (typedUserCompany) {
+        redirect(`/store/${typedUserCompany.slug}`);
       }
     }
     // No company - redirect to create one

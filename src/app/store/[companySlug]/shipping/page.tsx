@@ -157,11 +157,12 @@ export default function ShippingPage() {
         .eq('company_id', company.id);
 
       if (metricsData) {
+        const typedMetricsData = metricsData as Array<{ status?: string | null }>;
         setMetrics({
-          total: metricsData.length,
-          processing: metricsData.filter((s) => s.status === 'processing').length,
-          shipped: metricsData.filter((s) => s.status === 'shipped').length,
-          delivered: metricsData.filter((s) => s.status === 'delivered').length,
+          total: typedMetricsData.length,
+          processing: typedMetricsData.filter((s) => s.status === 'processing').length,
+          shipped: typedMetricsData.filter((s) => s.status === 'shipped').length,
+          delivered: typedMetricsData.filter((s) => s.status === 'delivered').length,
         });
       }
     } catch (err) {
@@ -353,11 +354,13 @@ export default function ShippingPage() {
         ? (uploadShipment.images_urls || [])
         : (uploadShipment.videos_urls || []);
       
-      const { error: updateError } = await supabase
-        .from('shipping')
+      const { error: updateError } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('shipping') as any
+      )
         .update({
           [`${type}_urls`]: [...existingUrls, ...uploadedUrls]
-        } as never)
+        })
         .eq('id', uploadShipment.id);
         
       if (updateError) {
@@ -409,11 +412,13 @@ export default function ShippingPage() {
       const filteredUrls = existingUrls.filter(u => u !== url);
 
       // Update the shipping record
-      const { error: updateError } = await supabase
-        .from('shipping')
+      const { error: updateError } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('shipping') as any
+      )
         .update({
           [`${type}_urls`]: filteredUrls
-        } as never)
+        })
         .eq('id', uploadShipment.id);
         
       if (updateError) {
@@ -517,8 +522,10 @@ export default function ShippingPage() {
 
       // Only update if there are changes
       if (Object.keys(updateData).length > 0) {
-        const { error: updateError } = await supabase
-          .from('shipping')
+        const { error: updateError } = await (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          supabase.from('shipping') as any
+        )
           .update(updateData)
           .eq('id', selectedShipment.id);
 

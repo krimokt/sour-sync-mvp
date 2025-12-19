@@ -108,7 +108,7 @@ export default function GenerateMagicLinkModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
         <DialogHeader>
           <DialogTitle>Generate Magic Link</DialogTitle>
           <DialogDescription>
@@ -125,7 +125,9 @@ export default function GenerateMagicLinkModal({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="expiresInDays">Expires In (days)</Label>
+              <Label htmlFor="expiresInDays" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Expires In (days)
+              </Label>
               <Input
                 id="expiresInDays"
                 type="number"
@@ -134,11 +136,14 @@ export default function GenerateMagicLinkModal({
                 value={expiresInDays}
                 onChange={(e) => setExpiresInDays(parseInt(e.target.value) || 30)}
                 disabled={isLoading}
+                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="maxUses">Max Uses (optional, leave empty for unlimited)</Label>
+              <Label htmlFor="maxUses" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Max Uses <span className="text-gray-400 dark:text-gray-500 text-xs font-normal">(optional, leave empty for unlimited)</span>
+              </Label>
               <Input
                 id="maxUses"
                 type="number"
@@ -147,6 +152,7 @@ export default function GenerateMagicLinkModal({
                 onChange={(e) => setMaxUses(e.target.value)}
                 placeholder="Unlimited"
                 disabled={isLoading}
+                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -181,13 +187,13 @@ export default function GenerateMagicLinkModal({
                 <Input
                   value={generatedLink}
                   readOnly
-                  className="font-mono text-sm"
+                  className="font-mono text-sm h-10 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white"
                 />
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={handleCopy}
-                  className="shrink-0"
+                  className="shrink-0 h-10 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   {copied ? (
                     <>

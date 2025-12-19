@@ -31,6 +31,7 @@ export default function InviteClientModal({
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [phone, setPhone] = useState('');
   const [generateMagicLink, setGenerateMagicLink] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -48,6 +49,7 @@ export default function InviteClientModal({
           email: email.trim(),
           fullName: fullName.trim(),
           companyName: companyName.trim(),
+          phone: phone.trim(),
         }),
       });
 
@@ -87,6 +89,7 @@ export default function InviteClientModal({
       setEmail('');
       setFullName('');
       setCompanyName('');
+      setPhone('');
       setError('');
       onClose();
     }
@@ -168,6 +171,22 @@ export default function InviteClientModal({
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
+                disabled={isLoading}
+                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <Phone className="h-4 w-4 text-gray-400" />
+                Phone Number <span className="text-gray-400 dark:text-gray-500 text-xs">(optional)</span>
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1234567890"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 disabled={isLoading}
                 className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />

@@ -15,7 +15,7 @@ export async function POST(
 ) {
   try {
     const { slug } = await params;
-    const { email, fullName, companyName } = await request.json();
+    const { email, fullName, companyName, phone } = await request.json();
 
     // Validate input (email is optional)
     if (!fullName || !companyName) {
@@ -86,72 +86,81 @@ export async function POST(
       );
     }
 
-    let userId: string | null = null;
+    let userId: string;
     let isNewUser = false;
 
-    // Only create user account if email is provided
-    if (trimmedEmail) {
-      // Check if user with this email already exists by checking profiles
-      const { data: existingProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('id, email')
-        .eq('email', trimmedEmail)
+    // Generate a unique email if not provided (required for Supabase auth)
+    const userEmail = trimmedEmail || `client-${Date.now()}-${Math.random().toString(36).substring(7)}@${company.slug}.placeholder.local`;
+    
+    // Check if user with this email already exists by checking profiles
+    const { data: existingProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email')
+      .eq('email', userEmail)
+      .maybeSingle();
+
+    if (existingProfile) {
+      userId = existingProfile.id;
+      
+      // Check if client record already exists
+      const { data: existingClient } = await supabaseAdmin
+        .from('clients')
+        .select('id, status')
+        .eq('company_id', company.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
-      if (existingProfile) {
-        userId = existingProfile.id;
-        
-        // Check if client record already exists
-        const { data: existingClient } = await supabaseAdmin
-          .from('clients')
-          .select('id, status')
-          .eq('company_id', company.id)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (existingClient) {
-          // Update status to active if it was inactive
-          if (existingClient.status !== 'active') {
-            await supabaseAdmin
-              .from('clients')
-              .update({ status: 'active' })
-              .eq('id', existingClient.id);
-          }
-          return NextResponse.json({
-            message: 'Client invitation sent (client already exists)',
-            client: { id: existingClient.id, status: 'active' },
-          });
+      if (existingClient) {
+        // Update status to active if it was inactive
+        if (existingClient.status !== 'active') {
+          await supabaseAdmin
+            .from('clients')
+            .update({ status: 'active' })
+            .eq('id', existingClient.id);
         }
-      } else {
-        // Create new user account
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email: trimmedEmail,
-          email_confirm: false, // They'll confirm via invitation link
-          user_metadata: {
-            full_name: fullName.trim(),
-          },
+        return NextResponse.json({
+          message: 'Client invitation sent (client already exists)',
+          client: { id: existingClient.id, status: 'active' },
         });
-
-        if (createError || !newUser.user) {
-          return NextResponse.json(
-            { error: `Failed to create user: ${createError?.message || 'Unknown error'}` },
-            { status: 500 }
-          );
-        }
-
-        userId = newUser.user.id;
-        isNewUser = true;
-
-        // Create profile
-        await supabaseAdmin
-          .from('profiles')
-          .upsert({
-            id: userId,
-            email: trimmedEmail,
-            full_name: fullName.trim(),
-            role: null, // Clients don't have admin roles
-          });
       }
+    } else {
+      // Create new user account (always create one, even without email provided)
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: userEmail,
+        email_confirm: true, // Auto-confirm placeholder emails
+        user_metadata: {
+          full_name: fullName.trim(),
+        },
+      });
+
+      if (createError || !newUser.user) {
+        return NextResponse.json(
+          { error: `Failed to create user: ${createError?.message || 'Unknown error'}` },
+          { status: 500 }
+        );
+      }
+
+      userId = newUser.user.id;
+      isNewUser = true;
+
+      // Create profile
+      await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: trimmedEmail || null, // Store null if email was not provided
+          full_name: fullName.trim(),
+          role: null, // Clients don't have admin roles
+        });
+    }
+
+    // Format phone number (remove non-digits except +, ensure E.164 format if provided)
+    let phone_e164: string | null = null;
+    if (phone && phone.trim()) {
+      const cleanedPhone = phone.trim();
+      // If it starts with +, keep it; otherwise, assume it needs country code
+      // For now, store as-is - you may want to add proper phone formatting logic
+      phone_e164 = cleanedPhone.startsWith('+') ? cleanedPhone : `+${cleanedPhone.replace(/[^\d]/g, '')}`;
     }
 
     // Create or update client record
@@ -163,6 +172,7 @@ export async function POST(
           user_id: userId,
           status: 'pending', // Set to pending until they sign up
           company_name: companyName.trim(),
+          phone_e164: phone_e164,
         },
         {
           onConflict: 'company_id,user_id',
@@ -191,6 +201,7 @@ export async function POST(
         ...client,
         email: trimmedEmail,
         fullName: fullName.trim(),
+        phone: phone_e164,
       },
     });
   } catch (error) {

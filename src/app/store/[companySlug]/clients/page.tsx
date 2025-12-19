@@ -14,12 +14,15 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
   const typedCompany = company as { id: string } | null;
   if (!typedCompany) return <div>Company not found</div>;
   
-  // Fetch Clients
-  const { data: clients } = await supabase
+  // Check authentication and get user profile for RLS
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Fetch Clients - try with user_id foreign key
+  const { data: clients, error: clientsError } = await supabase
     .from('clients')
     .select(`
       *,
-      profiles (
+      profiles!user_id (
         full_name,
         email,
         avatar_url
@@ -27,6 +30,22 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
     `)
     .eq('company_id', typedCompany.id)
     .order('created_at', { ascending: false });
+
+  if (clientsError) {
+    console.error('Error fetching clients:', clientsError);
+    console.error('User authenticated:', !!user);
+    if (user) {
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('company_id, role')
+        .eq('id', user.id)
+        .single();
+      console.error('User profile:', userProfile);
+    }
+  }
+
+  // Log clients for debugging
+  console.log('Clients fetched:', clients?.length || 0, 'clients');
 
   const typedClients = (clients || []) as Array<{
     id: string;

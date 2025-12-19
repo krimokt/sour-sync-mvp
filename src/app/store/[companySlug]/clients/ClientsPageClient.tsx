@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, MoreVertical, Ban, CheckCircle, Clock } from 'lucide-react';
 import InviteClientModal from '@/components/clients/InviteClientModal';
 import Image from 'next/image';
 
@@ -28,10 +28,41 @@ interface ClientsPageClientProps {
 
 export default function ClientsPageClient({ clients, companySlug }: ClientsPageClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [banningClientId, setBanningClientId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSuccess = () => {
     router.refresh(); // Refresh to show new client
+  };
+
+  const handleBanClient = async (clientId: string, currentStatus: string) => {
+    if (!confirm(`Are you sure you want to ${currentStatus === 'inactive' ? 'activate' : 'ban'} this client?`)) {
+      return;
+    }
+
+    setBanningClientId(clientId);
+    try {
+      const newStatus = currentStatus === 'inactive' ? 'active' : 'inactive';
+      const response = await fetch(`/api/store/${companySlug}/clients/${clientId}/ban`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update client status');
+      }
+
+      router.refresh(); // Refresh to show updated status
+      setOpenMenuId(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setBanningClientId(null);
+    }
   };
 
   return (
@@ -109,16 +140,56 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       client.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
                       client.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : 
+                      client.status === 'inactive' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
                       'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                     }`}>
-                      {client.status}
+                      {client.status === 'inactive' ? 'Banned' : client.status || 'active'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {client.created_at ? new Date(client.created_at).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="#" className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300">Edit</a>
+                    <div className="relative inline-block">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === client.id ? null : client.id)}
+                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                        disabled={banningClientId === client.id}
+                      >
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                      {openMenuId === client.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setOpenMenuId(null)}
+                          />
+                          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-700">
+                            <div className="py-1">
+                              {client.status === 'inactive' ? (
+                                <button
+                                  onClick={() => handleBanClient(client.id, client.status || 'active')}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                  disabled={banningClientId === client.id}
+                                >
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  Activate Client
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleBanClient(client.id, client.status || 'active')}
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                  disabled={banningClientId === client.id}
+                                >
+                                  <Ban className="w-4 h-4" />
+                                  {banningClientId === client.id ? 'Banning...' : 'Ban Client'}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

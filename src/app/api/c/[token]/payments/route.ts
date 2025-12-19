@@ -61,37 +61,10 @@ export async function GET(
       .eq('id', magicLink.client_id)
       .single();
 
-    // Fetch payments for this client's quotations
-    // First, get quotations for this client
-    const { data: quotations } = await supabaseAdmin
-      .from('quotations')
-      .select('id')
-      .eq('company_id', magicLink.company_id)
-      .eq('user_id', client?.user_id || null);
-
-    const quotationIds = (quotations || []).map((q) => q.id);
-
-    // Get payments linked to these quotations
-    const { data: payments, error } = await supabaseAdmin
-      .from('payments')
-      .select(`
-        *,
-        payment_quotations (
-          quotation_id,
-          quotations (
-            id,
-            quotation_id,
-            product_name
-          )
-        )
-      `)
-      .eq('company_id', magicLink.company_id)
-      .in('id', quotationIds.length > 0 ? quotationIds : ['00000000-0000-0000-0000-000000000000']) // Empty array workaround
-      .order('created_at', { ascending: false });
-
-    // Also get payments by user_id if available
+    // Fetch payments for this client
+    // Get payments by user_id (preferred method)
     if (client?.user_id) {
-      const { data: userPayments } = await supabaseAdmin
+      const { data: payments, error } = await supabaseAdmin
         .from('payments')
         .select(`
           *,
@@ -108,14 +81,67 @@ export async function GET(
         .eq('user_id', client.user_id)
         .order('created_at', { ascending: false });
 
-      // Merge and deduplicate
-      const allPayments = [...(payments || []), ...(userPayments || [])];
-      const uniquePayments = Array.from(
-        new Map(allPayments.map((p) => [p.id, p])).values()
-      );
+      if (error) {
+        console.error('Error fetching payments:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch payments' },
+          { status: 500 }
+        );
+      }
 
-      return NextResponse.json({ payments: uniquePayments });
+      return NextResponse.json({ payments: payments || [] });
     }
+
+    // Fallback: Get quotations for this client and find payments via payment_quotations
+    const { data: quotations } = await supabaseAdmin
+      .from('quotations')
+      .select('id')
+      .eq('company_id', magicLink.company_id)
+      .eq('user_id', client?.user_id || null);
+
+    const quotationIds = (quotations || []).map((q) => q.id);
+
+    if (quotationIds.length === 0) {
+      return NextResponse.json({ payments: [] });
+    }
+
+    // Get payment IDs from payment_quotations junction table
+    const { data: paymentQuotations, error: pqError } = await supabaseAdmin
+      .from('payment_quotations')
+      .select('payment_id')
+      .in('quotation_id', quotationIds);
+
+    if (pqError) {
+      console.error('Error fetching payment_quotations:', pqError);
+      return NextResponse.json(
+        { error: 'Failed to fetch payments' },
+        { status: 500 }
+      );
+    }
+
+    const paymentIds = (paymentQuotations || []).map((pq) => pq.payment_id);
+    
+    if (paymentIds.length === 0) {
+      return NextResponse.json({ payments: [] });
+    }
+
+    // Get payments by payment IDs
+    const { data: payments, error } = await supabaseAdmin
+      .from('payments')
+      .select(`
+        *,
+        payment_quotations (
+          quotation_id,
+          quotations (
+            id,
+            quotation_id,
+            product_name
+          )
+        )
+      `)
+      .eq('company_id', magicLink.company_id)
+      .in('id', paymentIds)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching payments:', error);

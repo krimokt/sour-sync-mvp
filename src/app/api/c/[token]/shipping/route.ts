@@ -71,6 +71,11 @@ export async function GET(
 
     const quotationIds = (quotations || []).map((q) => q.id);
 
+    // If no quotations found, return empty array
+    if (quotationIds.length === 0) {
+      return NextResponse.json({ shipments: [] });
+    }
+
     // Get shipments linked to these quotations
     const { data: shipments, error } = await supabaseAdmin
       .from('shipping')
@@ -83,7 +88,7 @@ export async function GET(
         )
       `)
       .eq('company_id', magicLink.company_id)
-      .in('quotation_id', quotationIds.length > 0 ? quotationIds : ['00000000-0000-0000-0000-000000000000'])
+      .in('quotation_id', quotationIds)
       .order('created_at', { ascending: false });
 
     if (error) {

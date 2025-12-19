@@ -17,6 +17,7 @@ import {
   Settings,
   ChevronDown,
   MoreHorizontal,
+  Users,
 } from 'lucide-react';
 
 type NavItem = {
@@ -63,6 +64,11 @@ const StoreSidebar: React.FC<StoreSidebarProps> = ({ companySlug }) => {
       icon: <CreditCard className="w-5 h-5" />,
       name: 'Payments',
       path: `${basePath}/payments`,
+    },
+    {
+      icon: <Users className="w-5 h-5" />,
+      name: 'Clients',
+      path: `${basePath}/clients`,
     },
     {
       icon: <Globe className="w-5 h-5" />,

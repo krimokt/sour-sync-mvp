@@ -219,10 +219,10 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
 
         // Check if response is JSON before parsing
         const loginContentType = loginResponse.headers.get('content-type');
-        let loginData;
         
         if (loginContentType && loginContentType.includes('application/json')) {
-          loginData = await loginResponse.json();
+          // Parse JSON to ensure valid response, but we don't need the data
+          await loginResponse.json();
         } else {
           // If not JSON, it's likely an HTML error page
           const text = await loginResponse.text();

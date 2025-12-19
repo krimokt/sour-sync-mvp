@@ -45,9 +45,9 @@ export async function GET(
     const { token } = await params;
     const validation = await validateToken(token);
 
-    if (!validation.valid) {
+    if (!validation.valid || !validation.magicLink) {
       return NextResponse.json(
-        { error: validation.error },
+        { error: validation.error || 'Invalid token' },
         { status: 403 }
       );
     }
@@ -142,9 +142,9 @@ export async function POST(
     const { token } = await params;
     const validation = await validateToken(token);
 
-    if (!validation.valid) {
+    if (!validation.valid || !validation.magicLink) {
       return NextResponse.json(
-        { error: validation.error },
+        { error: validation.error || 'Invalid token' },
         { status: 403 }
       );
     }

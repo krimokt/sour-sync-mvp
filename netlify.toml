@@ -6,6 +6,9 @@
   NODE_VERSION = "20"
   PNPM_VERSION = "10"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 # Next.js on Netlify - Netlify automatically detects Next.js and handles routing
 # The middleware will process subdomain requests and route them to /site/[companySlug]
 

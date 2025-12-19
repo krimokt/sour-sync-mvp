@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMagicLink } from '@/components/portal/MagicLinkProvider';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
@@ -29,11 +29,7 @@ export default function QuotationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
 
-  useEffect(() => {
-    fetchQuotations();
-  }, [pathname]);
-
-  const fetchQuotations = async () => {
+  const fetchQuotations = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -51,7 +47,11 @@ export default function QuotationsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [basePath, pathname]);
+
+  useEffect(() => {
+    fetchQuotations();
+  }, [fetchQuotations]);
 
   const filteredQuotations = selectedStatus === 'All'
     ? quotations

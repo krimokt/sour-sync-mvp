@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types/supabase';
-import { generateToken, hashToken, formatPhoneE164 } from '@/lib/magic-link';
+import { generateToken, hashToken } from '@/lib/magic-link';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

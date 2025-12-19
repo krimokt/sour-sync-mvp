@@ -31,7 +31,7 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
     .map((c) => c.user_id)
     .filter((id): id is string => !!id);
 
-  let profilesMap: Record<string, { full_name?: string | null; email?: string | null; avatar_url?: string | null }> = {};
+  const profilesMap: Record<string, { full_name?: string | null; email?: string | null; avatar_url?: string | null }> = {};
 
   if (userIds.length > 0) {
     const { data: profiles } = await supabase

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Truck, Package, MapPin, Calendar, CheckCircle } from 'lucide-react';
+import { Truck, MapPin, Calendar, CheckCircle } from 'lucide-react';
 
 interface ShipmentCardProps {
   shipment: {

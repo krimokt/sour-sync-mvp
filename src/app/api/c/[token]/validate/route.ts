@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { hashToken, verifyToken, validateMagicLink } from '@/lib/magic-link';
+import { hashToken, validateMagicLink } from '@/lib/magic-link';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

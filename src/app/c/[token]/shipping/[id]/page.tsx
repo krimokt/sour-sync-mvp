@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMagicLink } from '@/components/portal/MagicLinkProvider';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
 import { usePathname, useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, MapPin, Calendar, Package, CheckCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, MapPin, Calendar, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -31,9 +31,7 @@ interface Shipment {
 }
 
 export default function ShipmentDetailPage() {
-  const { data } = useMagicLink();
   const pathname = usePathname();
-  const router = useRouter();
   const basePath = `/c/${pathname.split('/')[2]}`;
   const shipmentId = pathname.split('/')[4];
 
@@ -41,11 +39,7 @@ export default function ShipmentDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchShipment();
-  }, [shipmentId, pathname]);
-
-  const fetchShipment = async () => {
+  const fetchShipment = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -63,7 +57,11 @@ export default function ShipmentDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [basePath, pathname, shipmentId]);
+
+  useEffect(() => {
+    fetchShipment();
+  }, [fetchShipment]);
 
   if (isLoading) {
     return (

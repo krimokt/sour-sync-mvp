@@ -93,7 +93,7 @@ export function validateMagicLink(
  */
 export function formatPhoneE164(phone: string): string {
   // Remove all non-digit characters except +
-  let cleaned = phone.replace(/[^\d+]/g, '');
+  const cleaned = phone.replace(/[^\d+]/g, '');
   
   // If doesn't start with +, assume it needs country code
   // For now, return as-is if it already has +

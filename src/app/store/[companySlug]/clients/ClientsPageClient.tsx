@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { Button } from '@/components/ui/button';
-import { Plus, MoreVertical, Ban, CheckCircle, Clock, Link2 } from 'lucide-react';
+import { Plus, MoreVertical, Ban, CheckCircle, Link2 } from 'lucide-react';
 import InviteClientModal from '@/components/clients/InviteClientModal';
 import GenerateMagicLinkModal from '@/components/clients/GenerateMagicLinkModal';
 import Image from 'next/image';

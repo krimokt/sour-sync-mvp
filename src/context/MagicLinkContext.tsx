@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface MagicLinkData {
   magicLinkId: string;
@@ -40,7 +40,7 @@ export function MagicLinkProvider({ children, token, initialData }: MagicLinkPro
   const [isLoading, setIsLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -59,13 +59,13 @@ export function MagicLinkProvider({ children, token, initialData }: MagicLinkPro
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (!initialData) {
       refresh();
     }
-  }, [token]);
+  }, [initialData, refresh]);
 
   return (
     <MagicLinkContext.Provider value={{ data, isLoading, error, refresh }}>

@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { hashToken, validateMagicLink } from '@/lib/magic-link';
 import { MagicLinkProvider } from '@/components/portal/MagicLinkProvider';

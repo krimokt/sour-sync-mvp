@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMagicLink } from '@/components/portal/MagicLinkProvider';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
@@ -26,18 +26,13 @@ interface Payment {
 }
 
 export default function PaymentsPage() {
-  const { data } = useMagicLink();
   const pathname = usePathname();
   const basePath = `/c/${pathname.split('/')[2]}`;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPayments();
-  }, [pathname]);
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -55,7 +50,11 @@ export default function PaymentsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [basePath, pathname]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
 
   const pendingPayments = payments.filter((p) => 
     (p.status || '').toLowerCase() === 'pending'

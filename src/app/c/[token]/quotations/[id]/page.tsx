@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMagicLink } from '@/components/portal/MagicLinkProvider';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
 import { usePathname, useRouter } from 'next/navigation';
-import { Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -39,7 +39,6 @@ interface Quotation {
 }
 
 export default function QuotationDetailPage() {
-  const { data } = useMagicLink();
   const pathname = usePathname();
   const router = useRouter();
   const basePath = `/c/${pathname.split('/')[2]}`;
@@ -50,11 +49,7 @@ export default function QuotationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    fetchQuotation();
-  }, [quotationId, pathname]);
-
-  const fetchQuotation = async () => {
+  const fetchQuotation = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -72,7 +67,11 @@ export default function QuotationDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [basePath, pathname, quotationId]);
+
+  useEffect(() => {
+    fetchQuotation();
+  }, [fetchQuotation]);
 
   const handleApprove = async () => {
     if (!confirm('Are you sure you want to approve this quotation?')) {

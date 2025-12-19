@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMagicLink } from '@/components/portal/MagicLinkProvider';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
@@ -24,18 +24,13 @@ interface Shipment {
 }
 
 export default function ShippingPage() {
-  const { data } = useMagicLink();
   const pathname = usePathname();
   const basePath = `/c/${pathname.split('/')[2]}`;
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchShipments();
-  }, [pathname]);
-
-  const fetchShipments = async () => {
+  const fetchShipments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -53,7 +48,11 @@ export default function ShippingPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [basePath, pathname]);
+
+  useEffect(() => {
+    fetchShipments();
+  }, [fetchShipments]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

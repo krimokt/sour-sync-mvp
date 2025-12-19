@@ -135,7 +135,7 @@ export default function InviteClientModal({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
-                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20"
+                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -152,7 +152,7 @@ export default function InviteClientModal({
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20"
+                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -169,7 +169,7 @@ export default function InviteClientModal({
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20"
+                className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </div>

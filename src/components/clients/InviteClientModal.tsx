@@ -96,9 +96,9 @@ export default function InviteClientModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Invite Client</DialogTitle>
+          <DialogTitle>Create New Client</DialogTitle>
           <DialogDescription>
-            Send an invitation to a new client. They will receive an email with instructions to sign up.
+            Create a new client account and optionally generate a magic link for portal access.
           </DialogDescription>
         </DialogHeader>
 
@@ -176,10 +176,10 @@ export default function InviteClientModal({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  Creating...
                 </>
               ) : (
-                'Send Invitation'
+                'Create Client'
               )}
             </Button>
           </DialogFooter>

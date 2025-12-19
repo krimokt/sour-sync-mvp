@@ -94,7 +94,7 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
           onClick={() => setIsModalOpen(true)}
         >
           <Plus className="w-4 h-4" />
-          Invite Client
+          Create New Client
         </Button>
       </div>
 
@@ -228,14 +228,14 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <p className="text-lg font-medium mb-2">No clients yet</p>
-                    <p className="text-sm mb-6">Invite your first client to get started.</p>
+                    <p className="text-sm mb-6">Create your first client to get started.</p>
                     <Button
                       variant="outline"
                       className="gap-2"
                       onClick={() => setIsModalOpen(true)}
                     >
                       <Plus className="w-4 h-4" />
-                      Invite Client
+                      Create New Client
                     </Button>
                   </td>
                 </tr>

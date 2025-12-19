@@ -29,13 +29,14 @@ export async function POST(
     let trimmedEmail: string | null = null;
     if (email && email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      trimmedEmail = email.trim().toLowerCase();
-      if (!emailRegex.test(trimmedEmail)) {
+      const emailTrimmed = email.trim().toLowerCase();
+      if (!emailRegex.test(emailTrimmed)) {
         return NextResponse.json(
           { error: 'Please enter a valid email address' },
           { status: 400 }
         );
       }
+      trimmedEmail = emailTrimmed;
     }
 
     // Get authenticated user

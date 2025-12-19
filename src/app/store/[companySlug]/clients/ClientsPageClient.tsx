@@ -15,8 +15,7 @@ interface Client {
   status?: string | null;
   created_at?: string;
   profile?: {
-    first_name?: string | null;
-    last_name?: string | null;
+    full_name?: string | null;
     email?: string | null;
     avatar_url?: string | null;
   } | null;
@@ -87,7 +86,7 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                             <span className="text-gray-500 font-medium">
-                              {(client.profile?.first_name?.[0] || client.company_name?.[0] || '?').toUpperCase()}
+                              {(client.profile?.full_name?.[0]?.trim() || client.company_name?.[0] || '?').toUpperCase()}
                             </span>
                           </div>
                         )}
@@ -97,7 +96,7 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                           {client.company_name || 'Individual'}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {client.profile?.first_name} {client.profile?.last_name}
+                          {client.profile?.full_name || '-'}
                         </div>
                       </div>
                     </div>

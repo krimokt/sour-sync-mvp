@@ -126,7 +126,7 @@ export default function InviteClientModal({
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <Mail className="h-4 w-4 text-gray-400" />
-                Email Address <span className="text-red-500">*</span>
+                Email Address <span className="text-gray-400 dark:text-gray-500 text-xs">(optional)</span>
               </Label>
               <Input
                 id="email"
@@ -134,7 +134,6 @@ export default function InviteClientModal({
                 placeholder="client@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 disabled={isLoading}
                 className="h-11 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-500/20"
               />

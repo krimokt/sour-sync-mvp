@@ -164,14 +164,58 @@ export async function POST(
       phone_e164 = cleanedPhone.startsWith('+') ? cleanedPhone : `+${cleanedPhone.replace(/[^\d]/g, '')}`;
     }
 
-    // Create or update client record
+    // Check if a client with this phone number already exists for this company
+    // (There's a unique constraint on company_id + phone_e164)
+    if (phone_e164) {
+      const { data: existingClientByPhone } = await supabaseAdmin
+        .from('clients')
+        .select('id, user_id, status')
+        .eq('company_id', company.id)
+        .eq('phone_e164', phone_e164)
+        .maybeSingle();
+
+      if (existingClientByPhone) {
+        // Client with this phone already exists - update it instead
+        const { data: updatedClient, error: updateError } = await supabaseAdmin
+          .from('clients')
+          .update({
+            user_id: userId, // Update to link to the current user
+            status: 'active', // Set to active when updated by staff
+            company_name: companyName.trim(),
+            phone_e164: phone_e164,
+          })
+          .eq('id', existingClientByPhone.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Client update error:', updateError);
+          return NextResponse.json(
+            { error: `Failed to update client: ${updateError.message}` },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({
+          message: 'Client updated successfully',
+          client: {
+            ...updatedClient,
+            email: trimmedEmail,
+            fullName: fullName.trim(),
+            phone: phone_e164,
+          },
+        });
+      }
+    }
+
+    // Create or update client record by company_id + user_id
     const { data: client, error: clientError } = await supabaseAdmin
       .from('clients')
       .upsert(
         {
           company_id: company.id,
           user_id: userId,
-          status: 'pending', // Set to pending until they sign up
+          status: 'active', // Set to active when created by staff
           company_name: companyName.trim(),
           phone_e164: phone_e164,
         },
@@ -184,6 +228,15 @@ export async function POST(
 
     if (clientError) {
       console.error('Client creation error:', clientError);
+      
+      // Check if error is due to phone number uniqueness constraint
+      if (clientError.code === '23505' && clientError.message.includes('idx_clients_company_phone')) {
+        return NextResponse.json(
+          { error: 'A client with this phone number already exists for this company. Please use a different phone number or update the existing client.' },
+          { status: 409 }
+        );
+      }
+      
       return NextResponse.json(
         { error: `Failed to create client: ${clientError.message}` },
         { status: 500 }

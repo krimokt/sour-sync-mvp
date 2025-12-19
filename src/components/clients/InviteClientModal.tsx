@@ -204,7 +204,7 @@ export default function InviteClientModal({
               variant="outline"
               onClick={handleClose}
               disabled={isLoading}
-              className="h-10 px-4"
+              className="h-10 px-4 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               Cancel
             </Button>

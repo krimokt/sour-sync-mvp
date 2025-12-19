@@ -122,7 +122,18 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, it's likely an HTML error page (404, 500, etc.)
+        const text = await response.text();
+        console.error('Non-JSON response from API:', text.substring(0, 200));
+        throw new Error('API route not found. Please check your deployment configuration.');
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
@@ -181,7 +192,18 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         }),
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, it's likely an HTML error page (404, 500, etc.)
+        const text = await response.text();
+        console.error('Non-JSON response from API:', text.substring(0, 200));
+        throw new Error('API route not found. Please check your deployment configuration.');
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Signup failed');
@@ -195,7 +217,18 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
           body: JSON.stringify({ email, password }),
         });
 
-        await loginResponse.json();
+        // Check if response is JSON before parsing
+        const loginContentType = loginResponse.headers.get('content-type');
+        let loginData;
+        
+        if (loginContentType && loginContentType.includes('application/json')) {
+          loginData = await loginResponse.json();
+        } else {
+          // If not JSON, it's likely an HTML error page
+          const text = await loginResponse.text();
+          console.error('Non-JSON response from login API:', text.substring(0, 200));
+          throw new Error('API route not found. Please check your deployment configuration.');
+        }
 
         if (!loginResponse.ok) {
           // Signup succeeded but login failed - user can manually login

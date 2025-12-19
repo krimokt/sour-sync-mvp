@@ -61,6 +61,7 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
     status?: string | null;
     created_at?: string;
     user_id?: string | null;
+    phone_e164?: string | null;
     [key: string]: unknown;
     profiles?: {
       full_name?: string | null;

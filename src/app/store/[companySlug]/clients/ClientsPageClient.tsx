@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { Button } from '@/components/ui/button';
-import { Plus, MoreVertical, Ban, CheckCircle, Clock } from 'lucide-react';
+import { Plus, MoreVertical, Ban, CheckCircle, Clock, Link2 } from 'lucide-react';
 import InviteClientModal from '@/components/clients/InviteClientModal';
+import GenerateMagicLinkModal from '@/components/clients/GenerateMagicLinkModal';
 import Image from 'next/image';
 
 interface Client {
@@ -14,6 +15,7 @@ interface Client {
   tax_id?: string | null;
   status?: string | null;
   created_at?: string;
+  phone_e164?: string | null;
   profiles?: {
     full_name?: string | null;
     email?: string | null;
@@ -28,6 +30,8 @@ interface ClientsPageClientProps {
 
 export default function ClientsPageClient({ clients, companySlug }: ClientsPageClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMagicLinkModalOpen, setIsMagicLinkModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [banningClientId, setBanningClientId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const router = useRouter();
@@ -166,6 +170,17 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                           />
                           <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-700">
                             <div className="py-1">
+                              <button
+                                onClick={() => {
+                                  setSelectedClient(client);
+                                  setIsMagicLinkModalOpen(true);
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              >
+                                <Link2 className="w-4 h-4 text-blue-600" />
+                                Generate Magic Link
+                              </button>
                               {client.status === 'inactive' ? (
                                 <button
                                   onClick={() => handleBanClient(client.id, client.status || 'active')}
@@ -220,6 +235,21 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
         companySlug={companySlug}
         onSuccess={handleSuccess}
       />
+
+      {selectedClient && (
+        <GenerateMagicLinkModal
+          isOpen={isMagicLinkModalOpen}
+          onClose={() => {
+            setIsMagicLinkModalOpen(false);
+            setSelectedClient(null);
+          }}
+          companySlug={companySlug}
+          clientId={selectedClient.id}
+          clientName={selectedClient.profiles?.full_name || selectedClient.company_name || undefined}
+          clientPhone={selectedClient.phone_e164 || undefined}
+          clientEmail={selectedClient.profiles?.email || undefined}
+        />
+      )}
     </div>
   );
 }

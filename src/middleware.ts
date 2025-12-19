@@ -15,6 +15,7 @@ const alwaysPublicPatterns = [
   /^\/payment-details/, // Public payment details page
   /^\/site\//, // Public company websites
   /^\/dashboard-client$/, // Client dashboard (handled by page)
+  /^\/c\//, // Magic link client portal (token validation in layout)
 ];
 
 // Legacy dashboard routes (keep for backward compatibility during migration)

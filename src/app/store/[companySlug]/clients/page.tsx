@@ -19,7 +19,11 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
     .from('clients')
     .select(`
       *,
-      profile:profiles!user_id (full_name, email, avatar_url)
+      profiles (
+        full_name,
+        email,
+        avatar_url
+      )
     `)
     .eq('company_id', typedCompany.id)
     .order('created_at', { ascending: false });
@@ -31,7 +35,7 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
     status?: string | null;
     created_at?: string;
     [key: string]: unknown;
-    profile?: {
+    profiles?: {
       full_name?: string | null;
       email?: string | null;
       avatar_url?: string | null;

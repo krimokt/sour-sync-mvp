@@ -14,7 +14,7 @@ interface Client {
   tax_id?: string | null;
   status?: string | null;
   created_at?: string;
-  profile?: {
+  profiles?: {
     full_name?: string | null;
     email?: string | null;
     avatar_url?: string | null;
@@ -75,10 +75,10 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        {client.profile?.avatar_url ? (
+                        {client.profiles?.avatar_url ? (
                           <Image
                             className="h-10 w-10 rounded-full object-cover"
-                            src={client.profile.avatar_url}
+                            src={client.profiles.avatar_url}
                             alt=""
                             width={40}
                             height={40}
@@ -86,7 +86,7 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                             <span className="text-gray-500 font-medium">
-                              {(client.profile?.full_name?.[0]?.trim() || client.company_name?.[0] || '?').toUpperCase()}
+                              {(client.profiles?.full_name?.[0]?.trim() || client.company_name?.[0] || '?').toUpperCase()}
                             </span>
                           </div>
                         )}
@@ -96,13 +96,13 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                           {client.company_name || 'Individual'}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {client.profile?.full_name || '-'}
+                          {client.profiles?.full_name || '-'}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white">{client.profile?.email}</div>
+                    <div className="text-sm text-gray-900 dark:text-white">{client.profiles?.email}</div>
                     <div className="text-sm text-gray-500">{client.tax_id || '-'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

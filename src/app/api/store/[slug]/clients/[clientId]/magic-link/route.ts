@@ -38,10 +38,10 @@ export async function POST(
       );
     }
 
-    // Get company by slug
+    // Get company by slug (including custom_domain)
     const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
-      .select('id, slug, name')
+      .select('id, slug, name, custom_domain')
       .eq('slug', slug)
       .single();
 
@@ -141,8 +141,15 @@ export async function POST(
       );
     }
 
-    // Generate the full URL
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Generate the full URL - use custom domain if available, otherwise use default
+    let baseUrl: string;
+    if (company.custom_domain) {
+      // Use custom domain with https protocol
+      baseUrl = `https://${company.custom_domain}`;
+    } else {
+      // Fall back to default domain
+      baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    }
     const magicLinkUrl = `${baseUrl}/c/${token}`;
 
     return NextResponse.json({

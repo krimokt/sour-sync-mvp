@@ -4,11 +4,18 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await params;
+    
+    // Log for debugging
+    console.log('[Company API] Request received:', {
+      slug,
+      path: req.nextUrl.pathname,
+      method: req.method,
+    });
 
     if (!slug) {
       return NextResponse.json({ error: 'Missing company slug' }, { status: 400 });

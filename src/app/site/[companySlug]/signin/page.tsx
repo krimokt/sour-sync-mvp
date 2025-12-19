@@ -47,10 +47,18 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
     const fetchCompany = async () => {
       try {
         setCompanyLoadError('');
-        const res = await fetch(`/api/public/company/${params.companySlug}`, {
+        const apiUrl = `/api/public/company/${params.companySlug}`;
+        console.log('[Signin] Fetching company from:', apiUrl);
+        
+        const res = await fetch(apiUrl, {
           method: 'GET',
           cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
+        
+        console.log('[Signin] API response status:', res.status, res.statusText);
 
         // Check if response is ok before parsing JSON
         if (!res.ok) {

@@ -94,7 +94,7 @@ export default function InviteClientModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[540px]">
+      <DialogContent className="sm:max-w-[540px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
         <DialogHeader className="space-y-3 pb-2">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 dark:bg-brand-500/20">

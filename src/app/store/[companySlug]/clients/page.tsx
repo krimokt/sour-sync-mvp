@@ -14,45 +14,53 @@ export default async function ClientsPage({ params }: { params: { companySlug: s
   const typedCompany = company as { id: string } | null;
   if (!typedCompany) return <div>Company not found</div>;
   
-  // Check authentication and get user profile for RLS
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  // Fetch Clients - try with user_id foreign key
+  // Fetch Clients first (without join since there's no direct FK relationship)
   const { data: clients, error: clientsError } = await supabase
     .from('clients')
-    .select(`
-      *,
-      profiles!user_id (
-        full_name,
-        email,
-        avatar_url
-      )
-    `)
+    .select('*')
     .eq('company_id', typedCompany.id)
     .order('created_at', { ascending: false });
 
   if (clientsError) {
     console.error('Error fetching clients:', clientsError);
-    console.error('User authenticated:', !!user);
-    if (user) {
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('company_id, role')
-        .eq('id', user.id)
-        .single();
-      console.error('User profile:', userProfile);
+    return <ClientsPageClient clients={[]} companySlug={params.companySlug} />;
+  }
+
+  // Fetch profiles for all client user_ids
+  const userIds = (clients || [])
+    .map((c) => c.user_id)
+    .filter((id): id is string => !!id);
+
+  let profilesMap: Record<string, { full_name?: string | null; email?: string | null; avatar_url?: string | null }> = {};
+
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, avatar_url')
+      .in('id', userIds);
+
+    if (profiles) {
+      profiles.forEach((profile) => {
+        profilesMap[profile.id] = {
+          full_name: profile.full_name,
+          email: profile.email,
+          avatar_url: profile.avatar_url,
+        };
+      });
     }
   }
 
-  // Log clients for debugging
-  console.log('Clients fetched:', clients?.length || 0, 'clients');
-
-  const typedClients = (clients || []) as Array<{
+  // Combine clients with their profiles
+  const typedClients = (clients || []).map((client) => ({
+    ...client,
+    profiles: client.user_id ? profilesMap[client.user_id] || null : null,
+  })) as Array<{
     id: string;
     company_name?: string | null;
     tax_id?: string | null;
     status?: string | null;
     created_at?: string;
+    user_id?: string | null;
     [key: string]: unknown;
     profiles?: {
       full_name?: string | null;

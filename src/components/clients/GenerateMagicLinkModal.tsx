@@ -219,7 +219,7 @@ export default function GenerateMagicLinkModal({
 
             {(clientPhone || clientEmail) && (
               <div className="space-y-2">
-                <Label>Share via</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Share via</Label>
                 <div className="flex gap-2">
                   {clientPhone && (
                     <>
@@ -228,7 +228,7 @@ export default function GenerateMagicLinkModal({
                         variant="outline"
                         size="sm"
                         onClick={() => handleShare('whatsapp')}
-                        className="flex-1"
+                        className="flex-1 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <MessageSquare className="w-4 h-4 mr-2" />
                         WhatsApp
@@ -238,7 +238,7 @@ export default function GenerateMagicLinkModal({
                         variant="outline"
                         size="sm"
                         onClick={() => handleShare('sms')}
-                        className="flex-1"
+                        className="flex-1 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <Send className="w-4 h-4 mr-2" />
                         SMS
@@ -251,7 +251,7 @@ export default function GenerateMagicLinkModal({
                       variant="outline"
                       size="sm"
                       onClick={() => handleShare('email')}
-                      className="flex-1"
+                      className="flex-1 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       <Mail className="w-4 h-4 mr-2" />
                       Email

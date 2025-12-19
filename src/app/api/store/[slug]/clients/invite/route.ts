@@ -181,7 +181,11 @@ export async function POST(
       message: isNewUser
         ? 'Client invitation sent successfully'
         : 'Client added successfully',
-      client,
+      client: {
+        ...client,
+        email: trimmedEmail,
+        fullName: fullName.trim(),
+      },
     });
   } catch (error) {
     console.error('Invite client error:', error);

@@ -13,12 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface InviteClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   companySlug: string;
-  onSuccess?: () => void;
+  onSuccess?: (clientData?: { id: string; email?: string; fullName?: string; phone?: string }) => void;
 }
 
 export default function InviteClientModal({
@@ -30,6 +31,7 @@ export default function InviteClientModal({
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [generateMagicLink, setGenerateMagicLink] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -55,13 +57,23 @@ export default function InviteClientModal({
         throw new Error(data.error || 'Failed to invite client');
       }
 
-      // Success - reset form and close
+      // Success - prepare client data for magic link generation if requested
+      const clientData = generateMagicLink && data.client ? {
+        id: data.client.id,
+        email: email.trim(),
+        fullName: fullName.trim(),
+        phone: data.client.phone_e164 || undefined,
+      } : undefined;
+
+      // Reset form and close
       setEmail('');
       setFullName('');
       setCompanyName('');
+      const shouldGenerateMagicLink = generateMagicLink;
+      setGenerateMagicLink(true); // Reset to default
       onClose();
       if (onSuccess) {
-        onSuccess();
+        onSuccess(shouldGenerateMagicLink ? clientData : undefined);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -134,6 +146,21 @@ export default function InviteClientModal({
               required
               disabled={isLoading}
             />
+          </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="generateMagicLink"
+              checked={generateMagicLink}
+              onCheckedChange={(checked) => setGenerateMagicLink(checked)}
+              disabled={isLoading}
+            />
+            <Label
+              htmlFor="generateMagicLink"
+              className="text-sm font-normal cursor-pointer text-gray-700 dark:text-gray-300"
+            >
+              Generate magic link for client portal access
+            </Label>
           </div>
 
           <DialogFooter>

@@ -36,8 +36,24 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleSuccess = () => {
+  const handleSuccess = (clientData?: { id: string; email?: string; fullName?: string; phone?: string }) => {
     router.refresh(); // Refresh to show new client
+    
+    // If client data is provided and we should generate magic link, open the modal
+    if (clientData) {
+      // Wait a bit for the refresh to complete, then open magic link modal
+      setTimeout(() => {
+        setSelectedClient({
+          id: clientData.id,
+          profiles: {
+            email: clientData.email || null,
+            full_name: clientData.fullName || null,
+          },
+          phone_e164: clientData.phone || null,
+        } as Client);
+        setIsMagicLinkModalOpen(true);
+      }, 500);
+    }
   };
 
   const handleBanClient = async (clientId: string, currentStatus: string) => {
@@ -74,7 +90,7 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
       <div className="flex items-center justify-between">
         <PageBreadcrumb pageTitle="Clients" />
         <Button
-          className="bg-brand-500 hover:bg-brand-600 text-white gap-2"
+          className="bg-brand-500 hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-600 text-white dark:text-white gap-2"
           onClick={() => setIsModalOpen(true)}
         >
           <Plus className="w-4 h-4" />

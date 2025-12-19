@@ -109,10 +109,12 @@ export default function GenerateMagicLinkModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-        <DialogHeader>
-          <DialogTitle>Generate Magic Link</DialogTitle>
-          <DialogDescription>
-            Create a secure link for {clientName || 'this client'} to access their portal without login.
+        <DialogHeader className="space-y-3 pb-2">
+          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+            Generate Magic Link
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+            Create a secure link for <span className="font-medium text-gray-900 dark:text-gray-300">{clientName || 'this client'}</span> to access their portal without login.
           </DialogDescription>
         </DialogHeader>
 

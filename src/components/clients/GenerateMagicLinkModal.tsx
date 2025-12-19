@@ -158,16 +158,21 @@ export default function GenerateMagicLinkModal({
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleClose}
                 disabled={isLoading}
+                className="h-10 px-4 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Cancel
               </Button>
-              <Button onClick={handleGenerate} disabled={isLoading}>
+              <Button 
+                onClick={handleGenerate} 
+                disabled={isLoading}
+                className="h-10 px-6 bg-brand-500 hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-600 text-white"
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

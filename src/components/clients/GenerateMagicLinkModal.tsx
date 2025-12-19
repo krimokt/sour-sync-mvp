@@ -261,8 +261,13 @@ export default function GenerateMagicLinkModal({
               </div>
             )}
 
-            <DialogFooter>
-              <Button onClick={handleClose}>Done</Button>
+            <DialogFooter className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button 
+                onClick={handleClose}
+                className="h-10 px-6 bg-brand-500 hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-600 text-white"
+              >
+                Done
+              </Button>
             </DialogFooter>
           </div>
         )}

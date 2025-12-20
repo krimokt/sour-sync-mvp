@@ -136,7 +136,12 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
       }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        const errorMessage = data.error || 'Login failed';
+        // Handle rate limiting with a more user-friendly message
+        if (response.status === 429 || data.rateLimited) {
+          throw new Error('Too many sign-in attempts. Please wait a few minutes before trying again.');
+        }
+        throw new Error(errorMessage);
       }
 
       // Success - redirect to client dashboard

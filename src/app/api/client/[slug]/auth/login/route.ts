@@ -67,6 +67,20 @@ export async function POST(
     });
 
     if (authError || !authData.user) {
+      // Handle rate limiting errors specifically
+      const errorMessage = authError?.message || 'Invalid email or password';
+      if (errorMessage.toLowerCase().includes('rate limit') || 
+          errorMessage.toLowerCase().includes('too many requests') ||
+          errorMessage.toLowerCase().includes('email rate limit')) {
+        return NextResponse.json(
+          { 
+            error: 'Too many sign-in attempts. Please wait a few minutes before trying again.',
+            rateLimited: true
+          },
+          { status: 429 }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }

@@ -23,7 +23,8 @@ interface Quotation {
 export default function QuotationsPage() {
   const { data } = useMagicLink();
   const pathname = usePathname();
-  const basePath = `/c/${pathname.split('/')[2]}`;
+  const token = pathname.split('/')[2];
+  const basePath = `/c/${token}`;
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function QuotationsPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${basePath.replace('/quotations', '')}/api/c/${pathname.split('/')[2]}/quotations`);
+      const response = await fetch(`/api/c/${token}/quotations`);
       const result = await response.json();
 
       if (!response.ok) {
@@ -47,7 +48,7 @@ export default function QuotationsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [basePath, pathname]);
+  }, [token]);
 
   useEffect(() => {
     fetchQuotations();

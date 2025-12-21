@@ -24,7 +24,8 @@ interface Shipment {
 
 export default function ShippingPage() {
   const pathname = usePathname();
-  const basePath = `/c/${pathname.split('/')[2]}`;
+  const token = pathname.split('/')[2];
+  const basePath = `/c/${token}`;
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function ShippingPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${basePath.replace('/shipping', '')}/api/c/${pathname.split('/')[2]}/shipping`);
+      const response = await fetch(`/api/c/${token}/shipping`);
       const result = await response.json();
 
       if (!response.ok) {
@@ -47,7 +48,7 @@ export default function ShippingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [basePath, pathname]);
+  }, [token]);
 
   useEffect(() => {
     fetchShipments();

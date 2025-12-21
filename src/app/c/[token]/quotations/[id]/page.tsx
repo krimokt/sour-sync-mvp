@@ -40,7 +40,8 @@ interface Quotation {
 export default function QuotationDetailPage() {
   const pathname = usePathname();
   const router = useRouter();
-  const basePath = `/c/${pathname.split('/')[2]}`;
+  const token = pathname.split('/')[2];
+  const basePath = `/c/${token}`;
   const quotationId = pathname.split('/')[4];
 
   const [quotation, setQuotation] = useState<Quotation | null>(null);
@@ -53,7 +54,7 @@ export default function QuotationDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${basePath.replace('/quotations/' + quotationId, '')}/api/c/${pathname.split('/')[2]}/quotations/${quotationId}`);
+      const response = await fetch(`/api/c/${token}/quotations/${quotationId}`);
       const result = await response.json();
 
       if (!response.ok) {
@@ -66,7 +67,7 @@ export default function QuotationDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [basePath, pathname, quotationId]);
+  }, [token, quotationId]);
 
   useEffect(() => {
     fetchQuotation();
@@ -79,7 +80,7 @@ export default function QuotationDetailPage() {
 
     setIsUpdating(true);
     try {
-      const response = await fetch(`${basePath.replace('/quotations/' + quotationId, '')}/api/c/${pathname.split('/')[2]}/quotations/${quotationId}`, {
+      const response = await fetch(`/api/c/${token}/quotations/${quotationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Approved' }),
@@ -103,7 +104,7 @@ export default function QuotationDetailPage() {
   const handleSelectOption = async (optionNumber: number) => {
     setIsUpdating(true);
     try {
-      const response = await fetch(`${basePath.replace('/quotations/' + quotationId, '')}/api/c/${pathname.split('/')[2]}/quotations/${quotationId}`, {
+      const response = await fetch(`/api/c/${token}/quotations/${quotationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ selected_option: optionNumber }),

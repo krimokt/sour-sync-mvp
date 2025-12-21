@@ -95,3 +95,4 @@ export default function QuotationCard({ quotation, basePath }: QuotationCardProp
   );
 }
 
+

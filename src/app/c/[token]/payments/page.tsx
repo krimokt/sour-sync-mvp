@@ -26,7 +26,8 @@ interface Payment {
 
 export default function PaymentsPage() {
   const pathname = usePathname();
-  const basePath = `/c/${pathname.split('/')[2]}`;
+  const token = pathname.split('/')[2];
+  const basePath = `/c/${token}`;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +37,7 @@ export default function PaymentsPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${basePath.replace('/payments', '')}/api/c/${pathname.split('/')[2]}/payments`);
+      const response = await fetch(`/api/c/${token}/payments`);
       const result = await response.json();
 
       if (!response.ok) {
@@ -49,7 +50,7 @@ export default function PaymentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [basePath, pathname]);
+  }, [token]);
 
   useEffect(() => {
     fetchPayments();

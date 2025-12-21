@@ -57,12 +57,27 @@ export async function GET(
 
     const { magicLink } = validation;
 
-    // Fetch quotations for this client
+    // Get client to find user_id
+    const { data: client, error: clientError } = await supabaseAdmin
+      .from('clients')
+      .select('user_id')
+      .eq('id', magicLink.client_id)
+      .single();
+
+    if (clientError || !client) {
+      console.error('Error fetching client:', clientError);
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
+    // Fetch quotations for this client using the correct user_id
     const { data: quotations, error } = await supabaseAdmin
       .from('quotations')
       .select('*')
       .eq('company_id', magicLink.company_id)
-      .eq('user_id', (magicLink.client_id as unknown as string)) // Note: quotations.user_id should match clients.user_id
+      .eq('user_id', client.user_id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -73,25 +88,7 @@ export async function GET(
       );
     }
 
-    // If user_id doesn't match, try to find quotations by client_id if there's a direct relationship
-    // For now, we'll use the client_id directly if quotations table has client_id
-    let finalQuotations = quotations || [];
-
-    // If no quotations found, try alternative: quotations might be linked via client_id field
-    if (finalQuotations.length === 0) {
-      const { data: altQuotations } = await supabaseAdmin
-        .from('quotations')
-        .select('*')
-        .eq('company_id', magicLink.company_id)
-        .order('created_at', { ascending: false })
-        .limit(50); // Limit to prevent too much data
-
-      // Filter by checking if quotation belongs to this client
-      // This is a fallback - ideally quotations should have client_id or user_id matching
-      finalQuotations = altQuotations || [];
-    }
-
-    return NextResponse.json({ quotations: finalQuotations });
+    return NextResponse.json({ quotations: quotations || [] });
   } catch (error) {
     console.error('List quotations error:', error);
     const message = error instanceof Error ? error.message : 'Server error';

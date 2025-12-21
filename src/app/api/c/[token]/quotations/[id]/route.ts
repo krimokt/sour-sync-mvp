@@ -54,12 +54,28 @@ export async function GET(
 
     const { magicLink } = validation;
 
-    // Get quotation
+    // Get client to find user_id
+    const { data: client, error: clientError } = await supabaseAdmin
+      .from('clients')
+      .select('user_id')
+      .eq('id', magicLink.client_id)
+      .single();
+
+    if (clientError || !client) {
+      console.error('Error fetching client:', clientError);
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get quotation and verify it belongs to this client
     const { data: quotation, error } = await supabaseAdmin
       .from('quotations')
       .select('*')
       .eq('id', id)
       .eq('company_id', magicLink.company_id)
+      .eq('user_id', client.user_id)
       .single();
 
     if (error || !quotation) {
@@ -97,12 +113,28 @@ export async function PATCH(
     const body = await request.json();
     const { status, selected_option } = body;
 
+    // Get client to find user_id
+    const { data: client, error: clientError } = await supabaseAdmin
+      .from('clients')
+      .select('user_id')
+      .eq('id', magicLink.client_id)
+      .single();
+
+    if (clientError || !client) {
+      console.error('Error fetching client:', clientError);
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
     // Get quotation first to verify ownership
     const { data: quotation } = await supabaseAdmin
       .from('quotations')
-      .select('id, company_id, status')
+      .select('id, company_id, user_id, status')
       .eq('id', id)
       .eq('company_id', magicLink.company_id)
+      .eq('user_id', client.user_id)
       .single();
 
     if (!quotation) {

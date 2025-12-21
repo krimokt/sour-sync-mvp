@@ -54,7 +54,22 @@ export async function GET(
 
     const { magicLink } = validation;
 
-    // Get shipment
+    // Get client to find user_id
+    const { data: client, error: clientError } = await supabaseAdmin
+      .from('clients')
+      .select('user_id')
+      .eq('id', magicLink.client_id)
+      .single();
+
+    if (clientError || !client) {
+      console.error('Error fetching client:', clientError);
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get shipment with quotation
     const { data: shipment, error } = await supabaseAdmin
       .from('shipping')
       .select(`
@@ -63,7 +78,8 @@ export async function GET(
           id,
           quotation_id,
           product_name,
-          image_url
+          image_url,
+          user_id
         )
       `)
       .eq('id', id)
@@ -71,6 +87,18 @@ export async function GET(
       .single();
 
     if (error || !shipment) {
+      return NextResponse.json(
+        { error: 'Shipment not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify the quotation belongs to this client
+    const quotation = Array.isArray(shipment.quotations) 
+      ? shipment.quotations[0] 
+      : shipment.quotations;
+
+    if (!quotation || quotation.user_id !== client.user_id) {
       return NextResponse.json(
         { error: 'Shipment not found' },
         { status: 404 }

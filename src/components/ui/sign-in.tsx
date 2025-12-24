@@ -233,16 +233,16 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               )}
 
               {isSignUp && (
-                 <div className="animate-element animate-delay-500 flex items-center gap-3 text-sm font-medium">
+                 <label className="animate-element animate-delay-500 flex items-center gap-3 text-sm font-medium cursor-pointer group">
                     <div className="relative">
                         <input type="checkbox" name="terms" className="peer sr-only" required />
                         <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded-md peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all"></div>
-                        <Check className="w-3.5 h-3.5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                        <Check className="w-3.5 h-3.5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
                     </div>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      I agree to the <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">Terms</a> and <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">Privacy Policy</a>.
+                    <span className="text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                      I agree to the <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline" onClick={(e) => e.stopPropagation()}>Terms</a> and <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>.
                     </span>
-                 </div>
+                 </label>
               )}
 
               <button 

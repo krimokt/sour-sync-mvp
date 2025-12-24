@@ -17,15 +17,12 @@ import { Plus, X } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useParams } from 'next/navigation';
 
-// Try to import ClientContext if available (for client pages)
-let useClientHook: (() => { company?: { id: string; quotation_countries?: string[] | null; quotation_input_fields?: string[] | null } | null }) | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const clientContext = require('@/context/ClientContext');
-  useClientHook = clientContext.useClient;
-} catch {
-  // ClientContext not available, that's okay
-}
+// Type for company with quotation settings
+type CompanyWithSettings = {
+  id: string;
+  quotation_countries?: string[] | null;
+  quotation_input_fields?: string[] | null;
+} | null;
 
 // Helper to validate Supabase image URLs
 const isValidImageUrl = (url: string | null | undefined) =>
@@ -114,24 +111,15 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
   const params = useParams();
   const companySlugFromUrl = params?.companySlug as string | undefined;
   
-  // Try to get company from ClientContext (for client pages)
-  let clientCompany = null;
-  if (useClientHook) {
-    try {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const client = useClientHook();
-      clientCompany = client?.company;
-    } catch {
-      // ClientContext not available, that's okay
-    }
-  }
+  // Note: ClientContext is not used here to avoid conditional hook usage
+  // Company data will be fetched via URL slug or profile instead
   
   // Try to get company from StoreContext, but don't fail if not available
-  let storeCompany = null;
+  let storeCompany: CompanyWithSettings = null;
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const store = useStore();
-    storeCompany = store?.company;
+    storeCompany = store?.company as CompanyWithSettings;
   } catch {
     // StoreContext not available, will fetch company data
   }
@@ -147,7 +135,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     city: '',
     country: ''
   });
-  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  // Address is saved automatically on form submission, no need for separate saving state
   const [formData, setFormData] = useState({
     productName: "",
     productUrl: "",
@@ -212,7 +200,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
       }
     }
   };
-
+  
   useEffect(() => {
     // Generate country list from country codes with error handling
     const countryList: CountryData[] = countryCodes
@@ -334,7 +322,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
       setIsLoadingSettings(true);
       try {
         let companyId: string | null = null;
-        let companyData: { quotation_countries?: any; quotation_input_fields?: any } | null = null;
+        let companyData: { quotation_countries?: string[] | null; quotation_input_fields?: string[] | null } | null = null;
         
         // Priority 1: Try to get company from ClientContext (for client pages)
         if (clientCompany?.id) {
@@ -351,9 +339,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
             quotation_countries: storeCompany.quotation_countries || null,
             quotation_input_fields: storeCompany.quotation_input_fields || null
           };
-        } 
-        // Priority 3: Try to get company from URL slug (for client pages)
-        else if (companySlugFromUrl) {
+        // Priority 2: Try to get company from URL slug (for client pages)
+        if (!companyData && companySlugFromUrl) {
           const { data: company, error } = await supabase
             .from('companies')
             .select('id, quotation_countries, quotation_input_fields')
@@ -370,8 +357,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
             };
           }
         }
-        // Priority 4: Fetch from user's profile
-        else {
+        // Priority 3: Fetch from user's profile
+        if (!companyData) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user?.id) {
             const { data: profile } = await supabase
@@ -408,7 +395,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           console.log('Company settings loaded:', {
             quotation_countries: companyData.quotation_countries,
             quotation_input_fields: companyData.quotation_input_fields,
-            source: clientCompany ? 'ClientContext' : storeCompany ? 'StoreContext' : companySlugFromUrl ? 'URL slug' : 'Profile'
+            source: storeCompany ? 'StoreContext' : companySlugFromUrl ? 'URL slug' : 'Profile'
           });
         } else {
           console.log('No company settings found');
@@ -421,7 +408,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     };
     
     fetchCompanySettings();
-  }, [isOpen, storeCompany, companySlugFromUrl, clientCompany]);
+  }, [isOpen, storeCompany, companySlugFromUrl]);
 
   // Filter countries based on search query and company settings
   const filteredCountries = useMemo(() => {
@@ -439,9 +426,9 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     // Apply search query filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(country => 
-        country.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        country.code.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      country.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      country.code.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     }
     
     return filtered;
@@ -878,51 +865,51 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                 return (
                   <>
                     {shouldShowField('product_name') && (
-                      <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Product Name *
-                        </label>
-                        <input
-                          type="text"
-                          name="productName"
-                          value={formData.productName}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          required
-                        />
-                      </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Product Name *
+                </label>
+                <input
+                  type="text"
+                  name="productName"
+                  value={formData.productName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  required
+                />
+              </div>
                     )}
-                    
+              
                     {shouldShowField('product_url') && (
-                      <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Alibaba Product URL*
-                        </label>
-                        <input
-                          type="text"
-                          name="productUrl"
-                          value={formData.productUrl}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        />
-                      </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Alibaba Product URL*
+                </label>
+                <input
+                  type="text"
+                  name="productUrl"
+                  value={formData.productUrl}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
                     )}
-                    
+              
                     {shouldShowField('quantity') && (
-                      <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Quantity Required *
-                        </label>
-                        <input
-                          type="number"
-                          name="quantity"
-                          value={formData.quantity}
-                          onChange={handleChange}
-                          min="1"
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Quantity Required *
+                </label>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  min="1"
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                          required
-                        />
-                      </div>
+                  required
+                />
+              </div>
                     )}
                   </>
                 );
@@ -936,10 +923,10 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   return companySettings.quotation_input_fields.includes(fieldId);
                 };
                 return shouldShowField('product_images') ? (
-                  <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Product Images
-                    </label>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Product Images
+                </label>
                 <div className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-[#1E88E5] dark:border-gray-700 rounded-xl hover:border-[#1E88E5]">
                   <div
                     {...getRootProps()}
@@ -1243,10 +1230,10 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                 <>
                   <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                     <div className="space-y-3">
-                      <div>
+              <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Receiver Name *
-                        </label>
+                </label>
                         <input
                           type="text"
                           value={addressData.receiverName}
@@ -1290,37 +1277,37 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                           Country *
                         </label>
                         <div className="mb-4 relative country-dropdown-container">
-                          <input
-                            type="text"
-                            placeholder="Search countries..."
-                            value={searchQuery}
-                            onChange={handleSearchChange}
+                  <input
+                    type="text"
+                    placeholder="Search countries..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
                             onFocus={() => setIsCountryDropdownOpen(true)}
                             onClick={() => setIsCountryDropdownOpen(true)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-2"
-                          />
-                          
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-2"
+                  />
+                  
                           {isCountryDropdownOpen && filteredCountries.length > 0 && (
                             <div className="absolute z-10 w-full h-[200px] overflow-y-auto border border-gray-300 rounded-md bg-white dark:bg-gray-800 shadow-lg">
-                              {filteredCountries.map((country) => (
-                                <div
-                                  key={country.code}
-                                  onClick={() => {
+                    {filteredCountries.map((country) => (
+                      <div
+                        key={country.code}
+                        onClick={() => {
                                     setAddressData(prev => ({ ...prev, country: country.code }));
-                                    setSearchQuery("");
+                          setSearchQuery("");
                                     setIsCountryDropdownOpen(false);
-                                  }}
-                                  className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                        }}
+                        className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
                                     addressData.country === country.code
-                                      ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200"
-                                      : ""
-                                  }`}
-                                >
-                                  <span className="text-xl">{country.emoji}</span>
-                                  <span>{country.name}</span>
-                                </div>
-                              ))}
-                            </div>
+                            ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200"
+                            : ""
+                        }`}
+                      >
+                        <span className="text-xl">{country.emoji}</span>
+                        <span>{country.name}</span>
+                      </div>
+                    ))}
+                  </div>
                           )}
                           {isCountryDropdownOpen && filteredCountries.length === 0 && (
                             <div className="absolute z-10 w-full border border-gray-300 rounded-md bg-white dark:bg-gray-800 shadow-lg p-4 text-center text-gray-500 dark:text-gray-400">
@@ -1329,16 +1316,16 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                                 : companySettings?.quotation_countries && companySettings.quotation_countries.length > 0
                                   ? "No countries available. Please contact support to add countries to your quotation settings."
                                   : "No countries found"}
-                            </div>
+                </div>
                           )}
-                        </div>
+              </div>
                         {addressData.country && (
                           <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white flex items-center gap-2">
                             <span className="text-xl">{getCountryEmoji(addressData.country.toUpperCase())}</span>
                             <span>{countries.find(c => c.code === addressData.country?.toLowerCase())?.name || addressData.country}</span>
                             <button
                               type="button"
-                              onClick={() => {
+                      onClick={() => {
                                 setAddressData(prev => ({ ...prev, country: '' }));
                                 setSearchQuery('');
                               }}
@@ -1346,29 +1333,29 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                             >
                               <X className="w-4 h-4" />
                             </button>
-                          </div>
+                    </div>
                         )}
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between mt-6">
-                    <button
-                      type="button"
-                      onClick={prevStep}
-                      className="flex items-center px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <ChevronLeftIcon className="w-4 h-4 mr-2" /> Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={nextStep}
+                </div>
+              </div>
+              
+              <div className="flex justify-between mt-6">
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="flex items-center px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <ChevronLeftIcon className="w-4 h-4 mr-2" /> Back
+                </button>
+                <button
+                  type="button"
+                  onClick={nextStep}
                       disabled={!addressData.receiverName.trim() || !addressData.address.trim() || !addressData.city.trim() || !addressData.country}
                       className="flex items-center px-6 py-2 bg-[#1E88E5] text-white rounded-md hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next <ArrowRightIcon className="w-4 h-4 ml-2" />
-                    </button>
-                  </div>
+                >
+                  Next <ArrowRightIcon className="w-4 h-4 ml-2" />
+                </button>
+              </div>
                 </>
               )}
             </div>

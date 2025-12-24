@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { QuotationData } from "@/types/quotation";
 import QuotationEditModal from "@/components/quotation/QuotationEditModal";
 import PriceOptionsModal from "@/components/quotation/PriceOptionsModal";
+import { VariantGroup } from "@/types/database";
 
 // Constants
 const ITEMS_PER_PAGE = 10;
@@ -217,7 +218,7 @@ export default function QuotationPage() {
           delivery_time_option3: item.delivery_time_option3,
           description_option3: item.description_option3,
           selected_option: item.selected_option,
-          variant_groups: (item as any).variant_groups || undefined
+          variant_groups: (item as { variant_groups?: VariantGroup[] | null }).variant_groups || undefined
         };
       }) || [];
 

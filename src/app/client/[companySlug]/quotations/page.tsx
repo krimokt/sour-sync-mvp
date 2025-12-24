@@ -306,10 +306,13 @@ export default function ClientQuotationsPage() {
                   .single();
                 if (error) throw error;
                 // Ensure variant_groups is properly typed
-                const quotationData = {
+                type QuotationRow = QuotationData & {
+                  variant_groups?: VariantGroup[] | null;
+                };
+                const quotationData: QuotationData = {
                   ...data,
-                  variant_groups: (data as any).variant_groups || null
-                } as QuotationData;
+                  variant_groups: (data as QuotationRow).variant_groups || null
+                };
                 setFullQuotationData(quotationData);
               } catch (err) {
                 console.error('Error fetching full quotation data:', err);

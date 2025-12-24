@@ -253,28 +253,28 @@ export default function QuotationsPage() {
         ) : quotations.length === 0 ? (
           <div className="p-6 text-center text-gray-500">No quotations found</div>
         ) : (
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableCell isHeader className="px-5 py-3 text-left text-sm font-medium text-gray-500">
+                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[25%]">
                   Product
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-left text-sm font-medium text-gray-500">
+                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[15%]">
                   Quotation ID
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-left text-sm font-medium text-gray-500">
+                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[10%]">
                   Quantity
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-left text-sm font-medium text-gray-500">
+                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[18%]">
                   Destination
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-left text-sm font-medium text-gray-500">
+                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[12%]">
                   Status
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-left text-sm font-medium text-gray-500">
+                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[12%]">
                   Date
                 </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-left text-sm font-medium text-gray-500">
+                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[8%]">
                   Actions
                 </TableCell>
               </TableRow>
@@ -282,38 +282,38 @@ export default function QuotationsPage() {
             <TableBody>
               {quotations.map((quotation) => (
                 <TableRow key={quotation.id}>
-                  <TableCell className="px-5 py-4">
-                    <div className="flex items-center gap-3">
+                  <TableCell className="px-4 py-4 w-[25%]">
+                    <div className="flex items-center gap-3 min-w-0">
                       {quotation.image_url || quotation.product_images?.[0] ? (
                         <Image
                           src={quotation.image_url || quotation.product_images?.[0] || ''}
                           alt={quotation.product_name}
                           width={40}
                           height={40}
-                          className="rounded-lg object-cover"
+                          className="rounded-lg object-cover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg dark:bg-gray-700" />
+                        <div className="w-10 h-10 bg-gray-200 rounded-lg dark:bg-gray-700 flex-shrink-0" />
                       )}
-                      <span className="font-medium text-gray-800 dark:text-white">
+                      <span className="font-medium text-gray-800 dark:text-white truncate">
                         {quotation.product_name}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-5 py-4 text-gray-600 dark:text-gray-400">
-                    {quotation.quotation_id}
+                  <TableCell className="px-4 py-4 text-gray-600 dark:text-gray-400 w-[15%]">
+                    <span className="truncate block">{quotation.quotation_id}</span>
                   </TableCell>
-                  <TableCell className="px-5 py-4 text-gray-600 dark:text-gray-400">
+                  <TableCell className="px-4 py-4 text-gray-600 dark:text-gray-400 w-[10%]">
                     {quotation.quantity}
                   </TableCell>
-                  <TableCell className="px-5 py-4 text-gray-600 dark:text-gray-400">
-                    {quotation.destination_city}, {quotation.destination_country}
+                  <TableCell className="px-4 py-4 text-gray-600 dark:text-gray-400 w-[18%]">
+                    <span className="truncate block">{quotation.destination_city}, {quotation.destination_country}</span>
                   </TableCell>
-                  <TableCell className="px-5 py-4">{getStatusBadge(quotation.status)}</TableCell>
-                  <TableCell className="px-5 py-4 text-gray-600 dark:text-gray-400">
+                  <TableCell className="px-4 py-4 w-[12%]">{getStatusBadge(quotation.status)}</TableCell>
+                  <TableCell className="px-4 py-4 text-gray-600 dark:text-gray-400 w-[12%]">
                     {formatDate(quotation.created_at)}
                   </TableCell>
-                  <TableCell className="px-5 py-4">
+                  <TableCell className="px-4 py-4 w-[8%]">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {

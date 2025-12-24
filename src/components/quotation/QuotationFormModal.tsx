@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Modal } from "@/components/ui/modal";
 import { 
-  ArrowRightIcon, 
   CloseIcon, 
-  ChevronLeftIcon, 
   CheckCircleIcon 
 } from "@/icons";
 import { useDropzone } from "react-dropzone";
@@ -101,6 +99,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
   const [searchQuery, setSearchQuery] = useState("");
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const [companySettings, setCompanySettings] = useState<{
     quotation_countries?: string[] | null;
     quotation_input_fields?: string[] | null;
@@ -795,7 +794,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     <Modal isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-3xl h-auto mx-auto p-4 sm:p-6 overflow-hidden">
       {/* Modal header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#016AFE] dark:text-white">Create New Quotation</h2>
+        <h2 className="text-xl font-bold text-[#096CC8] dark:text-white">Create New Quotation</h2>
         <button 
           onClick={onClose}
           className="p-1 text-gray-400 rounded-full hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
@@ -804,9 +803,52 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
         </button>
       </div>
 
+      {/* Stepper - Top */}
+      {step <= 3 && (
+        <Stepper value={step} onValueChange={(value) => {
+          // Only allow going back, not forward by clicking steps
+          if (value < step) {
+            setStep(value);
+          }
+        }}>
+          <StepperNav className="gap-3.5 mb-4">
+            <StepperItem step={1} completed={step > 1} className="relative flex-1 items-start">
+              <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
+                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                <div className="flex flex-col items-start gap-1">
+                  <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
+                    Step 1
+                  </StepperTitle>
+                </div>
+              </StepperTrigger>
+            </StepperItem>
+            <StepperItem step={2} completed={step > 2} className="relative flex-1 items-start">
+              <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
+                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                <div className="flex flex-col items-start gap-1">
+                  <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
+                    Step 2
+                  </StepperTitle>
+                </div>
+              </StepperTrigger>
+            </StepperItem>
+            <StepperItem step={3} className="relative flex-1 items-start">
+              <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
+                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                <div className="flex flex-col items-start gap-1">
+                  <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
+                    Step 3
+                  </StepperTitle>
+                </div>
+              </StepperTrigger>
+            </StepperItem>
+          </StepperNav>
+        </Stepper>
+      )}
+
       {/* Form content */}
       <div className="max-h-[calc(100vh-240px)] overflow-y-auto px-1 py-2">
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
           {/* Step 1: Product Information */}
           {step === 1 && (
             <div className="space-y-4">
@@ -1318,7 +1360,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                       className={`flex items-center justify-center gap-2 p-3 cursor-pointer border rounded-md transition-colors ${
                         formData.serviceType === service
                           ? "border-[#1E88E5] bg-blue-50 text-[#1E88E5] dark:bg-blue-900 dark:text-blue-200"
-                          : "border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600 text-[#9B4646] dark:text-white"
+                          : "border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600 text-[#1E88E5] dark:text-blue-400"
                       }`}
                     >
                       {service}
@@ -1380,73 +1422,35 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           )}
         </form>
       </div>
-
-      {/* Stepper - Bottom */}
+      
+      {/* Navigation Buttons */}
       {step <= 3 && (
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Stepper value={step} onValueChange={(value) => {
-            // Only allow going back, not forward by clicking steps
-            if (value < step) {
-              setStep(value);
-            }
-          }} className="space-y-6">
-            <StepperNav className="gap-3.5 mb-4">
-              <StepperItem step={1} completed={step > 1} className="relative flex-1 items-start">
-                <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
-                  <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
-                  <div className="flex flex-col items-start gap-1">
-                    <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
-                      Step 1
-                    </StepperTitle>
-                  </div>
-                </StepperTrigger>
-              </StepperItem>
-              <StepperItem step={2} completed={step > 2} className="relative flex-1 items-start">
-                <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
-                  <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
-                  <div className="flex flex-col items-start gap-1">
-                    <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
-                      Step 2
-                    </StepperTitle>
-                  </div>
-                </StepperTrigger>
-              </StepperItem>
-              <StepperItem step={3} className="relative flex-1 items-start">
-                <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
-                  <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
-                  <div className="flex flex-col items-start gap-1">
-                    <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
-                      Step 3
-                    </StepperTitle>
-                  </div>
-                </StepperTrigger>
-              </StepperItem>
-            </StepperNav>
-            
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-center gap-4">
-              {step > 1 && (
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="px-6 py-2.5 text-gray-700 dark:text-gray-200 flex items-center justify-center bg-gray-100 dark:bg-gray-800 font-semibold rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm border border-gray-200 dark:border-gray-700"
-                >
-                  Back
-                </button>
-              )}
-              <button
-                type={step === 3 ? "submit" : "button"}
-                onClick={step === 3 ? undefined : (e) => {
-                  e.preventDefault();
-                  nextStep();
-                }}
-                disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-full text-white bg-[#006cff] hover:bg-[#0052cc] dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed text-sm font-semibold shadow-sm"
-              >
-                {isSubmitting ? 'Submitting...' : (step === 3 ? 'Finish' : 'Continue')}
-              </button>
-            </div>
-          </Stepper>
+        <div className="flex items-center justify-center gap-4">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={prevStep}
+              className="px-6 py-2.5 text-gray-700 dark:text-gray-200 flex items-center justify-center bg-gray-100 dark:bg-gray-800 font-semibold rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm border border-gray-200 dark:border-gray-700"
+            >
+              Back
+            </button>
+          )}
+          <button
+            type={step === 3 ? "button" : "button"}
+            onClick={step === 3 ? (e) => {
+              e.preventDefault();
+              if (formRef.current) {
+                formRef.current.requestSubmit();
+              }
+            } : (e) => {
+              e.preventDefault();
+              nextStep();
+            }}
+            disabled={isSubmitting || (step === 3 && !formData.serviceType)}
+            className="px-6 py-2.5 rounded-full text-white bg-[#006cff] hover:bg-[#0052cc] dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed text-sm font-semibold shadow-sm my-2.5"
+          >
+            {isSubmitting ? 'Submitting...' : (step === 3 ? 'Finish' : 'Continue')}
+          </button>
         </div>
       )}
     </Modal>

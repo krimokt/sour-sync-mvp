@@ -168,8 +168,10 @@ export default function PaymentsPage() {
         .getPublicUrl(fileName);
 
       // Update payment record using Supabase client
-      const { error: updateError } = await supabase
-        .from('payments')
+      const { error: updateError } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('payments') as any
+      )
         .update({ 
           payment_proof_url: urlData.publicUrl,
           updated_at: new Date().toISOString()
@@ -286,11 +288,12 @@ export default function PaymentsPage() {
         .eq('company_id', company.id);
 
       if (metricsData) {
+        const typedMetricsData = metricsData as Array<{ status: string; amount: number | string }>;
         setMetrics({
-          total: metricsData.length,
-          approved: metricsData.filter((p) => p.status === 'Accepted' || p.status === 'approved' || p.status === 'completed').length,
-          pending: metricsData.filter((p) => p.status === 'pending' || p.status === 'Pending').length,
-          totalAmount: metricsData.reduce((sum, p) => sum + (Number(p.amount) || 0), 0),
+          total: typedMetricsData.length,
+          approved: typedMetricsData.filter((p) => p.status === 'Accepted' || p.status === 'approved' || p.status === 'completed').length,
+          pending: typedMetricsData.filter((p) => p.status === 'pending' || p.status === 'Pending').length,
+          totalAmount: typedMetricsData.reduce((sum, p) => sum + (Number(p.amount) || 0), 0),
         });
       }
     } catch (err) {

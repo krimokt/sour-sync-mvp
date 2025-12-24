@@ -133,11 +133,12 @@ export default function ClientShippingPage() {
         .eq('user_id', client.user_id);
 
       if (metricsData) {
+        const typedMetricsData = metricsData as Array<{ status?: string | null }>;
         setMetrics({
-          total: metricsData.length,
-          processing: metricsData.filter((s) => s.status === 'processing').length,
-          shipped: metricsData.filter((s) => s.status === 'shipped').length,
-          delivered: metricsData.filter((s) => s.status === 'delivered').length,
+          total: typedMetricsData.length,
+          processing: typedMetricsData.filter((s) => s.status === 'processing').length,
+          shipped: typedMetricsData.filter((s) => s.status === 'shipped').length,
+          delivered: typedMetricsData.filter((s) => s.status === 'delivered').length,
         });
       }
     } catch (err) {

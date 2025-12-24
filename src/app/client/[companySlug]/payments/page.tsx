@@ -653,7 +653,7 @@ export default function ClientPaymentsPage() {
           return metadata.company_id === company.id;
         }
         return false;
-      });
+      }) as Array<{ status: string; amount: number | string; company_id?: string; metadata?: unknown }>;
 
       if (metricsData) {
         setMetrics({
@@ -824,13 +824,14 @@ export default function ClientPaymentsPage() {
         .getPublicUrl(fileName);
 
       // Update the payment_proof_url in the payments table using MCP Supabase
-      const { error: updateError } = await supabase
-        .from('payments')
+      const { error: updateError } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('payments') as any
+      )
         .update({ 
           payment_proof_url: urlData.publicUrl,
           updated_at: new Date().toISOString()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+        })
         .eq('id', uploadPaymentId);
 
       if (updateError) {
@@ -918,13 +919,14 @@ export default function ClientPaymentsPage() {
         .from('payment-proofs')
         .getPublicUrl(fileName);
 
-      const { error: updateError } = await supabase
-        .from('payments')
+      const { error: updateError } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('payments') as any
+      )
         .update({ 
           payment_proof_url: urlData.publicUrl,
           updated_at: new Date().toISOString()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+        })
         .eq('id', viewReplaceProof.paymentId);
 
       if (updateError) {

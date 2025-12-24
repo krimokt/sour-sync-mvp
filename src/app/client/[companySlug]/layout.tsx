@@ -32,6 +32,9 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
     notFound();
   }
 
+  // Type assertion after null check
+  const companyData = company as Company;
+
   // 3. Check if user is a client of this company
   // Use service role to bypass RLS for this check (user is authenticated, just verifying client status)
   const { createClient } = await import('@supabase/supabase-js');
@@ -43,7 +46,7 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
   const { data: client, error: clientError } = await supabaseService
     .from('clients')
     .select('*')
-    .eq('company_id', company.id)
+    .eq('company_id', companyData.id)
     .eq('user_id', user.id)
     .eq('status', 'active')
     .single();
@@ -68,7 +71,7 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
   // 5. All checks passed - render the client layout
   return (
     <ClientProvider 
-      company={company as Company} 
+      company={companyData} 
       profile={profile as Profile}
       client={client as Client}
     >

@@ -47,15 +47,37 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
     const fetchCompany = async () => {
       try {
         setCompanyLoadError('');
-        const res = await fetch(`/api/public/company/${params.companySlug}`, {
+        const apiUrl = `/api/public/company/${params.companySlug}`;
+        console.log('[Signin] Fetching company from:', apiUrl);
+        
+        const res = await fetch(apiUrl, {
           method: 'GET',
           cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
+        
+        console.log('[Signin] API response status:', res.status, res.statusText);
+
+        // Check if response is ok before parsing JSON
+        if (!res.ok) {
+          const errorText = await res.text();
+          let errorMessage = 'Failed to load company';
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error || errorMessage;
+          } catch {
+            // If JSON parsing fails, use the text or default message
+            errorMessage = errorText || errorMessage;
+          }
+          throw new Error(errorMessage);
+        }
 
         const json = await res.json();
 
-        if (!res.ok || !json?.company) {
-          throw new Error(json?.error || 'Failed to load company');
+        if (!json?.company) {
+          throw new Error(json?.error || 'Company data not found');
         }
 
         const data = json.company as Company;
@@ -69,6 +91,8 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         }
       } catch (err) {
         console.error('Error fetching company:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error('Company fetch error details:', errorMessage);
         setCompanyLoadError(
           'Unable to load company branding. You can still sign in / sign up.'
         );
@@ -98,10 +122,26 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, it's likely an HTML error page (404, 500, etc.)
+        const text = await response.text();
+        console.error('Non-JSON response from API:', text.substring(0, 200));
+        throw new Error('API route not found. Please check your deployment configuration.');
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        const errorMessage = data.error || 'Login failed';
+        // Handle rate limiting with a more user-friendly message
+        if (response.status === 429 || data.rateLimited) {
+          throw new Error('Too many sign-in attempts. Please wait a few minutes before trying again.');
+        }
+        throw new Error(errorMessage);
       }
 
       // Success - redirect to client dashboard
@@ -157,7 +197,18 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         }),
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, it's likely an HTML error page (404, 500, etc.)
+        const text = await response.text();
+        console.error('Non-JSON response from API:', text.substring(0, 200));
+        throw new Error('API route not found. Please check your deployment configuration.');
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Signup failed');
@@ -171,7 +222,18 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
           body: JSON.stringify({ email, password }),
         });
 
-        await loginResponse.json();
+        // Check if response is JSON before parsing
+        const loginContentType = loginResponse.headers.get('content-type');
+        
+        if (loginContentType && loginContentType.includes('application/json')) {
+          // Parse JSON to ensure valid response, but we don't need the data
+          await loginResponse.json();
+        } else {
+          // If not JSON, it's likely an HTML error page
+          const text = await loginResponse.text();
+          console.error('Non-JSON response from login API:', text.substring(0, 200));
+          throw new Error('API route not found. Please check your deployment configuration.');
+        }
 
         if (!loginResponse.ok) {
           // Signup succeeded but login failed - user can manually login

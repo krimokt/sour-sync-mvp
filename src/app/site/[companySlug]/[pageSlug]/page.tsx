@@ -37,8 +37,9 @@ export default async function SiteDynamicPage({
 
   if (!company) return notFound();
 
-  const settingsData = company.settings;
-  const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData;
+  const typedCompany = company as { settings?: unknown } | null;
+  const settingsData = typedCompany?.settings;
+  const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData as { primary_color?: string; font_heading?: string; font_body?: string; [key: string]: unknown } | null | undefined;
   const themeColor = settings?.primary_color || '#3B82F6';
   const fontHeading = settings?.font_heading || 'Inter';
   const fontBody = settings?.font_body || 'Inter';

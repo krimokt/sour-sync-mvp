@@ -1,188 +1,411 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import PortalHeader from '@/components/portal/PortalHeader';
+import PortalNav from '@/components/portal/PortalNav';
+import { usePathname, useRouter } from 'next/navigation';
+import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
-interface QuotationDetailPageProps {
-  params: Promise<{ token: string; id: string }>;
+interface Quotation {
+  id: string;
+  quotation_id?: string;
+  product_name?: string;
+  product_url?: string;
+  quantity?: number;
+  status?: string;
+  destination_country?: string;
+  destination_city?: string;
+  shipping_method?: string;
+  total_price_option1?: string;
+  total_price_option2?: string;
+  total_price_option3?: string;
+  title_option1?: string;
+  title_option2?: string;
+  title_option3?: string;
+  description_option1?: string;
+  description_option2?: string;
+  description_option3?: string;
+  delivery_time_option1?: string;
+  delivery_time_option2?: string;
+  delivery_time_option3?: string;
+  selected_option?: number;
+  created_at?: string;
+  image_url?: string;
+  image_urls?: string[];
+  product_images?: string[];
 }
 
-async function getClientData(token: string) {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/client/validate-token?token=${encodeURIComponent(token)}`, {
-      cache: 'no-store',
-    });
+export default function QuotationDetailPage() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const token = pathname.split('/')[2];
+  const basePath = `/c/${token}`;
+  const quotationId = pathname.split('/')[4];
 
-    if (!response.ok) {
-      return null;
+  const [quotation, setQuotation] = useState<Quotation | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const fetchQuotation = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/c/${token}/quotations/${quotationId}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch quotation');
+      }
+
+      setQuotation(result.quotation);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load quotation');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, quotationId]);
+
+  useEffect(() => {
+    fetchQuotation();
+  }, [fetchQuotation]);
+
+  const handleApprove = async () => {
+    if (!confirm('Are you sure you want to approve this quotation?')) {
+      return;
     }
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching client data:', error);
-    return null;
-  }
-}
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/c/${token}/quotations/${quotationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Approved' }),
+      });
 
-async function getQuotation(quotationId: string, clientUserId: string, companyId: string) {
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+      const result = await response.json();
 
-    const { data, error } = await supabase
-      .from('quotations')
-      .select('*')
-      .eq('id', quotationId)
-      .eq('user_id', clientUserId)
-      .eq('company_id', companyId)
-      .single();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to approve quotation');
+      }
 
-    if (error) {
-      console.error('Error fetching quotation:', error);
-      return null;
+      setQuotation(result.quotation);
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to approve quotation');
+    } finally {
+      setIsUpdating(false);
     }
-
-    return data;
-  } catch (error) {
-    console.error('Error fetching quotation:', error);
-    return null;
-  }
-}
-
-function getStatusBadge(status: string) {
-  const statusColors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   };
 
-  return (
-    <span className={`px-3 py-1 text-sm font-semibold rounded-full ${statusColors[status] || statusColors.draft}`}>
-      {status}
-    </span>
-  );
-}
+  const handleSelectOption = async (optionNumber: number) => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/c/${token}/quotations/${quotationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_option: optionNumber }),
+      });
 
-export default async function QuotationDetailPage({ params }: QuotationDetailPageProps) {
-  const { token, id } = await params;
-  
-  const clientData = await getClientData(token);
+      const result = await response.json();
 
-  if (!clientData || !clientData.valid) {
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to select option');
+      }
+
+      setQuotation(result.quotation);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to select option');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600 dark:text-red-400">Invalid or expired token</p>
-        <Link href={`/c/${token}/invalid`} className="text-blue-600 hover:underline mt-2 inline-block">
-          Request a new link
-        </Link>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <PortalHeader />
+        <PortalNav />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        </main>
       </div>
     );
   }
 
-  const { client, company } = clientData;
-  const quotation = await getQuotation(id, client.user_id, company.id);
-
-  if (!quotation) {
+  if (error || !quotation) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-600 dark:text-gray-400">Quotation not found</p>
-        <Link href={`/c/${token}/quotations`} className="text-blue-600 hover:underline mt-2 inline-block">
-          ← Back to Quotations
-        </Link>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <PortalHeader />
+        <PortalNav />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <p className="text-red-700 dark:text-red-400">{error || 'Quotation not found'}</p>
+          </div>
+        </main>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Quotation #{quotation.id.slice(0, 8)}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Created on {new Date(quotation.created_at).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          {getStatusBadge(quotation.status || 'draft')}
-          <Link
-            href={`/c/${token}/quotations`}
-            className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-          >
-            ← Back
-          </Link>
-        </div>
-      </div>
+  const images = quotation.image_urls || quotation.product_images || (quotation.image_url ? [quotation.image_url] : []);
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
-        {/* Quotation Details */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Details</h2>
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <PortalHeader />
+      <PortalNav />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Link
+          href={`${basePath}/quotations`}
+          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Quotations
+        </Link>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
-              <dd className="mt-1">{getStatusBadge(quotation.status || 'draft')}</dd>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                {quotation.product_name || 'Quotation'}
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400">
+                {quotation.quotation_id || quotation.id}
+              </p>
+            </div>
+            <span className={`px-3 py-1 inline-flex items-center gap-1 text-sm font-semibold rounded-full ${
+              quotation.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+              quotation.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+            }`}>
+              {quotation.status || 'Pending'}
+            </span>
+          </div>
+
+          {images.length > 0 && (
+            <div className="mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {images.slice(0, 4).map((img, idx) => (
+                  <Image
+                    key={idx}
+                    src={img}
+                    alt={`Product image ${idx + 1}`}
+                    width={200}
+                    height={200}
+                    className="rounded-lg object-cover w-full h-32"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Quantity</h3>
+              <p className="text-gray-900 dark:text-white">{quotation.quantity || 1}</p>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Amount</dt>
-              <dd className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
-                {quotation.total ? `$${Number(quotation.total).toFixed(2)}` : '-'}
-              </dd>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Destination</h3>
+              <p className="text-gray-900 dark:text-white">
+                {quotation.destination_city}, {quotation.destination_country}
+              </p>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
-              <dd className="mt-1 text-gray-900 dark:text-white">
-                {new Date(quotation.created_at).toLocaleString()}
-              </dd>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Shipping Method</h3>
+              <p className="text-gray-900 dark:text-white">{quotation.shipping_method || 'TBD'}</p>
             </div>
-            {quotation.updated_at && (
+            {quotation.product_url && (
               <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
-                <dd className="mt-1 text-gray-900 dark:text-white">
-                  {new Date(quotation.updated_at).toLocaleString()}
-                </dd>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Product URL</h3>
+                <a
+                  href={quotation.product_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  View Product
+                </a>
               </div>
             )}
-          </dl>
+          </div>
+
+          {/* Price Options */}
+          {(quotation.total_price_option1 || quotation.total_price_option2 || quotation.total_price_option3) && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Price Options</h3>
+              <div className="space-y-4">
+                {quotation.total_price_option1 && (
+                  <div className={`border-2 rounded-lg p-4 ${
+                    quotation.selected_option === 1
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                          {quotation.title_option1 || 'Option 1'}
+                        </h4>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                          ${parseFloat(quotation.total_price_option1).toLocaleString()}
+                        </p>
+                        {quotation.description_option1 && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            {quotation.description_option1}
+                          </p>
+                        )}
+                        {quotation.delivery_time_option1 && (
+                          <p className="text-sm text-gray-500 dark:text-gray-500">
+                            Delivery: {quotation.delivery_time_option1}
+                          </p>
+                        )}
+                      </div>
+                      {quotation.status === 'Pending' && (
+                        <button
+                          onClick={() => handleSelectOption(1)}
+                          disabled={isUpdating || quotation.selected_option === 1}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            quotation.selected_option === 1
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {quotation.selected_option === 1 ? 'Selected' : 'Select'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {quotation.total_price_option2 && (
+                  <div className={`border-2 rounded-lg p-4 ${
+                    quotation.selected_option === 2
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                          {quotation.title_option2 || 'Option 2'}
+                        </h4>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                          ${parseFloat(quotation.total_price_option2).toLocaleString()}
+                        </p>
+                        {quotation.description_option2 && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            {quotation.description_option2}
+                          </p>
+                        )}
+                        {quotation.delivery_time_option2 && (
+                          <p className="text-sm text-gray-500 dark:text-gray-500">
+                            Delivery: {quotation.delivery_time_option2}
+                          </p>
+                        )}
+                      </div>
+                      {quotation.status === 'Pending' && (
+                        <button
+                          onClick={() => handleSelectOption(2)}
+                          disabled={isUpdating || quotation.selected_option === 2}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            quotation.selected_option === 2
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {quotation.selected_option === 2 ? 'Selected' : 'Select'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {quotation.total_price_option3 && (
+                  <div className={`border-2 rounded-lg p-4 ${
+                    quotation.selected_option === 3
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                          {quotation.title_option3 || 'Option 3'}
+                        </h4>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                          ${parseFloat(quotation.total_price_option3).toLocaleString()}
+                        </p>
+                        {quotation.description_option3 && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            {quotation.description_option3}
+                          </p>
+                        )}
+                        {quotation.delivery_time_option3 && (
+                          <p className="text-sm text-gray-500 dark:text-gray-500">
+                            Delivery: {quotation.delivery_time_option3}
+                          </p>
+                        )}
+                      </div>
+                      {quotation.status === 'Pending' && (
+                        <button
+                          onClick={() => handleSelectOption(3)}
+                          disabled={isUpdating || quotation.selected_option === 3}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            quotation.selected_option === 3
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {quotation.selected_option === 3 ? 'Selected' : 'Select'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          {quotation.status === 'Pending' && (
+            <div className="flex gap-4">
+              <button
+                onClick={handleApprove}
+                disabled={isUpdating}
+                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Approve Quotation
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {quotation.status === 'Approved' && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <p className="text-green-700 dark:text-green-400">
+                This quotation has been approved. You can proceed to payment.
+              </p>
+              <Link
+                href={`${basePath}/payments`}
+                className="inline-block mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Go to Payments
+              </Link>
+            </div>
+          )}
         </div>
-
-        {/* Notes/Description */}
-        {quotation.notes && (
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</h3>
-            <p className="text-gray-900 dark:text-white">{quotation.notes}</p>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        {(quotation.status === 'pending' || quotation.status === 'approved') && (
-          <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <form action={`/api/client/quotations/${id}/approve`} method="POST">
-              <input type="hidden" name="token" value={token} />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Approve Quotation
-              </button>
-            </form>
-            <form action={`/api/client/quotations/${id}/confirm`} method="POST">
-              <input type="hidden" name="token" value={token} />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Confirm Order
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
+      </main>
     </div>
   );
 }

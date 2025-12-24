@@ -37,7 +37,8 @@ export default function SelectStorePage() {
           .eq('id', user.id)
           .single();
 
-        if (!profile?.company_id) {
+        const typedProfile = profile as { company_id?: string | null } | null;
+        if (!typedProfile?.company_id) {
           // No company - show message to create one
           setNoCompany(true);
           setIsLoading(false);
@@ -48,12 +49,13 @@ export default function SelectStorePage() {
         const { data: company } = await supabase
           .from('companies')
           .select('id, name, slug, logo_url, plan')
-          .eq('id', profile.company_id)
+          .eq('id', typedProfile.company_id!)
           .single();
 
-        if (company) {
+        const typedCompany = company as { id: string; name: string; slug: string; logo_url: string | null; plan: string } | null;
+        if (typedCompany) {
           // If only one company, redirect directly
-          router.push(`/store/${company.slug}`);
+          router.push(`/store/${typedCompany.slug}`);
           return;
         } else {
           setNoCompany(true);

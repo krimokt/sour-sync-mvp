@@ -225,7 +225,8 @@ export default function AnimatedSignInForm() {
         throw new Error('Profile not found. Please contact support.');
       }
 
-      if (!profile.company_id) {
+      const typedProfile = profile as { company_id?: string | null; role?: string | null; [key: string]: unknown };
+      if (!typedProfile.company_id) {
         // User has profile but no company - redirect to create one
         router.push('/signup?step=company');
         return;
@@ -235,15 +236,16 @@ export default function AnimatedSignInForm() {
       const { data: company, error: companyError } = await supabase
         .from('companies')
         .select('slug, status')
-        .eq('id', profile.company_id)
+        .eq('id', typedProfile.company_id!)
         .single();
 
       if (companyError || !company) {
         throw new Error('Could not find your company');
       }
 
+      const typedCompany = company as { slug: string; status: string };
       // Check if company is active
-      if (company.status !== 'active') {
+      if (typedCompany.status !== 'active') {
         setError('Your company account is suspended. Please contact support.');
         await supabase.auth.signOut();
         setIsLoading(false);
@@ -252,10 +254,10 @@ export default function AnimatedSignInForm() {
 
       // Step 4: Redirect to company dashboard
       // If there was a redirect URL and it's for the same company, use it
-      if (redirectTo && redirectTo.startsWith(`/store/${company.slug}`)) {
+      if (redirectTo && redirectTo.startsWith(`/store/${typedCompany.slug}`)) {
         window.location.href = redirectTo;
       } else {
-        window.location.href = `/store/${company.slug}`;
+        window.location.href = `/store/${typedCompany.slug}`;
       }
 
     } catch (err: unknown) {

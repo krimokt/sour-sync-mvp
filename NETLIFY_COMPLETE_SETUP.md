@@ -120,10 +120,12 @@ Make sure these are set in Netlify:
 
 1. Go to **Site settings** → **Environment variables**
 2. Add:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `NEXT_PUBLIC_USE_SUBDOMAINS` = `true` (to use subdomain URLs in builder)
+   - `NEXT_PUBLIC_SUPABASE_URL` (your Supabase project URL)
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (your Supabase anon/public key)
+   - `SUPABASE_SERVICE_ROLE_KEY` (your Supabase service role key - **required for API routes**)
+   - `NEXT_PUBLIC_USE_SUBDOMAINS` = `true` (optional, to use subdomain URLs in builder)
+   
+   **Important:** The `SUPABASE_SERVICE_ROLE_KEY` is critical for the company branding API to work. Without it, you'll see "Unable to load company branding" errors.
 
 ## Troubleshooting
 

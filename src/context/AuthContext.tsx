@@ -64,11 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(profileData as Profile);
 
       // Get company if profile has company_id
-      if (profileData.company_id) {
+      const typedProfileData = profileData as { company_id?: string | null; [key: string]: unknown } | null;
+      if (typedProfileData?.company_id) {
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
           .select('*')
-          .eq('id', profileData.company_id)
+          .eq('id', typedProfileData.company_id)
           .single();
 
         if (!companyError && companyData) {
@@ -169,21 +170,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', data.user.id)
         .single();
 
-      if (!profileData?.company_id) {
+      const typedProfileData2 = profileData as { company_id?: string | null; [key: string]: unknown } | null;
+      if (!typedProfileData2?.company_id) {
         return { error: { message: 'No company found. Please complete setup.', name: 'NoCompanyError', status: 404 } as AuthError };
       }
 
       const { data: companyData } = await supabase
         .from('companies')
         .select('slug')
-        .eq('id', profileData.company_id)
+        .eq('id', typedProfileData2.company_id)
         .single();
 
-      if (!companyData?.slug) {
+      const typedCompanyData = companyData as { slug?: string } | null;
+      if (!typedCompanyData?.slug) {
         return { error: { message: 'Company not found', name: 'CompanyNotFound', status: 404 } as AuthError };
       }
 
-      return { companySlug: companyData.slug };
+      return { companySlug: typedCompanyData.slug };
 
     } catch (error) {
       console.error('Sign in error:', error);
@@ -213,8 +216,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userId = authData.user.id;
 
       // Step 2: Create company
-      const { data: companyData, error: companyError } = await supabase
-        .from('companies')
+      const { data: companyData, error: companyError } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('companies') as any
+      )
         .insert({
           name: companyName,
           slug: companySlug,
@@ -230,8 +235,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Step 3: Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
+      const { error: profileError } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('profiles') as any
+      )
         .insert({
           id: userId,
           full_name: fullName,

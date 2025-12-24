@@ -15,7 +15,7 @@ const alwaysPublicPatterns = [
   /^\/payment-details/, // Public payment details page
   /^\/site\//, // Public company websites
   /^\/dashboard-client$/, // Client dashboard (handled by page)
-  /^\/c\//, // Client magic link portal (token-based, no auth required)
+  /^\/c\//, // Magic link client portal (token validation in layout)
 ];
 
 // Legacy dashboard routes (keep for backward compatibility during migration)
@@ -90,22 +90,58 @@ export async function middleware(req: NextRequest) {
   
   // ----- CUSTOM DOMAIN ROUTING -----
   // Check if this is a custom domain (client's own domain like mycompany.com)
-  if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/') && !path.startsWith('/client/')) {
+  // IMPORTANT: Exclude API routes from custom domain rewriting - they should go directly to the API
+  if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/') && !path.startsWith('/client/') && !path.startsWith('/api/')) {
     try {
       // Create Supabase client to look up custom domain
       const supabase = createMiddlewareClient({ req, res });
       
-      // Look up company by custom domain
       const hostWithoutPort = hostname.split(':')[0];
-      const { data: settings } = await supabase
+      
+      // First, check if the full hostname (including subdomain) matches a custom domain
+      // This handles cases like whitesourcing.sthe.shop where the subdomain might be part of the custom domain
+      let { data: settings } = await supabase
         .from('website_settings')
         .select('company_id, companies!inner(slug)')
         .eq('custom_domain', hostWithoutPort)
         .single();
       
-      if (settings?.companies) {
+      // If not found, check if this is a subdomain of a registered custom domain
+      // Example: whitesourcing.sthe.shop when sthe.shop is registered
+      if (!settings) {
+        const parts = hostWithoutPort.split('.');
+        if (parts.length >= 3) {
+          // This is a subdomain, try the root domain (e.g., sthe.shop from whitesourcing.sthe.shop)
+          const rootDomain = parts.slice(-2).join('.'); // Get last two parts
+          const subdomain = parts[0]; // Get first part as potential company slug
+          
+          // Check if root domain is registered
+          const { data: rootSettings } = await supabase
+            .from('website_settings')
+            .select('company_id, companies!inner(slug)')
+            .eq('custom_domain', rootDomain)
+            .single();
+          
+          if (rootSettings) {
+            // Root domain is registered, check if subdomain matches the company slug
+            const typedRootSettings = rootSettings as { company_id?: string; companies?: { slug: string } | { slug: string }[] } | null;
+            if (typedRootSettings?.companies) {
+              const companies = Array.isArray(typedRootSettings.companies) ? typedRootSettings.companies : [typedRootSettings.companies];
+              const company = companies[0] as { slug: string } | undefined;
+              
+              // If subdomain matches company slug, use it; otherwise use the root domain's company
+              if (company?.slug === subdomain || company?.slug) {
+                settings = rootSettings;
+              }
+            }
+          }
+        }
+      }
+      
+      const typedSettings = settings as { company_id?: string; companies?: { slug: string } | { slug: string }[] } | null;
+      if (typedSettings?.companies) {
         // Found company with this custom domain
-        const companies = Array.isArray(settings.companies) ? settings.companies : [settings.companies];
+        const companies = Array.isArray(typedSettings.companies) ? typedSettings.companies : [typedSettings.companies];
         const company = companies[0] as { slug: string } | undefined;
         if (company?.slug) {
           // Handle /dashboard-client route

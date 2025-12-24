@@ -266,8 +266,10 @@ export default function WebsiteBuilder({ companyId, companySlug, initialSettings
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('website_settings')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('website_settings') as any
+      )
         .update({ 
           homepage_layout_draft: layout, 
           updated_at: new Date().toISOString() 
@@ -290,8 +292,10 @@ export default function WebsiteBuilder({ companyId, companySlug, initialSettings
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      const { error } = await supabase
-        .from('website_settings')
+      const { error } = await (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('website_settings') as any
+      )
         .update({ 
           homepage_layout_draft: layout, 
           homepage_layout_published: layout,

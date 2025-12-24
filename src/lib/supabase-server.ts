@@ -67,7 +67,8 @@ export async function getCurrentUserWithCompany() {
     .eq('id', user.id)
     .single();
 
-  if (!profile || !profile.company_id) {
+  const typedProfile = profile as { company_id?: string | null; [key: string]: unknown } | null;
+  if (!typedProfile || !typedProfile.company_id) {
     return { user, profile, company: null };
   }
 
@@ -75,7 +76,7 @@ export async function getCurrentUserWithCompany() {
   const { data: company } = await supabase
     .from('companies')
     .select('*')
-    .eq('id', profile.company_id)
+    .eq('id', typedProfile.company_id)
     .single();
 
   return { user, profile, company };
@@ -107,14 +108,15 @@ export async function verifyUserBelongsToCompany(companySlug: string) {
     .from('profiles')
     .select('company_id, role')
     .eq('id', user.id)
-    .eq('company_id', company.id)
+    .eq('company_id', (company as { id: string }).id)
     .single();
 
-  if (!profile) {
+  const typedProfile2 = profile as { role?: string | null } | null;
+  if (!typedProfile2) {
     return { authorized: false, reason: 'not_member' };
   }
 
-  return { authorized: true, role: profile.role };
+  return { authorized: true, role: typedProfile2.role };
 }
 
 

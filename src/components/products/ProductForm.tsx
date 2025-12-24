@@ -162,16 +162,20 @@ export default function ProductForm({ product, companyId, companySlug }: Product
       let productId: string;
 
       if (product) {
-        const { error: updateError } = await supabase
-          .from('products')
+        const { error: updateError } = await (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          supabase.from('products') as any
+        )
           .update(productData)
           .eq('id', product.id);
 
         if (updateError) throw updateError;
         productId = product.id;
       } else {
-        const { data: newProduct, error: insertError } = await supabase
-          .from('products')
+        const { data: newProduct, error: insertError } = await (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          supabase.from('products') as any
+        )
           .insert(productData)
           .select('id')
           .single();
@@ -197,8 +201,10 @@ export default function ProductForm({ product, companyId, companySlug }: Product
           sort_order: tier.sort_order || 0,
         }));
 
-        const { error: tiersError } = await supabase
-          .from('price_tiers')
+        const { error: tiersError } = await (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          supabase.from('price_tiers') as any
+        )
           .insert(tiersToInsert);
 
         if (tiersError) {

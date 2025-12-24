@@ -1,177 +1,142 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useMagicLink } from '@/components/portal/MagicLinkProvider';
+import PortalHeader from '@/components/portal/PortalHeader';
+import PortalNav from '@/components/portal/PortalNav';
+import QuotationCard from '@/components/portal/QuotationCard';
+import { Plus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import CreateQuotationButton from './CreateQuotationButton';
+import { usePathname } from 'next/navigation';
 
-interface QuotationsPageProps {
-  params: Promise<{ token: string }>;
+interface Quotation {
+  id: string;
+  quotation_id?: string;
+  product_name?: string;
+  status?: string;
+  total_price_option1?: string;
+  created_at?: string;
+  image_url?: string;
+  image_urls?: string[];
 }
 
-async function getClientData(token: string) {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/client/validate-token?token=${encodeURIComponent(token)}`, {
-      cache: 'no-store',
-    });
+export default function QuotationsPage() {
+  const { data } = useMagicLink();
+  const pathname = usePathname();
+  const token = pathname.split('/')[2];
+  const basePath = `/c/${token}`;
+  const [quotations, setQuotations] = useState<Quotation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
 
-    if (!response.ok) {
-      return null;
+  const fetchQuotations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/c/${token}/quotations`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch quotations');
+      }
+
+      setQuotations(result.quotations || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load quotations');
+    } finally {
+      setIsLoading(false);
     }
+  }, [token]);
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching client data:', error);
-    return null;
-  }
-}
+  useEffect(() => {
+    fetchQuotations();
+  }, [fetchQuotations]);
 
-async function getQuotations(client: any, companyId: string) {
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    // Fetch quotations by user_id (client's auth user_id) and company_id
-    const { data, error } = await supabase
-      .from('quotations')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching quotations:', error);
-      return [];
-    }
-
-    // Filter quotations that belong to this client by user_id
-    // If client has user_id, filter by that; otherwise return empty
-    if (client.user_id && data) {
-      return data.filter((q: any) => q.user_id === client.user_id);
-    }
-
-    return [];
-  } catch (error) {
-    console.error('Error fetching quotations:', error);
-    return [];
-  }
-}
-
-function getStatusBadge(status: string) {
-  const statusColors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  };
+  const filteredQuotations = selectedStatus === 'All'
+    ? quotations
+    : quotations.filter((q) => (q.status || '').toLowerCase() === selectedStatus.toLowerCase());
 
   return (
-    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[status] || statusColors.draft}`}>
-      {status}
-    </span>
-  );
-}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <PortalHeader />
+      <PortalNav />
 
-export default async function QuotationsPage({ params }: QuotationsPageProps) {
-  const { token } = await params;
-  
-  const clientData = await getClientData(token);
-
-  if (!clientData || !clientData.valid) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600 dark:text-red-400">Invalid or expired token</p>
-        <Link href={`/c/${token}/invalid`} className="text-blue-600 hover:underline mt-2 inline-block">
-          Request a new link
-        </Link>
-      </div>
-    );
-  }
-
-  const { client, company } = clientData;
-  const quotations = await getQuotations(client, company.id);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quotations</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            View and manage your quotations
-          </p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Quotations
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              View and manage your quotation requests
+            </p>
+          </div>
+          {data.scopes.includes('create') && (
+            <Link
+              href={`${basePath}/quotations/new`}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Create Quotation
+            </Link>
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          <CreateQuotationButton 
-            token={token} 
-            allowedCountries={company.quotation_countries || []} 
-          />
-          <Link
-            href={`/c/${token}`}
-            className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-          >
-            ← Back to Home
-          </Link>
-        </div>
-      </div>
 
-      {quotations.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-          <p className="text-gray-600 dark:text-gray-400">No quotations found</p>
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Quotation ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {quotations.map((quotation: any) => (
-                  <tr key={quotation.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      #{quotation.id.slice(0, 8)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(quotation.status || 'draft')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(quotation.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {quotation.total ? `$${Number(quotation.total).toFixed(2)}` : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        href={`/c/${token}/quotations/${quotation.id}`}
-                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                      >
-                        View →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Status Filter */}
+        <div className="mb-6">
+          <div className="flex gap-2">
+            {['All', 'Pending', 'Approved', 'Rejected'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setSelectedStatus(status)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedStatus === status
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
         </div>
-      )}
+
+        {/* Quotations List */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <p className="text-red-700 dark:text-red-400">{error}</p>
+          </div>
+        ) : filteredQuotations.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No quotations found</p>
+            {data.scopes.includes('create') && (
+              <Link
+                href={`${basePath}/quotations/new`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Create Your First Quotation
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredQuotations.map((quotation) => (
+              <QuotationCard
+                key={quotation.id}
+                quotation={quotation}
+                basePath={basePath}
+              />
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

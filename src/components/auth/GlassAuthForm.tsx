@@ -119,7 +119,8 @@ export default function GlassAuthForm({ initialMode = 'signin' }: GlassAuthFormP
         .single();
 
       if (profileError) throw new Error(`Could not load your profile: ${profileError.message}`);
-      if (!profile?.company_id) {
+      const typedProfile = profile as { company_id?: string | null; role?: string | null; [key: string]: unknown } | null;
+      if (!typedProfile?.company_id) {
         // If no company, switch to signup or guide them
         setMode('signup'); 
         // Or redirect to onboarding step
@@ -130,12 +131,13 @@ export default function GlassAuthForm({ initialMode = 'signin' }: GlassAuthFormP
       const { data: company, error: companyError } = await supabase
         .from('companies')
         .select('slug, status')
-        .eq('id', profile.company_id)
+        .eq('id', typedProfile.company_id!)
         .single();
 
       if (companyError || !company) throw new Error('Could not find your company');
+      const typedCompany = company as { slug: string; status: string };
       
-      if (company.status !== 'active') {
+      if (typedCompany.status !== 'active') {
         await supabase.auth.signOut();
         alert('Your company account is suspended. Please contact support.');
         setIsLoading(false);
@@ -143,10 +145,10 @@ export default function GlassAuthForm({ initialMode = 'signin' }: GlassAuthFormP
       }
 
       // Step 4: Redirect
-      if (redirectTo && redirectTo.startsWith(`/store/${company.slug}`)) {
+      if (redirectTo && redirectTo.startsWith(`/store/${typedCompany.slug}`)) {
         window.location.href = redirectTo;
       } else {
-        window.location.href = `/store/${company.slug}`;
+        window.location.href = `/store/${typedCompany.slug}`;
       }
 
     } catch (err: unknown) {

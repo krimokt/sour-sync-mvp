@@ -40,8 +40,9 @@ export default async function SiteHomePage({
     return null;
   }
 
-  const settingsData = company.settings;
-  const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData;
+  const typedCompany = company as { settings?: unknown } | null;
+  const settingsData = typedCompany?.settings;
+  const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData as { primary_color?: string; [key: string]: unknown } | null | undefined;
   
   const themeColor = settings?.primary_color || '#3B82F6';
   const isPreview = searchParams.preview === 'true';

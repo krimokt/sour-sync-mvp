@@ -1068,7 +1068,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           <StepperNav className="gap-3.5 mb-4">
             <StepperItem step={1} completed={step > 1} className="relative flex-1 items-start">
               <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
-                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-[#006cff] data-[state=completed]:dark:bg-blue-500 transition-all duration-300"></StepperIndicator>
                 <div className="flex flex-col items-start gap-1">
                   <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
                     Step 1
@@ -1078,7 +1078,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
             </StepperItem>
             <StepperItem step={2} completed={step > 2} className="relative flex-1 items-start">
               <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
-                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-[#006cff] data-[state=completed]:dark:bg-blue-500 transition-all duration-300"></StepperIndicator>
                 <div className="flex flex-col items-start gap-1">
                   <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
                     Step 2
@@ -1088,7 +1088,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
             </StepperItem>
             <StepperItem step={3} className="relative flex-1 items-start">
               <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
-                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-[#006cff] data-[state=completed]:dark:bg-blue-500 transition-all duration-300"></StepperIndicator>
                 <div className="flex flex-col items-start gap-1">
                   <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
                     Step 3

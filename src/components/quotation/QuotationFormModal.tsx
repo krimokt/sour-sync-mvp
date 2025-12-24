@@ -16,6 +16,14 @@ import { VariantGroup, VariantValue } from '@/types/database';
 import { Plus, X } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useParams } from 'next/navigation';
+import {
+  Stepper,
+  StepperItem,
+  StepperNav,
+  StepperTrigger,
+  StepperIndicator,
+  StepperTitle,
+} from '@/components/ui/stepper';
 
 // Type for company with quotation settings
 type CompanyWithSettings = {
@@ -787,40 +795,13 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     <Modal isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-3xl h-auto mx-auto p-4 sm:p-6 overflow-hidden">
       {/* Modal header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#0D47A1] dark:text-white">Create New Quotation</h2>
+        <h2 className="text-xl font-bold text-[#016AFE] dark:text-white">Create New Quotation</h2>
         <button 
           onClick={onClose}
           className="p-1 text-gray-400 rounded-full hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
         >
           <CloseIcon className="w-6 h-6" />
         </button>
-      </div>
-
-      {/* Progress indicator */}
-      <div className="relative mb-6">
-        <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-gray-200 dark:bg-gray-700"></div>
-        <div className="relative flex justify-between">
-          {[1, 2, 3].map((stepNumber) => (
-            <div key={stepNumber} className="flex flex-col items-center">
-              <div 
-                className={`z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                  step >= stepNumber 
-                    ? 'bg-[#1E88E5] text-white border-[#1E88E5]' 
-                    : 'bg-white text-gray-400 border-gray-300 dark:bg-gray-800 dark:border-gray-600'
-                }`}
-              >
-                {step > stepNumber ? <CheckCircleIcon className="w-4 h-4" /> : stepNumber}
-              </div>
-              <span className={`mt-2 text-xs ${
-                step >= stepNumber 
-                  ? 'text-[#1E88E5]' 
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}>
-                Step {stepNumber}
-              </span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Form content */}
@@ -853,7 +834,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   name="productName"
                   value={formData.productName}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors"
+                  placeholder="Enter product name"
                   required
                 />
               </div>
@@ -869,7 +851,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   name="productUrl"
                   value={formData.productUrl}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors"
+                  placeholder="https://www.alibaba.com/product/..."
                 />
               </div>
                     )}
@@ -885,7 +868,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   value={formData.quantity}
                   onChange={handleChange}
                   min="1"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                  placeholder="Enter quantity"
                   required
                 />
               </div>
@@ -920,8 +904,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
 
                     <div className="flex flex-col items-center">
                       {/* Icon Container */}
-                      <div className="mb-4 flex justify-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                      <div className="mb-4 flex justify-center text-[#9B4646]">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-[#024EB1] dark:bg-gray-800 dark:text-gray-400">
                           <svg
                             className="fill-current"
                             width="24"
@@ -1027,7 +1011,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                             value={group.name}
                             onChange={(e) => updateVariantGroup(groupIndex, 'name', e.target.value)}
                             placeholder="Group name (e.g., Color, Size)"
-                            className="flex-1 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] transition-colors"
+                            className="flex-1 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors"
                           />
                           <button
                             type="button"
@@ -1051,7 +1035,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                                     value={value.name}
                                     onChange={(e) => updateVariantValue(groupIndex, valueIndex, 'name', e.target.value)}
                                     placeholder="e.g., Black, White, S, M"
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] transition-colors"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors"
                                   />
                                 </div>
                                 
@@ -1065,7 +1049,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                                     value={value.moq || ''}
                                     onChange={(e) => updateVariantValue(groupIndex, valueIndex, 'moq', e.target.value ? parseInt(e.target.value) : undefined)}
                                     placeholder="MOQ"
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] transition-colors"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                                   />
                                 </div>
                                 
@@ -1180,16 +1164,6 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   </div>
                 )}
               </div>
-              
-              <div className="flex justify-end mt-6">
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="flex items-center px-6 py-2 bg-[#1E88E5] text-white rounded-md hover:bg-[#1976D2] transition-colors"
-                >
-                  Next <ArrowRightIcon className="w-4 h-4 ml-2" />
-                </button>
-              </div>
             </div>
           )}
 
@@ -1263,7 +1237,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                     onChange={handleSearchChange}
                             onFocus={() => setIsCountryDropdownOpen(true)}
                             onClick={() => setIsCountryDropdownOpen(true)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-2"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors mb-2"
                   />
                   
                           {isCountryDropdownOpen && filteredCountries.length > 0 && (
@@ -1279,7 +1253,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                         className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
                                     addressData.country === country.code
                             ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200"
-                            : ""
+                            : "text-gray-900 dark:text-white"
                         }`}
                       >
                         <span className="text-xl">{country.emoji}</span>
@@ -1317,24 +1291,6 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                       </div>
                 </div>
               </div>
-              
-              <div className="flex justify-between mt-6">
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="flex items-center px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <ChevronLeftIcon className="w-4 h-4 mr-2" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={nextStep}
-                      disabled={!addressData.receiverName.trim() || !addressData.address.trim() || !addressData.city.trim() || !addressData.country}
-                      className="flex items-center px-6 py-2 bg-[#1E88E5] text-white rounded-md hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next <ArrowRightIcon className="w-4 h-4 ml-2" />
-                </button>
-              </div>
                 </>
               )}
             </div>
@@ -1346,7 +1302,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Service Details</h3>
               
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block mb-1 text-sm font-medium text-[#2A2727] dark:text-gray-300">
                   Service Type *
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1362,7 +1318,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                       className={`flex items-center justify-center gap-2 p-3 cursor-pointer border rounded-md transition-colors ${
                         formData.serviceType === service
                           ? "border-[#1E88E5] bg-blue-50 text-[#1E88E5] dark:bg-blue-900 dark:text-blue-200"
-                          : "border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600"
+                          : "border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600 text-[#9B4646] dark:text-white"
                       }`}
                     >
                       {service}
@@ -1394,23 +1350,6 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   </div>
                 </div>
               </div>
-              
-              <div className="flex justify-between mt-6">
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="flex items-center px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <ChevronLeftIcon className="w-4 h-4 mr-2" /> Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex items-center px-6 py-2 bg-[#1E88E5] text-white rounded-md hover:bg-[#1976D2] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Quotation'}
-                </button>
-              </div>
             </div>
           )}
           
@@ -1441,6 +1380,75 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           )}
         </form>
       </div>
+
+      {/* Stepper - Bottom */}
+      {step <= 3 && (
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <Stepper value={step} onValueChange={(value) => {
+            // Only allow going back, not forward by clicking steps
+            if (value < step) {
+              setStep(value);
+            }
+          }} className="space-y-6">
+            <StepperNav className="gap-3.5 mb-4">
+              <StepperItem step={1} completed={step > 1} className="relative flex-1 items-start">
+                <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
+                  <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                  <div className="flex flex-col items-start gap-1">
+                    <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
+                      Step 1
+                    </StepperTitle>
+                  </div>
+                </StepperTrigger>
+              </StepperItem>
+              <StepperItem step={2} completed={step > 2} className="relative flex-1 items-start">
+                <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
+                  <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                  <div className="flex flex-col items-start gap-1">
+                    <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
+                      Step 2
+                    </StepperTitle>
+                  </div>
+                </StepperTrigger>
+              </StepperItem>
+              <StepperItem step={3} className="relative flex-1 items-start">
+                <StepperTrigger className="flex flex-col items-start justify-center gap-3.5 grow w-full">
+                  <StepperIndicator className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 w-full data-[state=active]:bg-[#006cff] data-[state=active]:dark:bg-blue-500 data-[state=completed]:bg-green-500 data-[state=completed]:dark:bg-green-500 transition-all duration-300"></StepperIndicator>
+                  <div className="flex flex-col items-start gap-1">
+                    <StepperTitle className="text-start font-semibold text-gray-900 dark:text-white group-data-[state=inactive]/step:text-gray-400 dark:group-data-[state=inactive]/step:text-gray-500 text-xs transition-colors">
+                      Step 3
+                    </StepperTitle>
+                  </div>
+                </StepperTrigger>
+              </StepperItem>
+            </StepperNav>
+            
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-center gap-4">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="px-6 py-2.5 text-gray-700 dark:text-gray-200 flex items-center justify-center bg-gray-100 dark:bg-gray-800 font-semibold rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm border border-gray-200 dark:border-gray-700"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                type={step === 3 ? "submit" : "button"}
+                onClick={step === 3 ? undefined : (e) => {
+                  e.preventDefault();
+                  nextStep();
+                }}
+                disabled={isSubmitting}
+                className="px-6 py-2.5 rounded-full text-white bg-[#006cff] hover:bg-[#0052cc] dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed text-sm font-semibold shadow-sm"
+              >
+                {isSubmitting ? 'Submitting...' : (step === 3 ? 'Finish' : 'Continue')}
+              </button>
+            </div>
+          </Stepper>
+        </div>
+      )}
     </Modal>
   );
 };

@@ -4,8 +4,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import Image from "next/image";
 import { Modal } from "@/components/ui/modal";
 import { 
-  CloseIcon, 
-  CheckCircleIcon 
+  CloseIcon
 } from "@/icons";
 import { useDropzone } from "react-dropzone";
 import { countries as countryCodes } from 'country-flag-icons';
@@ -131,6 +130,17 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     country?: string | null;
   } | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [previousAddresses, setPreviousAddresses] = useState<Array<{
+    id: string;
+    full_name: string | null;
+    address_line_1: string | null;
+    address_line_2: string | null;
+    city: string | null;
+    country: string;
+    phone: string | null;
+    is_default: boolean;
+  }>>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [addressData, setAddressData] = useState({
     receiverName: '',
     address: '',
@@ -315,6 +325,86 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     
     fetchUserProfile();
   }, [isOpen]);
+
+  // Fetch previous addresses from client_addresses table
+  useEffect(() => {
+    const fetchPreviousAddresses = async () => {
+      if (!isOpen) return;
+      
+      setIsLoadingAddresses(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          // Get company_id first (needed for client_addresses query)
+          let finalCompanyId = companyId;
+          
+          // Try from URL slug if not set
+          if (!finalCompanyId && companySlugFromUrl) {
+            const { data: company } = await supabase
+              .from('companies')
+              .select('id')
+              .eq('slug', companySlugFromUrl)
+              .maybeSingle();
+            if (company?.id) {
+              finalCompanyId = company.id;
+            }
+          }
+          
+          // Try from user profile if still not set
+          if (!finalCompanyId) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('company_id')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            if (profile?.company_id) {
+              finalCompanyId = profile.company_id;
+            }
+          }
+          
+          // Try from clients table if still not set
+          if (!finalCompanyId) {
+            const { data: client } = await supabase
+              .from('clients')
+              .select('company_id')
+              .eq('user_id', session.user.id)
+              .eq('status', 'active')
+              .maybeSingle();
+            if (client?.company_id) {
+              finalCompanyId = client.company_id;
+            }
+          }
+          
+          // If we have company_id, fetch addresses
+          if (finalCompanyId) {
+            const { data: addresses, error } = await supabase
+              .from('client_addresses')
+              .select('id, full_name, address_line_1, address_line_2, city, country, phone, is_default')
+              .eq('user_id', session.user.id)
+              .eq('company_id', finalCompanyId)
+              .order('is_default', { ascending: false })
+              .order('created_at', { ascending: false });
+            
+            if (error) {
+              console.error('Error fetching previous addresses:', error);
+            } else if (addresses) {
+              setPreviousAddresses(addresses);
+            }
+          } else {
+            // No company_id found, set empty addresses
+            setPreviousAddresses([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching previous addresses:', error);
+        setPreviousAddresses([]);
+      } finally {
+        setIsLoadingAddresses(false);
+      }
+    };
+    
+    fetchPreviousAddresses();
+  }, [isOpen, companyId, companySlugFromUrl]);
 
   // Fetch company settings (quotation_countries and quotation_input_fields)
   useEffect(() => {
@@ -588,6 +678,32 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     setStep(step - 1);
   };
 
+  // Reset form to initial state
+  const resetForm = () => {
+    setStep(1);
+    setFormData({
+      productName: "",
+      productUrl: "",
+      quantity: "",
+      productImages: [] as File[],
+      destinationCountry: "",
+      destinationCity: "",
+      shippingMethod: "",
+      serviceType: "",
+      variantGroups: [] as VariantGroup[],
+    });
+    setAddressData({
+      receiverName: '',
+      address: '',
+      city: '',
+      country: ''
+    });
+    setVariantValueImages({});
+    setIsSubmitting(false);
+    setSearchQuery("");
+    setIsCountryDropdownOpen(false);
+  };
+
   // Submit the form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -613,10 +729,95 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
       return;
     }
     
-    // Save address to user profile
+    // Save address to client_addresses table
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session?.user?.id) {
+        // Get company_id (needed for client_addresses)
+        let finalCompanyId = companyId;
+        if (!finalCompanyId && companySlugFromUrl) {
+          const { data: company } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('slug', companySlugFromUrl)
+            .maybeSingle();
+          if (company?.id) {
+            finalCompanyId = company.id;
+          }
+        }
+        
+        // Try from user profile if still not set
+        if (!finalCompanyId) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', sessionData.session.user.id)
+            .maybeSingle();
+          if (profile?.company_id) {
+            finalCompanyId = profile.company_id;
+          }
+        }
+        
+        // Try from clients table if still not set
+        if (!finalCompanyId) {
+          const { data: client } = await supabase
+            .from('clients')
+            .select('company_id')
+            .eq('user_id', sessionData.session.user.id)
+            .eq('status', 'active')
+            .maybeSingle();
+          if (client?.company_id) {
+            finalCompanyId = client.company_id;
+          }
+        }
+        
+        // Save to client_addresses if we have company_id
+        if (finalCompanyId) {
+          // Check if this exact address already exists
+          const { data: existingAddress } = await supabase
+            .from('client_addresses')
+            .select('id')
+            .eq('user_id', sessionData.session.user.id)
+            .eq('company_id', finalCompanyId)
+            .eq('address_line_1', addressData.address)
+            .eq('city', addressData.city)
+            .eq('country', addressData.country.toUpperCase())
+            .maybeSingle();
+          
+          if (!existingAddress) {
+            // Only create new address if it doesn't exist
+            const { error: addressError } = await supabase
+              .from('client_addresses')
+              .insert({
+                user_id: sessionData.session.user.id,
+                company_id: finalCompanyId,
+                full_name: addressData.receiverName,
+                address_line_1: addressData.address,
+                city: addressData.city,
+                country: addressData.country.toUpperCase(),
+                is_default: previousAddresses.length === 0, // Set as default if it's the first address
+              });
+            
+            if (addressError) {
+              console.error('Error saving address to client_addresses:', addressError);
+            } else {
+              // Refresh previous addresses list
+              const { data: addresses } = await supabase
+                .from('client_addresses')
+                .select('id, full_name, address_line_1, address_line_2, city, country, phone, is_default')
+                .eq('user_id', sessionData.session.user.id)
+                .eq('company_id', finalCompanyId)
+                .order('is_default', { ascending: false })
+                .order('created_at', { ascending: false });
+              
+              if (addresses) {
+                setPreviousAddresses(addresses);
+              }
+            }
+          }
+        }
+        
+        // Also update profile for backward compatibility
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
@@ -635,7 +836,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
       }
     } catch (error) {
       console.error('Error saving address:', error);
-      // Continue with quotation submission even if profile update fails
+      // Continue with quotation submission even if address save fails
     }
     
     // Shipping method is no longer required as we use personal address
@@ -1039,30 +1240,52 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                       Uploaded Images ({formData.productImages.length})
                     </label>
                     <div className="flex flex-wrap gap-3 mt-2">
-                      {formData.productImages.map((file, index) => (
-                        <div key={index} className="relative w-24 h-24 overflow-hidden rounded-md group">
-                          {isValidImageUrl(URL.createObjectURL(file)) ? (
-                            <Image
-                              src={URL.createObjectURL(file)!}
-                              alt={`Product image ${index + 1}`}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center justify-center w-full h-40 bg-gray-200 text-gray-500 rounded">
-                              <span style={{fontSize: '2rem'}}>📷</span>
-                              <span>No Photo Uploaded</span>
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <CloseIcon className="w-3 h-3 text-white" />
-                          </button>
-                        </div>
-                      ))}
+                      {formData.productImages.map((file, index) => {
+                        // For File objects, create a blob URL for preview
+                        // File objects are always valid for preview
+                        const imageUrl = file instanceof File 
+                          ? URL.createObjectURL(file)
+                          : (typeof file === 'string' && isValidImageUrl(file) ? file : null);
+                        
+                        return (
+                          <div key={index} className="relative w-24 h-24 overflow-hidden rounded-md group">
+                            {imageUrl ? (
+                              <Image
+                                src={imageUrl}
+                                alt={`Product image ${index + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center w-full h-40 bg-gray-200 text-gray-500 rounded">
+                                <span style={{fontSize: '2rem'}}>📷</span>
+                                <span>No Photo Uploaded</span>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <svg
+                                className="w-3 h-3 text-white"
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  clipRule="evenodd"
+                                  d="M6.04289 16.5418C5.65237 16.9323 5.65237 17.5655 6.04289 17.956C6.43342 18.3465 7.06658 18.3465 7.45711 17.956L11.9987 13.4144L16.5408 17.9565C16.9313 18.347 17.5645 18.347 17.955 17.9565C18.3455 17.566 18.3455 16.9328 17.955 16.5423L13.4129 12.0002L17.955 7.45808C18.3455 7.06756 18.3455 6.43439 17.955 6.04387C17.5645 5.65335 16.9313 5.65335 16.5408 6.04387L11.9987 10.586L7.45711 6.04439C7.06658 5.65386 6.43342 5.65386 6.04289 6.04439C5.65237 6.43491 5.65237 7.06808 6.04289 7.4586L10.5845 12.0002L6.04289 16.5418Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1276,6 +1499,52 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                 </div>
               ) : (
                 <>
+                  {/* Previous Addresses Section */}
+                  {!isLoadingAddresses && previousAddresses.length > 0 && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        Select a Previous Address
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {previousAddresses.map((addr) => (
+                          <button
+                            key={addr.id}
+                            type="button"
+                            onClick={() => {
+                              setAddressData({
+                                receiverName: addr.full_name || '',
+                                address: addr.address_line_1 || '',
+                                city: addr.city || '',
+                                country: addr.country || ''
+                              });
+                            }}
+                            className="text-left p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-[#1E88E5] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900 dark:text-white text-sm">
+                                  {addr.full_name || 'Unnamed Address'}
+                                </div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                  {addr.address_line_1}
+                                  {addr.address_line_2 && `, ${addr.address_line_2}`}
+                                </div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">
+                                  {addr.city}, {addr.country}
+                                </div>
+                              </div>
+                              {addr.is_default && (
+                                <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                     <div className="space-y-3">
               <div>
@@ -1450,27 +1719,38 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           
           {/* Step 4: Completion */}
           {step === 4 && (
-            <div className="text-center py-8">
-              <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-500 dark:bg-green-900 dark:text-green-300">
-                <CheckCircleIcon className="w-10 h-10" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Quotation Submitted Successfully!</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Your quotation has been submitted and is now being reviewed by our team.
-                You&apos;ll receive a response shortly.
-              </p>
-              <div className="p-4 mb-6 bg-blue-50 dark:bg-blue-900/30 rounded-md">
-                <p className="text-blue-700 dark:text-blue-300 font-medium">
-                  Waiting for prices from supplier
+            <div className="flex flex-col items-center justify-center py-8 px-4 min-h-[400px]">
+              <div className="text-center max-w-md w-full">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  Quotation Submitted Successfully
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  Your quotation has been submitted and is being reviewed. You will receive a response via email shortly.
                 </p>
+                
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg px-4 py-2 mb-8 inline-block">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Status: <span className="font-medium">Pending Review</span>
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-6 py-2.5 bg-[#006cff] hover:bg-[#0052cc] dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full font-medium text-sm transition-colors"
+                  >
+                    Create New Quotation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full font-medium text-sm transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-2 bg-[#1E88E5] text-white rounded-md hover:bg-[#1976D2] transition-colors"
-              >
-                Close
-              </button>
             </div>
           )}
         </form>

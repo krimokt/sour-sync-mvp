@@ -106,6 +106,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
   } | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   
   // Get company slug from URL params (for client pages)
   const params = useParams();
@@ -386,7 +387,11 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
         // Set company settings if we found them
         if (companyData) {
           setCompanySettings(companyData);
+          if (companyId) {
+            setCompanyId(companyId);
+          }
           console.log('Company settings loaded:', {
+            company_id: companyId,
             quotation_countries: companyData.quotation_countries,
             quotation_input_fields: companyData.quotation_input_fields,
             source: storeCompany ? 'StoreContext' : companySlugFromUrl ? 'URL slug' : 'Profile'
@@ -743,8 +748,55 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           })
       );
       
+      // Get company_id - try multiple sources to ensure we have it for RLS policy
+      let finalCompanyId = companyId;
+      if (!finalCompanyId && sessionData?.session?.user?.id) {
+        // Try to get company_id from user profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('id', sessionData.session.user.id)
+          .single();
+        
+        if (profile?.company_id) {
+          finalCompanyId = profile.company_id;
+        } else {
+          // Try to get company_id from clients table (for client users)
+          const { data: client } = await supabase
+            .from('clients')
+            .select('company_id')
+            .eq('user_id', sessionData.session.user.id)
+            .eq('status', 'active')
+            .maybeSingle();
+          
+          if (client?.company_id) {
+            finalCompanyId = client.company_id;
+          }
+        }
+      }
+      
+      // If still no company_id and we have a company slug from URL, fetch it
+      // Note: This will only work if the user has access to this company (checked by RLS)
+      if (!finalCompanyId && companySlugFromUrl) {
+        const { data: company } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('slug', companySlugFromUrl)
+          .maybeSingle();
+        
+        if (company?.id) {
+          finalCompanyId = company.id;
+        }
+      }
+      
+      // Validate that we have a company_id (required for RLS policy)
+      if (!finalCompanyId) {
+        throw new Error('Unable to determine company. Please ensure you are associated with a company or accessing the correct company page.');
+      }
+      
       // Create the quotation record
       console.log('Debug - formData shipping method:', formData.shippingMethod);
+      console.log('Debug - company_id for insert:', finalCompanyId);
       
       const { data: quotationData, error: insertError } = await supabase
         .from('quotations')
@@ -761,6 +813,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           status: 'Pending',
           image_url: imageUrls.length > 0 ? imageUrls[0] : null,
           user_id: sessionData?.session?.user?.id,
+          company_id: finalCompanyId, // Required for RLS policy
           quotation_id: `QT-${Date.now()}`,
           title_option1: '',
           total_price_option1: '0',

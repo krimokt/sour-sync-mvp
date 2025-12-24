@@ -15,9 +15,10 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useClient } from '@/context/ClientContext';
 import StatCard from '@/components/common/StatCard';
-import { Send, CheckCircle, Clock, X, Package, Plus, ChevronUp, ChevronDown, Eye, Download, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { Send, CheckCircle, Clock, X, Package, Plus, ChevronUp, ChevronDown, Eye, Download, ZoomIn, ZoomOut, RotateCw, Layers, Truck } from 'lucide-react';
 import QuotationFormModal from '@/components/quotation/QuotationFormModal';
 import Button from '@/components/ui/button/Button';
+import { VariantGroup } from '@/types/database';
 import {
   ColumnDef,
   flexRender,
@@ -71,6 +72,8 @@ interface QuotationData {
   selected_option?: number;
   quotation_fees?: string;
   user_id?: string;
+  variant_groups?: VariantGroup[];
+  notes?: string;
 }
 
 interface QuotationMetrics {
@@ -298,11 +301,16 @@ export default function ClientQuotationsPage() {
               try {
                 const { data, error } = await supabase
                   .from('quotations')
-                  .select('*')
+                  .select('*, variant_groups')
                   .eq('id', quotation.id)
                   .single();
                 if (error) throw error;
-                setFullQuotationData(data);
+                // Ensure variant_groups is properly typed
+                const quotationData = {
+                  ...data,
+                  variant_groups: (data as any).variant_groups || null
+                } as QuotationData;
+                setFullQuotationData(quotationData);
               } catch (err) {
                 console.error('Error fetching full quotation data:', err);
                 setFullQuotationData(quotation);
@@ -659,9 +667,61 @@ export default function ClientQuotationsPage() {
                   </div>
                 </div>
 
+                {/* Variant Groups */}
+                {fullQuotationData?.variant_groups && fullQuotationData.variant_groups.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-[#06b6d4]" />
+                      Variant Groups
+                    </h3>
+                    <div className="space-y-4">
+                      {fullQuotationData.variant_groups.map((group, groupIndex) => (
+                        <div key={groupIndex} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                          <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-base">
+                            {group.name || `Group ${groupIndex + 1}`}
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {group.values && group.values.length > 0 ? (
+                              group.values.map((value, valueIndex) => (
+                                <div key={valueIndex} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                                  {value.images && value.images.length > 0 && (
+                                    <div className="relative w-12 h-12 flex-shrink-0 rounded-md overflow-hidden border border-gray-200 dark:border-gray-600">
+                                      <Image 
+                                        src={value.images[0]} 
+                                        alt={value.name} 
+                                        fill 
+                                        className="object-cover" 
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                      {value.name || `Value ${valueIndex + 1}`}
+                                    </p>
+                                    {value.moq && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        MOQ: {value.moq}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic p-3">
+                                No values in this group
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Shipping Information */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Truck className="w-5 h-5 text-[#06b6d4]" />
                     Shipping Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -679,6 +739,46 @@ export default function ClientQuotationsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Delivery Information */}
+                {fullQuotationData && fullQuotationData.selected_option && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-[#06b6d4]" />
+                      Delivery Information
+                    </h3>
+                    <div className="space-y-3">
+                      {fullQuotationData[`delivery_time_option${fullQuotationData.selected_option}` as keyof QuotationData] && (
+                        <div>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Estimated Delivery Time</span>
+                          <p className="text-gray-800 dark:text-gray-200 mt-1 font-medium">
+                            {fullQuotationData[`delivery_time_option${fullQuotationData.selected_option}` as keyof QuotationData] as string}
+                          </p>
+                        </div>
+                      )}
+                      {fullQuotationData[`description_option${fullQuotationData.selected_option}` as keyof QuotationData] && (
+                        <div>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Delivery Details</span>
+                          <p className="text-gray-800 dark:text-gray-200 mt-1 whitespace-pre-wrap">
+                            {fullQuotationData[`description_option${fullQuotationData.selected_option}` as keyof QuotationData] as string}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {fullQuotationData?.notes && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Notes
+                    </h3>
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                      {fullQuotationData.notes}
+                    </p>
+                  </div>
+                )}
 
                 {/* Price Options */}
                 {fullQuotationData && (fullQuotationData.title_option1 || fullQuotationData.title_option2 || fullQuotationData.title_option3) && (

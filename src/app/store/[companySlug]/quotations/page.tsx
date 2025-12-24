@@ -18,6 +18,7 @@ import StatCard from '@/components/common/StatCard';
 import { Send, CheckCircle, Clock, X, Eye, Edit, Save, Loader2, Upload, Trash2 } from 'lucide-react';
 import QuotationReviewModal from '@/components/quotation/QuotationReviewModal';
 import { Modal } from '@/components/ui/modal';
+import { VariantGroup } from '@/types/database';
 
 // Constants
 const ITEMS_PER_PAGE = 10;
@@ -42,6 +43,7 @@ interface QuotationData {
   notes?: string;
   total_price_option1?: string;
   user_id?: string;
+  variant_groups?: VariantGroup[];
 }
 
 interface QuotationMetrics {

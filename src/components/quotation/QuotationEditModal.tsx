@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { customToast } from "@/components/ui/toast";
 import PriceOptionsModal from "./PriceOptionsModal";
 import Image from 'next/image';
+import { VariantGroup } from '@/types/database';
 
 interface QuotationEditModalProps {
   isOpen: boolean;
@@ -288,6 +289,62 @@ export default function QuotationEditModal({ isOpen, onClose, quotation, onUpdat
                     </div>
                   </div>
                 </div>
+
+                {/* Variant Groups Display */}
+                {quotation.variant_groups && quotation.variant_groups.length > 0 && (
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6 pb-6">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                      Variant Groups
+                    </label>
+                    <div className="space-y-4">
+                      {(quotation.variant_groups as VariantGroup[]).map((group, groupIndex) => (
+                        <div key={groupIndex} className="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                            {group.name || `Group ${groupIndex + 1}`}
+                          </h4>
+                          <div className="space-y-2">
+                            {group.values && group.values.length > 0 ? (
+                              group.values.map((value, valueIndex) => (
+                                <div key={valueIndex} className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
+                                  <div className="flex items-start gap-4">
+                                    <div className="flex-1">
+                                      <div className="font-medium text-gray-900 dark:text-white mb-1">
+                                        {value.name || `Value ${valueIndex + 1}`}
+                                      </div>
+                                      {value.moq && (
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                                          MOQ: {value.moq}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {value.images && value.images.length > 0 && (
+                                      <div className="flex gap-2">
+                                        {value.images.map((imageUrl, imgIndex) => (
+                                          <div key={imgIndex} className="relative w-16 h-16 overflow-hidden rounded-md border border-gray-300 dark:border-gray-600">
+                                            <Image
+                                              src={imageUrl}
+                                              alt={`${value.name} variant image`}
+                                              fill
+                                              className="object-cover"
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                No values in this group
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6 pb-6 space-y-4">
                   <div>

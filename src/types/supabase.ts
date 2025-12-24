@@ -284,6 +284,7 @@ export interface Database {
           description_option3?: string
           image_option3?: string
           user_id: string
+          variant_groups?: unknown
         }
         Insert: {
           id?: string
@@ -316,6 +317,7 @@ export interface Database {
           description_option3?: string
           image_option3?: string
           user_id?: string
+          variant_groups?: unknown
         }
         Update: {
           id?: string
@@ -348,6 +350,7 @@ export interface Database {
           description_option3?: string
           image_option3?: string
           user_id?: string
+          variant_groups?: unknown
         }
       }
     }

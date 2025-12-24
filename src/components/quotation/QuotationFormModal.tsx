@@ -12,6 +12,20 @@ import {
 import { useDropzone } from "react-dropzone";
 import { countries as countryCodes } from 'country-flag-icons';
 import { supabase } from "@/lib/supabase";
+import { VariantGroup, VariantValue } from '@/types/database';
+import { Plus, X } from 'lucide-react';
+import { useStore } from '@/context/StoreContext';
+import { useParams } from 'next/navigation';
+
+// Try to import ClientContext if available (for client pages)
+let useClientHook: (() => { company?: { id: string; quotation_countries?: string[] | null; quotation_input_fields?: string[] | null } | null }) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const clientContext = require('@/context/ClientContext');
+  useClientHook = clientContext.useClient;
+} catch {
+  // ClientContext not available, that's okay
+}
 
 // Helper to validate Supabase image URLs
 const isValidImageUrl = (url: string | null | undefined) =>
@@ -88,7 +102,52 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
   const [step, setStep] = useState(1);
   const [countries, setCountries] = useState<CountryData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companySettings, setCompanySettings] = useState<{
+    quotation_countries?: string[] | null;
+    quotation_input_fields?: string[] | null;
+  } | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  
+  // Get company slug from URL params (for client pages)
+  const params = useParams();
+  const companySlugFromUrl = params?.companySlug as string | undefined;
+  
+  // Try to get company from ClientContext (for client pages)
+  let clientCompany = null;
+  if (useClientHook) {
+    try {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const client = useClientHook();
+      clientCompany = client?.company;
+    } catch {
+      // ClientContext not available, that's okay
+    }
+  }
+  
+  // Try to get company from StoreContext, but don't fail if not available
+  let storeCompany = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const store = useStore();
+    storeCompany = store?.company;
+  } catch {
+    // StoreContext not available, will fetch company data
+  }
+  const [userProfile, setUserProfile] = useState<{
+    address?: string | null;
+    city?: string | null;
+    country?: string | null;
+  } | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [addressData, setAddressData] = useState({
+    receiverName: '',
+    address: '',
+    city: '',
+    country: ''
+  });
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [formData, setFormData] = useState({
     productName: "",
     productUrl: "",
@@ -98,8 +157,62 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     destinationCity: "",
     shippingMethod: "",
     serviceType: "",
+    variantGroups: [] as VariantGroup[],
   });
+  const [variantValueImages, setVariantValueImages] = useState<Record<string, File | null>>({});
   
+  // Handle variant value image upload
+  const handleVariantValueImageChange = (valueId: string, file: File | null) => {
+    setVariantValueImages(prev => ({
+      ...prev,
+      [valueId]: file
+    }));
+  };
+
+  const removeVariantValueImage = (valueId: string) => {
+    setVariantValueImages(prev => {
+      const newImages = { ...prev };
+      delete newImages[valueId];
+      return newImages;
+    });
+    // Also remove from variant value images array
+    const groupIndex = formData.variantGroups.findIndex(g => 
+      g.values.some(v => v.id === valueId)
+    );
+    if (groupIndex !== -1) {
+      const valueIndex = formData.variantGroups[groupIndex].values.findIndex(v => v.id === valueId);
+      if (valueIndex !== -1) {
+        updateVariantValue(groupIndex, valueIndex, 'images', []);
+      }
+    }
+  };
+
+  // Drag and drop handlers for variant value images
+  const [draggedVariantValueId, setDraggedVariantValueId] = useState<string | null>(null);
+
+  const handleVariantImageDrag = (e: React.DragEvent, valueId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDraggedVariantValueId(valueId);
+    } else if (e.type === 'dragleave') {
+      setDraggedVariantValueId(null);
+    }
+  };
+
+  const handleVariantImageDrop = (e: React.DragEvent, valueId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedVariantValueId(null);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        handleVariantValueImageChange(valueId, file);
+      }
+    }
+  };
+
   useEffect(() => {
     // Generate country list from country codes with error handling
     const countryList: CountryData[] = countryCodes
@@ -160,15 +273,179 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     setCountries(countryList);
   }, []);
   
-  // Filter countries based on search query
-  const filteredCountries = useMemo(() => {
-    if (!searchQuery.trim()) return countries;
+  // Fetch user profile data when modal opens
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!isOpen) return;
+      
+      setIsLoadingProfile(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('address, city, country')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching profile:', error);
+          } else if (profile) {
+            setUserProfile(profile);
+            // Auto-populate address data and form data with profile address
+            setAddressData({
+              receiverName: profile.full_name || '',
+              address: profile.address || '',
+              city: profile.city || '',
+              country: profile.country || ''
+            });
+            if (profile.country) {
+              setFormData(prev => ({
+                ...prev,
+                destinationCountry: profile.country?.toLowerCase() || '',
+                destinationCity: profile.city || ''
+              }));
+            }
+          } else {
+            // No profile found, initialize empty address data
+            setAddressData({
+              receiverName: '',
+              address: '',
+              city: '',
+              country: ''
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
     
-    return countries.filter(country => 
-      country.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      country.code.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [countries, searchQuery]);
+    fetchUserProfile();
+  }, [isOpen]);
+
+  // Fetch company settings (quotation_countries and quotation_input_fields)
+  useEffect(() => {
+    const fetchCompanySettings = async () => {
+      if (!isOpen) return;
+      
+      setIsLoadingSettings(true);
+      try {
+        let companyId: string | null = null;
+        let companyData: { quotation_countries?: any; quotation_input_fields?: any } | null = null;
+        
+        // Priority 1: Try to get company from ClientContext (for client pages)
+        if (clientCompany?.id) {
+          companyId = clientCompany.id;
+          companyData = {
+            quotation_countries: clientCompany.quotation_countries || null,
+            quotation_input_fields: clientCompany.quotation_input_fields || null
+          };
+        }
+        // Priority 2: Try to get company from StoreContext
+        else if (storeCompany?.id) {
+          companyId = storeCompany.id;
+          companyData = {
+            quotation_countries: storeCompany.quotation_countries || null,
+            quotation_input_fields: storeCompany.quotation_input_fields || null
+          };
+        } 
+        // Priority 3: Try to get company from URL slug (for client pages)
+        else if (companySlugFromUrl) {
+          const { data: company, error } = await supabase
+            .from('companies')
+            .select('id, quotation_countries, quotation_input_fields')
+            .eq('slug', companySlugFromUrl)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching company by slug:', error);
+          } else if (company) {
+            companyId = company.id;
+            companyData = {
+              quotation_countries: company.quotation_countries,
+              quotation_input_fields: company.quotation_input_fields
+            };
+          }
+        }
+        // Priority 4: Fetch from user's profile
+        else {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('company_id')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (profile?.company_id) {
+              companyId = profile.company_id;
+              
+              // Fetch company settings
+              const { data: company, error } = await supabase
+                .from('companies')
+                .select('quotation_countries, quotation_input_fields')
+                .eq('id', companyId)
+                .single();
+              
+              if (error) {
+                console.error('Error fetching company settings:', error);
+              } else if (company) {
+                companyData = {
+                  quotation_countries: company.quotation_countries,
+                  quotation_input_fields: company.quotation_input_fields
+                };
+              }
+            }
+          }
+        }
+        
+        // Set company settings if we found them
+        if (companyData) {
+          setCompanySettings(companyData);
+          console.log('Company settings loaded:', {
+            quotation_countries: companyData.quotation_countries,
+            quotation_input_fields: companyData.quotation_input_fields,
+            source: clientCompany ? 'ClientContext' : storeCompany ? 'StoreContext' : companySlugFromUrl ? 'URL slug' : 'Profile'
+          });
+        } else {
+          console.log('No company settings found');
+        }
+      } catch (error) {
+        console.error('Error fetching company settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+    
+    fetchCompanySettings();
+  }, [isOpen, storeCompany, companySlugFromUrl, clientCompany]);
+
+  // Filter countries based on search query and company settings
+  const filteredCountries = useMemo(() => {
+    let filtered = countries;
+    
+    // Filter by company's quotation_countries if set
+    if (companySettings?.quotation_countries && Array.isArray(companySettings.quotation_countries) && companySettings.quotation_countries.length > 0) {
+      const allowedCodes = companySettings.quotation_countries.map(c => String(c).toLowerCase().trim()).filter(Boolean);
+      filtered = filtered.filter(country => {
+        const countryCode = country.code.toLowerCase().trim();
+        return allowedCodes.includes(countryCode);
+      });
+    }
+    
+    // Apply search query filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(country => 
+        country.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        country.code.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [countries, searchQuery, companySettings]);
   
   // Get country region
   const getCountryRegion = (countryCode: string) => {
@@ -198,7 +475,26 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
   // Handle search query change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setIsCountryDropdownOpen(true); // Keep dropdown open when typing
   };
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.country-dropdown-container')) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+    
+    if (isCountryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCountryDropdownOpen]);
 
   // Handle file upload with dropzone
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -226,6 +522,66 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
     }));
   };
 
+  // Variant Group functions
+  const addVariantGroup = () => {
+    const newGroup: VariantGroup = {
+      id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: "",
+      values: [],
+    };
+    setFormData(prev => ({
+      ...prev,
+      variantGroups: [...prev.variantGroups, newGroup],
+    }));
+  };
+
+  const updateVariantGroup = (index: number, field: keyof VariantGroup, value: string) => {
+    const newGroups = [...formData.variantGroups];
+    (newGroups[index] as any)[field] = value;
+    setFormData(prev => ({
+      ...prev,
+      variantGroups: newGroups,
+    }));
+  };
+
+  const removeVariantGroup = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      variantGroups: prev.variantGroups.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addVariantValue = (groupIndex: number) => {
+    const newGroups = [...formData.variantGroups];
+    const newValue: VariantValue = {
+      id: `value-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: "",
+    };
+    newGroups[groupIndex].values.push(newValue);
+    setFormData(prev => ({
+      ...prev,
+      variantGroups: newGroups,
+    }));
+  };
+
+  const updateVariantValue = (groupIndex: number, valueIndex: number, field: keyof VariantValue, value: string | string[] | number | undefined) => {
+    const newGroups = [...formData.variantGroups];
+    (newGroups[groupIndex].values[valueIndex] as any)[field] = value;
+    setFormData(prev => ({
+      ...prev,
+      variantGroups: newGroups,
+    }));
+  };
+
+  const removeVariantValue = (groupIndex: number, valueIndex: number) => {
+    const newGroups = [...formData.variantGroups];
+    newGroups[groupIndex].values = newGroups[groupIndex].values.filter((_, i) => i !== valueIndex);
+    setFormData(prev => ({
+      ...prev,
+      variantGroups: newGroups,
+    }));
+  };
+
   // Navigate to next step
   const nextStep = () => {
     // Validate fields for the current step
@@ -239,16 +595,9 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
         return;
       }
     } else if (step === 2) {
-      if (!formData.destinationCountry) {
-        alert("Please select a destination country");
-        return;
-      }
-      if (!formData.destinationCity.trim()) {
-        alert("Please enter a destination city");
-        return;
-      }
-      if (!formData.shippingMethod) {
-        alert("Please select a shipping method");
+      // Validate that address information is provided
+      if (!addressData.receiverName.trim() || !addressData.address.trim() || !addressData.city.trim() || !addressData.country) {
+        alert("Please fill in all address fields (receiver name, address, city, and country)");
         return;
       }
     }
@@ -279,23 +628,39 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
       return;
     }
     
-    if (!formData.destinationCountry) {
-      alert("Please select a destination country");
+    // Validate that address information is provided
+    if (!addressData.receiverName.trim() || !addressData.address.trim() || !addressData.city.trim() || !addressData.country) {
+      alert("Please fill in all address fields (receiver name, address, city, and country)");
       setStep(2);
       return;
     }
     
-    if (!formData.destinationCity.trim()) {
-      alert("Please enter a destination city");
-      setStep(2);
-      return;
+    // Save address to user profile
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: addressData.receiverName,
+            address: addressData.address,
+            city: addressData.city,
+            country: addressData.country.toUpperCase(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', sessionData.session.user.id);
+        
+        if (updateError) {
+          console.error('Error saving address to profile:', updateError);
+          // Continue with quotation submission even if profile update fails
+        }
+      }
+    } catch (error) {
+      console.error('Error saving address:', error);
+      // Continue with quotation submission even if profile update fails
     }
     
-    if (!formData.shippingMethod) {
-      alert("Please select a shipping method");
-      setStep(2);
-      return;
-    }
+    // Shipping method is no longer required as we use personal address
     
     if (!formData.serviceType) {
       alert("Please select a service type");
@@ -311,7 +676,7 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
       // Get the current user session
       const { data: sessionData } = await supabase.auth.getSession();
       
-      // Upload images first if any
+      // Upload product images first if any
       const imageUrls: string[] = [];
       if (formData.productImages.length > 0) {
         for (const file of formData.productImages) {
@@ -347,6 +712,63 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           }
         }
       }
+
+      // Upload variant value images and update variant groups
+      const processedVariantGroups = await Promise.all(
+        formData.variantGroups
+          .filter(g => g.name && g.values.length > 0)
+          .map(async (group) => {
+            const processedValues = await Promise.all(
+              group.values.map(async (value) => {
+                let imageUrls: string[] = [];
+                
+                // Upload new image file if exists
+                if (variantValueImages[value.id]) {
+                  try {
+                    const file = variantValueImages[value.id]!;
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `variant-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+                    const filePath = `${fileName}`;
+                    
+                    const { error: uploadError } = await supabase.storage
+                      .from('quotation_images')
+                      .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                      });
+                    
+                    if (!uploadError) {
+                      const { data: { publicUrl } } = supabase.storage
+                        .from('quotation_images')
+                        .getPublicUrl(filePath);
+                      
+                      if (publicUrl) {
+                        imageUrls = [publicUrl];
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error uploading variant image:', error);
+                    // Keep existing images if upload fails
+                    imageUrls = value.images || [];
+                  }
+                } else {
+                  // Keep existing images if no new file
+                  imageUrls = value.images || [];
+                }
+                
+                return {
+                  ...value,
+                  images: imageUrls
+                };
+              })
+            );
+            
+            return {
+              ...group,
+              values: processedValues
+            };
+          })
+      );
       
       // Create the quotation record
       console.log('Debug - formData shipping method:', formData.shippingMethod);
@@ -357,9 +779,11 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           product_name: formData.productName,
           product_url: formData.productUrl,
           quantity: parseInt(formData.quantity, 10),
-          shipping_country: formData.destinationCountry,
-          shipping_city: formData.destinationCity,
-          shipping_method: mapShippingMethodToDbValue(formData.shippingMethod),
+          shipping_country: addressData.country.toUpperCase(),
+          shipping_city: addressData.city,
+          destination_country: addressData.country.toUpperCase(),
+          destination_city: addressData.city,
+          shipping_method: formData.shippingMethod ? mapShippingMethodToDbValue(formData.shippingMethod) : 'Air', // Default to Air if not set
           service_type: formData.serviceType,
           status: 'Pending',
           image_url: imageUrls.length > 0 ? imageUrls[0] : null,
@@ -367,7 +791,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
           quotation_id: `QT-${Date.now()}`,
           title_option1: '',
           total_price_option1: '0',
-          delivery_time_option1: 'To be determined'
+          delivery_time_option1: 'To be determined',
+          variant_groups: processedVariantGroups.length > 0 ? processedVariantGroups : null
         } as never)
         .select();
         
@@ -440,52 +865,81 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Product Information</h3>
               
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Product Name *
-                </label>
-                <input
-                  type="text"
-                  name="productName"
-                  value={formData.productName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  required
-                />
-              </div>
+              {/* Helper function to check if field should be shown */}
+              {(() => {
+                const shouldShowField = (fieldId: string) => {
+                  // If no settings, show all fields (backward compatibility)
+                  if (!companySettings?.quotation_input_fields || companySettings.quotation_input_fields.length === 0) {
+                    return true;
+                  }
+                  return companySettings.quotation_input_fields.includes(fieldId);
+                };
+                
+                return (
+                  <>
+                    {shouldShowField('product_name') && (
+                      <div>
+                        <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Product Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="productName"
+                          value={formData.productName}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          required
+                        />
+                      </div>
+                    )}
+                    
+                    {shouldShowField('product_url') && (
+                      <div>
+                        <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Alibaba Product URL*
+                        </label>
+                        <input
+                          type="text"
+                          name="productUrl"
+                          value={formData.productUrl}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        />
+                      </div>
+                    )}
+                    
+                    {shouldShowField('quantity') && (
+                      <div>
+                        <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Quantity Required *
+                        </label>
+                        <input
+                          type="number"
+                          name="quantity"
+                          value={formData.quantity}
+                          onChange={handleChange}
+                          min="1"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                          required
+                        />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Alibaba Product URL*
-                </label>
-                <input
-                  type="text"
-                  name="productUrl"
-                  value={formData.productUrl}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Quantity Required *
-                </label>
-                <input
-                  type="number"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  min="1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Product Images
-                </label>
+              {(() => {
+                const shouldShowField = (fieldId: string) => {
+                  if (!companySettings?.quotation_input_fields || companySettings.quotation_input_fields.length === 0) {
+                    return true;
+                  }
+                  return companySettings.quotation_input_fields.includes(fieldId);
+                };
+                return shouldShowField('product_images') ? (
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Product Images
+                    </label>
                 <div className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-[#1E88E5] dark:border-gray-700 rounded-xl hover:border-[#1E88E5]">
                   <div
                     {...getRootProps()}
@@ -567,6 +1021,198 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                     </div>
                   </div>
                 )}
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Variant Groups Section - Always shown as it's not in quotation_input_fields */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Variant Groups
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Create groups like Color, Size, Material, etc.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addVariantGroup}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#1E88E5] hover:text-[#1976D2] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Group
+                  </button>
+                </div>
+
+                {formData.variantGroups.length === 0 ? (
+                  <div className="text-center py-6 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-700 border-dashed rounded-lg">
+                    <p className="text-sm">No variant groups added</p>
+                    <p className="text-xs mt-1">Examples: Color, Size, Material, Voltage, Packaging</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {formData.variantGroups.map((group, groupIndex) => (
+                      <div key={group.id} className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                        <div className="flex items-center gap-3 mb-4">
+                          <input
+                            type="text"
+                            value={group.name}
+                            onChange={(e) => updateVariantGroup(groupIndex, 'name', e.target.value)}
+                            placeholder="Group name (e.g., Color, Size)"
+                            className="flex-1 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] transition-colors"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeVariantGroup(groupIndex)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {group.values.map((value, valueIndex) => (
+                            <div key={value.id} className="p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md">
+                              <div className="grid grid-cols-12 gap-3 items-start">
+                                <div className="col-span-4">
+                                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                    Value Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={value.name}
+                                    onChange={(e) => updateVariantValue(groupIndex, valueIndex, 'name', e.target.value)}
+                                    placeholder="e.g., Black, White, S, M"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] transition-colors"
+                                  />
+                                </div>
+                                
+                                <div className="col-span-3">
+                                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                    MOQ (Optional)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={value.moq || ''}
+                                    onChange={(e) => updateVariantValue(groupIndex, valueIndex, 'moq', e.target.value ? parseInt(e.target.value) : undefined)}
+                                    placeholder="MOQ"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] transition-colors"
+                                  />
+                                </div>
+                                
+                                <div className="col-span-5">
+                                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                    Image (Optional)
+                                  </label>
+                                  <div className="min-h-[80px]">
+                                    {variantValueImages[value.id] || (value.images && value.images.length > 0) ? (
+                                      <div className="relative">
+                                        <div className="relative w-20 h-20 overflow-hidden rounded-md border border-gray-300 dark:border-gray-600 group">
+                                          {variantValueImages[value.id] ? (
+                                            <Image
+                                              src={URL.createObjectURL(variantValueImages[value.id]!)}
+                                              alt={`Variant image`}
+                                              fill
+                                              className="object-cover"
+                                            />
+                                          ) : value.images && value.images[0] ? (
+                                            <Image
+                                              src={value.images[0]}
+                                              alt={`Variant image`}
+                                              fill
+                                              className="object-cover"
+                                            />
+                                          ) : null}
+                                          <button
+                                            type="button"
+                                            onClick={() => removeVariantValueImage(value.id)}
+                                            className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                          >
+                                            <X className="w-3 h-3 text-white" />
+                                          </button>
+                                        </div>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            handleVariantValueImageChange(value.id, file);
+                                          }}
+                                          className="hidden"
+                                          id={`variant-image-${value.id}`}
+                                        />
+                                        <label
+                                          htmlFor={`variant-image-${value.id}`}
+                                          className="mt-2 block text-xs text-[#1E88E5] hover:text-[#1976D2] cursor-pointer underline"
+                                        >
+                                          Change image
+                                        </label>
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            handleVariantValueImageChange(value.id, file);
+                                          }}
+                                          className="hidden"
+                                          id={`variant-image-${value.id}`}
+                                        />
+                                        <div
+                                          onDragEnter={(e) => handleVariantImageDrag(e, value.id)}
+                                          onDragOver={(e) => handleVariantImageDrag(e, value.id)}
+                                          onDragLeave={(e) => handleVariantImageDrag(e, value.id)}
+                                          onDrop={(e) => handleVariantImageDrop(e, value.id)}
+                                          className={`flex flex-col items-center justify-center w-full h-20 border-2 border-dashed rounded-md cursor-pointer transition-colors ${
+                                            draggedVariantValueId === value.id
+                                              ? "border-[#1E88E5] bg-blue-50 dark:bg-blue-900/20"
+                                              : "border-gray-300 dark:border-gray-600 hover:border-[#1E88E5] dark:hover:border-[#1E88E5]"
+                                          }`}
+                                          onClick={() => document.getElementById(`variant-image-${value.id}`)?.click()}
+                                        >
+                                          <svg
+                                            className="w-6 h-6 text-gray-400 mb-1"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                            />
+                                          </svg>
+                                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            {draggedVariantValueId === value.id ? "Drop image here" : "Click or drag to upload"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          <button
+                            type="button"
+                            onClick={() => addVariantValue(groupIndex)}
+                            className="w-full px-3 py-2 text-sm text-[#1E88E5] hover:text-[#1976D2] hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-dashed border-gray-300 dark:border-gray-600 rounded-md transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Value
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <div className="flex justify-end mt-6">
@@ -581,106 +1227,150 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
             </div>
           )}
 
-          {/* Step 2: Shipping Information */}
+          {/* Step 2: Personal Address Information */}
           {step === 2 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Shipping Information</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Personal Address Information</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Enter your address information. This will be saved to your profile for future quotations.
+              </p>
               
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Destination Country *
-                </label>
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    placeholder="Search countries..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-2"
-                  />
-                  
-                  <div className="h-[200px] overflow-y-auto border border-gray-300 rounded-md">
-                    {filteredCountries.map((country) => (
-                      <div
-                        key={country.code}
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            destinationCountry: country.code,
-                            shippingMethod: ""
-                          });
-                          setSearchQuery("");
-                        }}
-                        className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                          formData.destinationCountry === country.code
-                            ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200"
-                            : ""
-                        }`}
-                      >
-                        <span className="text-xl">{country.emoji}</span>
-                        <span>{country.name}</span>
+              {isLoadingProfile ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E88E5]"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Receiver Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={addressData.receiverName}
+                          onChange={(e) => setAddressData(prev => ({ ...prev, receiverName: e.target.value }))}
+                          placeholder="Enter receiver's full name"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5]"
+                          required
+                        />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Destination City *
-                </label>
-                <input
-                  type="text"
-                  name="destinationCity"
-                  value={formData.destinationCity}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Shipping Method *
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {formData.destinationCountry && getShippingMethods(getCountryRegion(formData.destinationCountry)).map((method) => (
-                    <div
-                      key={method}
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          shippingMethod: method
-                        });
-                      }}
-                      className={`flex items-center justify-center gap-2 p-3 cursor-pointer border rounded-md transition-colors ${
-                        formData.shippingMethod === method
-                          ? "border-[#1E88E5] bg-blue-50 text-[#1E88E5] dark:bg-blue-900 dark:text-blue-200"
-                          : "border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600"
-                      }`}
-                    >
-                      {method}
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Address *
+                        </label>
+                        <input
+                          type="text"
+                          value={addressData.address}
+                          onChange={(e) => setAddressData(prev => ({ ...prev, address: e.target.value }))}
+                          placeholder="Enter your address"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5]"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          value={addressData.city}
+                          onChange={(e) => setAddressData(prev => ({ ...prev, city: e.target.value }))}
+                          placeholder="Enter your city"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5]"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Country *
+                        </label>
+                        <div className="mb-4 relative country-dropdown-container">
+                          <input
+                            type="text"
+                            placeholder="Search countries..."
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            onFocus={() => setIsCountryDropdownOpen(true)}
+                            onClick={() => setIsCountryDropdownOpen(true)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-[#1E88E5] dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-2"
+                          />
+                          
+                          {isCountryDropdownOpen && filteredCountries.length > 0 && (
+                            <div className="absolute z-10 w-full h-[200px] overflow-y-auto border border-gray-300 rounded-md bg-white dark:bg-gray-800 shadow-lg">
+                              {filteredCountries.map((country) => (
+                                <div
+                                  key={country.code}
+                                  onClick={() => {
+                                    setAddressData(prev => ({ ...prev, country: country.code }));
+                                    setSearchQuery("");
+                                    setIsCountryDropdownOpen(false);
+                                  }}
+                                  className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                    addressData.country === country.code
+                                      ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200"
+                                      : ""
+                                  }`}
+                                >
+                                  <span className="text-xl">{country.emoji}</span>
+                                  <span>{country.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {isCountryDropdownOpen && filteredCountries.length === 0 && (
+                            <div className="absolute z-10 w-full border border-gray-300 rounded-md bg-white dark:bg-gray-800 shadow-lg p-4 text-center text-gray-500 dark:text-gray-400">
+                              {searchQuery.trim() 
+                                ? "No countries found matching your search"
+                                : companySettings?.quotation_countries && companySettings.quotation_countries.length > 0
+                                  ? "No countries available. Please contact support to add countries to your quotation settings."
+                                  : "No countries found"}
+                            </div>
+                          )}
+                        </div>
+                        {addressData.country && (
+                          <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white flex items-center gap-2">
+                            <span className="text-xl">{getCountryEmoji(addressData.country.toUpperCase())}</span>
+                            <span>{countries.find(c => c.code === addressData.country?.toLowerCase())?.name || addressData.country}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAddressData(prev => ({ ...prev, country: '' }));
+                                setSearchQuery('');
+                              }}
+                              className="ml-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="flex justify-between mt-6">
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="flex items-center px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <ChevronLeftIcon className="w-4 h-4 mr-2" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="flex items-center px-6 py-2 bg-[#1E88E5] text-white rounded-md hover:bg-[#1976D2] transition-colors"
-                >
-                  Next <ArrowRightIcon className="w-4 h-4 ml-2" />
-                </button>
-              </div>
+                  </div>
+                  
+                  <div className="flex justify-between mt-6">
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="flex items-center px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <ChevronLeftIcon className="w-4 h-4 mr-2" /> Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      disabled={!addressData.receiverName.trim() || !addressData.address.trim() || !addressData.city.trim() || !addressData.country}
+                      className="flex items-center px-6 py-2 bg-[#1E88E5] text-white rounded-md hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next <ArrowRightIcon className="w-4 h-4 ml-2" />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
           
@@ -727,14 +1417,10 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                     <span className="font-medium text-gray-800 dark:text-white">{formData.quantity}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Destination:</span>
+                    <span className="text-gray-600 dark:text-gray-300">Address:</span>
                     <span className="font-medium text-gray-800 dark:text-white">
-                      {formData.destinationCity}, {countries.find(c => c.code === formData.destinationCountry)?.name || ''}
+                      {addressData.address ? `${addressData.address}, ${addressData.city}, ${countries.find(c => c.code === addressData.country?.toLowerCase())?.name || addressData.country}` : 'Not set'}
                     </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Shipping Method:</span>
-                    <span className="font-medium text-gray-800 dark:text-white">{formData.shippingMethod}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-300">Service:</span>

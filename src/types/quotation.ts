@@ -64,4 +64,5 @@ export interface QuotationData {
   description_option3?: string;
   selected_option?: number;
   product_url?: string;
+  variant_groups?: import('./database').VariantGroup[];
 } 

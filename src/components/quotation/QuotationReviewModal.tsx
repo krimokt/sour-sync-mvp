@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Modal } from '@/components/ui/modal';
 import { CloseIcon } from '@/icons';
-import { Eye, Package, MapPin, Truck, FileText, Link as LinkIcon, Image as ImageIcon, CheckCircle, Loader2 } from 'lucide-react';
+import { Eye, Package, MapPin, Truck, FileText, Link as LinkIcon, Image as ImageIcon, CheckCircle, Loader2, Layers } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Button from '@/components/ui/button/Button';
+import { VariantGroup } from '@/types/database';
 
 interface QuotationReviewModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface QuotationReviewModalProps {
     product_images?: string[];
     created_at: string;
     status?: string;
+    variant_groups?: VariantGroup[];
   };
 }
 
@@ -123,6 +125,7 @@ export default function QuotationReviewModal({ isOpen, onClose, quotation }: Quo
         delivery_time_option3?: string | null;
         image_option3?: string | null;
         selected_option?: number | null;
+        variant_groups?: VariantGroup[] | null;
         [key: string]: unknown;
       };
 
@@ -358,6 +361,65 @@ export default function QuotationReviewModal({ isOpen, onClose, quotation }: Quo
               )}
             </div>
           </div>
+
+          {/* Variant Groups Section */}
+          {quotation.variant_groups && quotation.variant_groups.length > 0 && (
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-4">
+                <Layers className="w-5 h-5 text-[#06b6d4]" />
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Variant Groups</h3>
+              </div>
+              
+              <div className="space-y-4">
+                {quotation.variant_groups.map((group, groupIndex) => (
+                  <div key={groupIndex} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-base">
+                      {group.name || `Group ${groupIndex + 1}`}
+                    </h4>
+                    <div className="space-y-2">
+                      {group.values && group.values.length > 0 ? (
+                        group.values.map((value, valueIndex) => (
+                          <div key={valueIndex} className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
+                            <div className="flex items-start gap-4">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900 dark:text-white mb-1">
+                                  {value.name || `Value ${valueIndex + 1}`}
+                                </div>
+                                {value.moq && (
+                                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    MOQ: {value.moq}
+                                  </div>
+                                )}
+                              </div>
+                              {value.images && value.images.length > 0 && (
+                                <div className="flex gap-2">
+                                  {value.images.map((imageUrl, imgIndex) => (
+                                    <div key={imgIndex} className="relative w-16 h-16 overflow-hidden rounded-md border border-gray-300 dark:border-gray-600">
+                                      <Image
+                                        src={imageUrl}
+                                        alt={`${value.name} variant image`}
+                                        fill
+                                        className="object-cover"
+                                        unoptimized
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-gray-500 dark:text-gray-400 italic p-3">
+                          No values in this group
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Shipping Information Section */}
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 border border-gray-200 dark:border-gray-700">

@@ -7,10 +7,6 @@ import { ArrowRight, X, ChevronLeft, CheckCircle } from 'lucide-react';
 import { useDropzone } from "react-dropzone";
 import { countries as countryCodes } from 'country-flag-icons';
 
-// Helper to validate Supabase image URLs
-const isValidImageUrl = (url: string | null | undefined) =>
-  !!url && url.startsWith('https://cfhochnjniddaztgwrbk.supabase.co/');
-
 // Shipping methods based on destination region
 const getShippingMethods = (region: string) => {
   const methods = ["Sea Freight", "Air Freight"];
@@ -634,7 +630,7 @@ const QuotationFormModalWithToken: React.FC<QuotationFormModalWithTokenProps> = 
               Quotation Submitted Successfully!
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Your quotation request has been received. We'll review it and get back to you soon.
+              Your quotation request has been received. We&apos;ll review it and get back to you soon.
             </p>
             <button
               onClick={handleClose}

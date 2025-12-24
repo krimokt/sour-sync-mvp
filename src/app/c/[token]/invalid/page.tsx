@@ -5,7 +5,7 @@ interface InvalidTokenPageProps {
 }
 
 export default async function InvalidTokenPage({ params }: InvalidTokenPageProps) {
-  const { token } = await params;
+  await params;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
@@ -41,8 +41,8 @@ export default async function InvalidTokenPage({ params }: InvalidTokenPageProps
             </h3>
             <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1 list-disc list-inside">
               <li>Contact the company to request a new magic link</li>
-              <li>Make sure you're using the most recent link sent to you</li>
-              <li>Check that the link hasn't expired (links expire after 30 days)</li>
+              <li>Make sure you&apos;re using the most recent link sent to you</li>
+              <li>Check that the link hasn&apos;t expired (links expire after 30 days)</li>
             </ul>
           </div>
 

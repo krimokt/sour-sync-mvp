@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { Button } from '@/components/ui/button';
-import { Loader2, X, Copy, Check, Link2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -31,7 +31,6 @@ export default function MagicLinksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'used' | 'expired' | 'revoked'>('all');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMagicLinks();
@@ -54,7 +53,7 @@ export default function MagicLinksPage() {
       }
 
       // Fetch Magic Links
-      let query = supabase
+      const query = supabase
         .from('client_magic_links')
         .select(`
           *,
@@ -74,7 +73,10 @@ export default function MagicLinksPage() {
 
       // Filter by status
       const now = new Date();
-      let filteredLinks = (linksData || []).map((link: any) => ({
+      type SupabaseMagicLinkResponse = Omit<MagicLink, 'client'> & {
+        client: MagicLink['client'] | null;
+      };
+      let filteredLinks: MagicLink[] = (linksData as SupabaseMagicLinkResponse[] || []).map((link) => ({
         ...link,
         client: link.client || null,
       }));
@@ -145,13 +147,6 @@ export default function MagicLinksPage() {
     return { label: 'Active', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
   };
 
-  const copyLink = async (linkId: string) => {
-    // We can't get the plain token from the database (it's hashed)
-    // So we'll show a message that they need to generate a new link
-    toast.info('Cannot copy link - token is hashed. Generate a new link from the Clients page.');
-    setCopiedId(linkId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   if (isLoading) {
     return (

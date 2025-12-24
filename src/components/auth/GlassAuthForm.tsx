@@ -162,9 +162,15 @@ export default function GlassAuthForm({ initialMode = 'signin' }: GlassAuthFormP
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
+    const formCompanyName = formData.get('companyName') as string;
+    const formCompanySlug = formData.get('companySlug') as string;
+    
+    // Use form data if state is empty (fallback for edge cases)
+    const finalCompanyName = companyName || formCompanyName;
+    const finalCompanySlug = companySlug || formCompanySlug;
     
     // Validation
-    if (!fullName || !email || !password || !companyName || !companySlug) {
+    if (!fullName || !email || !password || !finalCompanyName || !finalCompanySlug) {
       alert('Please fill in all required fields');
       setIsLoading(false);
       return;
@@ -185,8 +191,8 @@ export default function GlassAuthForm({ initialMode = 'signin' }: GlassAuthFormP
           email,
           password,
           fullName,
-          companyName,
-          companySlug,
+          companyName: finalCompanyName,
+          companySlug: finalCompanySlug,
         }),
       });
 
@@ -204,7 +210,7 @@ export default function GlassAuthForm({ initialMode = 'signin' }: GlassAuthFormP
         // Auto login or redirect
         alert('Account created successfully! Redirecting...');
         // Use the slug we just created
-        window.location.href = `/store/${companySlug}`;
+        window.location.href = `/store/${finalCompanySlug}`;
       }
 
     } catch (err: unknown) {
@@ -263,10 +269,14 @@ export default function GlassAuthForm({ initialMode = 'signin' }: GlassAuthFormP
       onGoogleSignIn={handleGoogleSignIn}
       onResetPassword={handleResetPassword}
       onModeChange={setMode}
+      onCompanyNameChange={(e) => {
+        if (mode === 'signup') {
+          setCompanyName(e.target.value);
+        }
+      }}
       onSlugChange={(e) => {
         if (mode === 'signup') {
-          if (e.target.name === 'companyName') setCompanyName(e.target.value); // Capture this one too if passed
-          if (e.target.name === 'companySlug') handleSlugChange(e);
+          handleSlugChange(e);
         }
       }}
     />

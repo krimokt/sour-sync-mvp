@@ -418,7 +418,7 @@ const CheckoutConfirmationModal: React.FC<CheckoutConfirmationModalProps> = ({
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-gray-600">Product</span>
-                <p className="font-medium text-gray-900">{quotation.product_name || 'N/A'}</p>
+                <p className="font-medium text-gray-900">{quotation.product?.name || 'N/A'}</p>
               </div>
               <div>
                 <span className="text-gray-600">Quotation ID</span>
@@ -430,11 +430,11 @@ const CheckoutConfirmationModal: React.FC<CheckoutConfirmationModalProps> = ({
               </div>
               <div>
                 <span className="text-gray-600">Destination</span>
-                <p className="font-medium text-gray-900">{quotation.shipping_city || 'N/A'}, {quotation.shipping_country || 'N/A'}</p>
+                <p className="font-medium text-gray-900">{quotation.destination || 'N/A'}</p>
               </div>
               <div>
                 <span className="text-gray-600">Shipping Method</span>
-                <p className="font-medium text-gray-900">{quotation.shipping_method || 'Sea'}</p>
+                <p className="font-medium text-gray-900">{quotation.shippingMethod || 'Sea'}</p>
               </div>
             </div>
           </div>

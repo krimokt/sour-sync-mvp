@@ -2,9 +2,13 @@
 
 import Image from 'next/image';
 import { useMagicLink } from './MagicLinkProvider';
+import { usePathname } from 'next/navigation';
+import CreateQuotationButton from '@/app/c/[token]/quotations/CreateQuotationButton';
 
 export default function PortalHeader() {
   const { data } = useMagicLink();
+  const pathname = usePathname();
+  const token = pathname?.split('/')[2] || '';
   const company = data.company as { name?: string; logo_url?: string | null } | undefined;
 
   return (
@@ -34,6 +38,11 @@ export default function PortalHeader() {
               </p>
             </div>
           </div>
+          {data.scopes.includes('create') && token && (
+            <div className="flex items-center">
+              <CreateQuotationButton token={token} />
+            </div>
+          )}
         </div>
       </div>
     </header>

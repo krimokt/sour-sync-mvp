@@ -6,8 +6,7 @@ import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
 import QuotationCard from '@/components/portal/QuotationCard';
 import CreateQuotationButton from './CreateQuotationButton';
-import { Plus, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface Quotation {

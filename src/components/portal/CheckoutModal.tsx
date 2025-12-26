@@ -34,6 +34,7 @@ interface Quotation {
   id: string;
   quotation_id?: string;
   product_name?: string;
+  quantity?: number;
   selected_option?: number;
   total_price_option1?: string;
   total_price_option2?: string;
@@ -41,6 +42,21 @@ interface Quotation {
   title_option1?: string;
   title_option2?: string;
   title_option3?: string;
+  description_option1?: string;
+  description_option2?: string;
+  description_option3?: string;
+  delivery_time_option1?: string;
+  delivery_time_option2?: string;
+  delivery_time_option3?: string;
+  image_option1?: string;
+  image_option2?: string;
+  image_option3?: string;
+  image_url?: string;
+  image_urls?: string[];
+  product_images?: string[];
+  destination_country?: string;
+  destination_city?: string;
+  shipping_method?: string;
 }
 
 interface CheckoutModalProps {
@@ -151,18 +167,157 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Selected Price Option Summary */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Selected Option</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              {quotation.selected_option === 1 && (quotation.title_option1 || 'Option 1')}
-              {quotation.selected_option === 2 && (quotation.title_option2 || 'Option 2')}
-              {quotation.selected_option === 3 && (quotation.title_option3 || 'Option 3')}
-            </p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              ${selectedPrice.toLocaleString()}
-            </p>
+          {/* Quotation Details */}
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Quotation Details</h3>
+            
+            {/* Product Images */}
+            {(() => {
+              const images = quotation.image_urls || quotation.product_images || (quotation.image_url ? [quotation.image_url] : []);
+              const selectedOption = quotation.selected_option;
+              let optionImages: string[] = [];
+              
+              if (selectedOption) {
+                const imageField = quotation[`image_option${selectedOption}` as keyof Quotation] as string | undefined;
+                if (imageField) {
+                  try {
+                    const parsed = JSON.parse(imageField);
+                    optionImages = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+                  } catch {
+                    if (imageField) optionImages = [imageField];
+                  }
+                }
+              }
+              
+              const displayImages = optionImages.length > 0 ? optionImages : images;
+              
+              return displayImages.length > 0 ? (
+                <div className="mb-4">
+                  <div className="grid grid-cols-3 gap-2">
+                    {displayImages.slice(0, 3).map((img, idx) => (
+                      <div key={idx} className="relative w-full h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                        <Image
+                          src={img}
+                          alt={`Product image ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+            
+            {/* Product Info */}
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Product:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {quotation.product_name || 'N/A'}
+                </span>
+              </div>
+              
+              {quotation.quotation_id && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Quotation ID:</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {quotation.quotation_id}
+                  </span>
+                </div>
+              )}
+              
+              {quotation.quantity && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Quantity:</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {quotation.quantity}
+                  </span>
+                </div>
+              )}
+              
+              {quotation.destination_country && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Destination:</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {quotation.destination_city ? `${quotation.destination_city}, ` : ''}
+                    {quotation.destination_country}
+                  </span>
+                </div>
+              )}
+              
+              {quotation.shipping_method && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Shipping:</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {quotation.shipping_method}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Selected Price Option Summary */}
+          {quotation.selected_option && (() => {
+            const optionNum = quotation.selected_option;
+            const title = quotation[`title_option${optionNum}` as keyof Quotation] as string | undefined;
+            const description = quotation[`description_option${optionNum}` as keyof Quotation] as string | undefined;
+            const deliveryTime = quotation[`delivery_time_option${optionNum}` as keyof Quotation] as string | undefined;
+            const imageField = quotation[`image_option${optionNum}` as keyof Quotation] as string | undefined;
+            
+            let optionImages: string[] = [];
+            if (imageField) {
+              try {
+                const parsed = JSON.parse(imageField);
+                optionImages = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+              } catch {
+                if (imageField) optionImages = [imageField];
+              }
+            }
+            
+            return (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Selected Price Option</h3>
+                
+                <div className="flex items-start gap-4 mb-3">
+                  {optionImages.length > 0 && (
+                    <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-blue-300 dark:border-blue-700 flex-shrink-0">
+                      <Image
+                        src={optionImages[0]}
+                        alt={title || `Option ${optionNum}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white mb-1">
+                      {title || `Option ${optionNum}`}
+                    </p>
+                    {description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        {description}
+                      </p>
+                    )}
+                    {deliveryTime && (
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                        Delivery: {deliveryTime}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="pt-3 border-t border-blue-200 dark:border-blue-700">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Total Amount:</span>
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      ${selectedPrice.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">

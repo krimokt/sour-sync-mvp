@@ -36,9 +36,10 @@ interface EditableTextProps {
   onChange: (value: string) => void;
   className?: string;
   tag?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span' | 'div';
+  readOnly?: boolean;
 }
 
-export const EditableText: React.FC<EditableTextProps> = ({ value, onChange, className, tag: Tag = 'span' }) => {
+export const EditableText: React.FC<EditableTextProps> = ({ value, onChange, className, tag: Tag = 'span', readOnly = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,6 +50,7 @@ export const EditableText: React.FC<EditableTextProps> = ({ value, onChange, cla
   }, [value]);
 
   const handleBlur = () => {
+    if (readOnly) return;
     setIsEditing(false);
     if (localValue !== value) {
       onChange(localValue);
@@ -56,11 +58,17 @@ export const EditableText: React.FC<EditableTextProps> = ({ value, onChange, cla
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (readOnly) return;
     if (e.key === 'Enter') {
       e.preventDefault();
       inputRef.current?.blur();
     }
   };
+
+  // If readOnly, render as plain text without editing capabilities
+  if (readOnly) {
+    return <Tag className={className}>{value}</Tag>;
+  }
 
   return (
     <Tag
@@ -86,9 +94,10 @@ interface EditableImageProps {
   alt: string;
   onChange: (newSrc: string) => void;
   className?: string;
+  readOnly?: boolean;
 }
 
-export const EditableImage: React.FC<EditableImageProps> = ({ src, alt, onChange, className }) => {
+export const EditableImage: React.FC<EditableImageProps> = ({ src, alt, onChange, className, readOnly = false }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [urlInput, setUrlInput] = useState('');
@@ -108,6 +117,11 @@ export const EditableImage: React.FC<EditableImageProps> = ({ src, alt, onChange
       setShowEditor(false);
     }
   };
+
+  // If readOnly, render as plain image without editing capabilities
+  if (readOnly) {
+    return <img src={src} alt={alt} className={className} />;
+  }
 
   return (
     <div 
@@ -174,14 +188,20 @@ interface EditableIconProps {
   onChange: (newIcon: string) => void;
   className?: string;
   themeColor: ThemeColor;
+  readOnly?: boolean;
 }
 
-export const EditableIcon: React.FC<EditableIconProps> = ({ iconName, onChange, className, themeColor }) => {
+export const EditableIcon: React.FC<EditableIconProps> = ({ iconName, onChange, className, themeColor, readOnly = false }) => {
   const [showPicker, setShowPicker] = useState(false);
   const IconComponent = ICON_MAP[iconName] || Box;
 
   // Simple contrast logic for picker
   const pickerBorderColor = themeColor === 'amber' ? 'border-amber-500' : 'border-blue-500';
+
+  // If readOnly, render as plain icon without editing capabilities
+  if (readOnly) {
+    return <IconComponent className={className} />;
+  }
 
   return (
     <div className="relative inline-block">

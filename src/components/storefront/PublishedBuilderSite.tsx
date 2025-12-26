@@ -22,6 +22,7 @@ export default function PublishedBuilderSite({ formData, generatedContent }: Pub
         content={generatedContent} 
         onEdit={handleEdit}
         hideSidebar={true}
+        readOnly={true}
       />
     </div>
   );

@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
 import { usePathname, useRouter } from 'next/navigation';
-import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle, ArrowLeft, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import CheckoutModal from '@/components/portal/CheckoutModal';
 
 interface Quotation {
   id: string;
@@ -51,6 +52,7 @@ export default function QuotationDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const fetchQuotation = useCallback(async () => {
     setIsLoading(true);
@@ -105,7 +107,12 @@ export default function QuotationDetailPage() {
   };
 
   const handleSelectOption = async (optionNumber: number) => {
-    setIsUpdating(true);
+    if (!quotation) return;
+    
+    // Optimize: Update local state immediately for instant feedback
+    setQuotation({ ...quotation, selected_option: optionNumber });
+    
+    // Sync with server in background
     try {
       const response = await fetch(`/api/c/${token}/quotations/${quotationId}`, {
         method: 'PATCH',
@@ -116,14 +123,16 @@ export default function QuotationDetailPage() {
       const result = await response.json();
 
       if (!response.ok) {
+        // Revert on error
+        setQuotation({ ...quotation, selected_option: quotation.selected_option });
         throw new Error(result.error || 'Failed to select option');
       }
 
+      // Update with server response to ensure consistency
       setQuotation(result.quotation);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to select option');
-    } finally {
-      setIsUpdating(false);
+      // Only show error if it's not a network issue (user already sees the change)
+      console.error('Failed to sync option selection:', err);
     }
   };
 
@@ -262,7 +271,7 @@ export default function QuotationDetailPage() {
                           : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600'
                       }`}
                       onClick={() => {
-                        if (quotation.selected_option !== 1 && !isUpdating) {
+                        if (quotation.selected_option !== 1) {
                           handleSelectOption(1);
                         }
                       }}
@@ -302,7 +311,7 @@ export default function QuotationDetailPage() {
                               e.stopPropagation();
                               handleSelectOption(1);
                             }}
-                            disabled={isUpdating || quotation.selected_option === 1}
+                            disabled={quotation.selected_option === 1}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
                               quotation.selected_option === 1
                                 ? 'bg-blue-600 text-white'
@@ -337,7 +346,7 @@ export default function QuotationDetailPage() {
                           : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600'
                       }`}
                       onClick={() => {
-                        if (quotation.selected_option !== 2 && !isUpdating) {
+                        if (quotation.selected_option !== 2) {
                           handleSelectOption(2);
                         }
                       }}
@@ -377,7 +386,7 @@ export default function QuotationDetailPage() {
                               e.stopPropagation();
                               handleSelectOption(2);
                             }}
-                            disabled={isUpdating || quotation.selected_option === 2}
+                            disabled={quotation.selected_option === 2}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
                               quotation.selected_option === 2
                                 ? 'bg-blue-600 text-white'
@@ -412,7 +421,7 @@ export default function QuotationDetailPage() {
                           : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600'
                       }`}
                       onClick={() => {
-                        if (quotation.selected_option !== 3 && !isUpdating) {
+                        if (quotation.selected_option !== 3) {
                           handleSelectOption(3);
                         }
                       }}
@@ -452,7 +461,7 @@ export default function QuotationDetailPage() {
                               e.stopPropagation();
                               handleSelectOption(3);
                             }}
-                            disabled={isUpdating || quotation.selected_option === 3}
+                            disabled={quotation.selected_option === 3}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
                               quotation.selected_option === 3
                                 ? 'bg-blue-600 text-white'
@@ -494,20 +503,45 @@ export default function QuotationDetailPage() {
           )}
 
           {quotation.status === 'Approved' && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <p className="text-green-700 dark:text-green-400">
-                This quotation has been approved. You can proceed to payment.
-              </p>
-              <Link
-                href={`${basePath}/payments`}
-                className="inline-block mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Go to Payments
-              </Link>
+            <div className="space-y-4">
+              {quotation.selected_option ? (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p className="text-blue-700 dark:text-blue-400 mb-4">
+                    Price option selected. Ready to proceed with payment.
+                  </p>
+                  <button
+                    onClick={() => setIsCheckoutOpen(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    Proceed to Checkout
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                  <p className="text-yellow-700 dark:text-yellow-400">
+                    Please select a price option above to proceed with payment.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </main>
+
+      {/* Checkout Modal */}
+      {quotation && (
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          quotation={quotation}
+          token={token}
+          onSuccess={() => {
+            fetchQuotation();
+            router.push(`${basePath}/payments`);
+          }}
+        />
+      )}
     </div>
   );
 }

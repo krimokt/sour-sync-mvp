@@ -30,6 +30,9 @@ interface Quotation {
   delivery_time_option1?: string;
   delivery_time_option2?: string;
   delivery_time_option3?: string;
+  image_option1?: string;
+  image_option2?: string;
+  image_option3?: string;
   selected_option?: number;
   created_at?: string;
   image_url?: string;
@@ -234,136 +237,235 @@ export default function QuotationDetailPage() {
             )}
           </div>
 
-          {/* Price Options */}
-          {(quotation.total_price_option1 || quotation.total_price_option2 || quotation.total_price_option3) && (
+          {/* Price Options - Only show when Approved */}
+          {quotation.status === 'Approved' && (quotation.total_price_option1 || quotation.total_price_option2 || quotation.total_price_option3) && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Price Options</h3>
               <div className="space-y-4">
-                {quotation.total_price_option1 && (
-                  <div className={`border-2 rounded-lg p-4 ${
-                    quotation.selected_option === 1
-                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700'
-                  }`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
-                          {quotation.title_option1 || 'Option 1'}
-                        </h4>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                          ${parseFloat(quotation.total_price_option1).toLocaleString()}
-                        </p>
-                        {quotation.description_option1 && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {quotation.description_option1}
-                          </p>
+                {quotation.total_price_option1 && (() => {
+                  // Parse image_option1 (can be JSON string or single URL)
+                  let option1Images: string[] = [];
+                  if (quotation.image_option1) {
+                    try {
+                      const parsed = JSON.parse(quotation.image_option1);
+                      option1Images = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+                    } catch {
+                      if (quotation.image_option1) option1Images = [quotation.image_option1];
+                    }
+                  }
+                  
+                  return (
+                    <div 
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                        quotation.selected_option === 1
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600'
+                      }`}
+                      onClick={() => {
+                        if (quotation.selected_option !== 1 && !isUpdating) {
+                          handleSelectOption(1);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-4">
+                        {option1Images.length > 0 && (
+                          <div className="relative w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                            <Image
+                              src={option1Images[0]}
+                              alt={quotation.title_option1 || 'Option 1'}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         )}
-                        {quotation.delivery_time_option1 && (
-                          <p className="text-sm text-gray-500 dark:text-gray-500">
-                            Delivery: {quotation.delivery_time_option1}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                            {quotation.title_option1 || 'Option 1'}
+                          </h4>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                            ${parseFloat(quotation.total_price_option1).toLocaleString()}
                           </p>
+                          {quotation.description_option1 && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              {quotation.description_option1}
+                            </p>
+                          )}
+                          {quotation.delivery_time_option1 && (
+                            <p className="text-sm text-gray-500 dark:text-gray-500">
+                              Delivery: {quotation.delivery_time_option1}
+                            </p>
+                          )}
+                        </div>
+                        {quotation.status === 'Approved' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectOption(1);
+                            }}
+                            disabled={isUpdating || quotation.selected_option === 1}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
+                              quotation.selected_option === 1
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            {quotation.selected_option === 1 ? 'Selected' : 'Select'}
+                          </button>
                         )}
                       </div>
-                      {quotation.status === 'Pending' && (
-                        <button
-                          onClick={() => handleSelectOption(1)}
-                          disabled={isUpdating || quotation.selected_option === 1}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            quotation.selected_option === 1
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          {quotation.selected_option === 1 ? 'Selected' : 'Select'}
-                        </button>
-                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
-                {quotation.total_price_option2 && (
-                  <div className={`border-2 rounded-lg p-4 ${
-                    quotation.selected_option === 2
-                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700'
-                  }`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
-                          {quotation.title_option2 || 'Option 2'}
-                        </h4>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                          ${parseFloat(quotation.total_price_option2).toLocaleString()}
-                        </p>
-                        {quotation.description_option2 && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {quotation.description_option2}
-                          </p>
+                {quotation.total_price_option2 && (() => {
+                  // Parse image_option2 (can be JSON string or single URL)
+                  let option2Images: string[] = [];
+                  if (quotation.image_option2) {
+                    try {
+                      const parsed = JSON.parse(quotation.image_option2);
+                      option2Images = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+                    } catch {
+                      if (quotation.image_option2) option2Images = [quotation.image_option2];
+                    }
+                  }
+                  
+                  return (
+                    <div 
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                        quotation.selected_option === 2
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600'
+                      }`}
+                      onClick={() => {
+                        if (quotation.selected_option !== 2 && !isUpdating) {
+                          handleSelectOption(2);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-4">
+                        {option2Images.length > 0 && (
+                          <div className="relative w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                            <Image
+                              src={option2Images[0]}
+                              alt={quotation.title_option2 || 'Option 2'}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         )}
-                        {quotation.delivery_time_option2 && (
-                          <p className="text-sm text-gray-500 dark:text-gray-500">
-                            Delivery: {quotation.delivery_time_option2}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                            {quotation.title_option2 || 'Option 2'}
+                          </h4>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                            ${parseFloat(quotation.total_price_option2).toLocaleString()}
                           </p>
+                          {quotation.description_option2 && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              {quotation.description_option2}
+                            </p>
+                          )}
+                          {quotation.delivery_time_option2 && (
+                            <p className="text-sm text-gray-500 dark:text-gray-500">
+                              Delivery: {quotation.delivery_time_option2}
+                            </p>
+                          )}
+                        </div>
+                        {quotation.status === 'Approved' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectOption(2);
+                            }}
+                            disabled={isUpdating || quotation.selected_option === 2}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
+                              quotation.selected_option === 2
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            {quotation.selected_option === 2 ? 'Selected' : 'Select'}
+                          </button>
                         )}
                       </div>
-                      {quotation.status === 'Pending' && (
-                        <button
-                          onClick={() => handleSelectOption(2)}
-                          disabled={isUpdating || quotation.selected_option === 2}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            quotation.selected_option === 2
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          {quotation.selected_option === 2 ? 'Selected' : 'Select'}
-                        </button>
-                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
-                {quotation.total_price_option3 && (
-                  <div className={`border-2 rounded-lg p-4 ${
-                    quotation.selected_option === 3
-                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700'
-                  }`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
-                          {quotation.title_option3 || 'Option 3'}
-                        </h4>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                          ${parseFloat(quotation.total_price_option3).toLocaleString()}
-                        </p>
-                        {quotation.description_option3 && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {quotation.description_option3}
-                          </p>
+                {quotation.total_price_option3 && (() => {
+                  // Parse image_option3 (can be JSON string or single URL)
+                  let option3Images: string[] = [];
+                  if (quotation.image_option3) {
+                    try {
+                      const parsed = JSON.parse(quotation.image_option3);
+                      option3Images = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+                    } catch {
+                      if (quotation.image_option3) option3Images = [quotation.image_option3];
+                    }
+                  }
+                  
+                  return (
+                    <div 
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                        quotation.selected_option === 3
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600'
+                      }`}
+                      onClick={() => {
+                        if (quotation.selected_option !== 3 && !isUpdating) {
+                          handleSelectOption(3);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-4">
+                        {option3Images.length > 0 && (
+                          <div className="relative w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                            <Image
+                              src={option3Images[0]}
+                              alt={quotation.title_option3 || 'Option 3'}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         )}
-                        {quotation.delivery_time_option3 && (
-                          <p className="text-sm text-gray-500 dark:text-gray-500">
-                            Delivery: {quotation.delivery_time_option3}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                            {quotation.title_option3 || 'Option 3'}
+                          </h4>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                            ${parseFloat(quotation.total_price_option3).toLocaleString()}
                           </p>
+                          {quotation.description_option3 && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              {quotation.description_option3}
+                            </p>
+                          )}
+                          {quotation.delivery_time_option3 && (
+                            <p className="text-sm text-gray-500 dark:text-gray-500">
+                              Delivery: {quotation.delivery_time_option3}
+                            </p>
+                          )}
+                        </div>
+                        {quotation.status === 'Approved' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectOption(3);
+                            }}
+                            disabled={isUpdating || quotation.selected_option === 3}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
+                              quotation.selected_option === 3
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            {quotation.selected_option === 3 ? 'Selected' : 'Select'}
+                          </button>
                         )}
                       </div>
-                      {quotation.status === 'Pending' && (
-                        <button
-                          onClick={() => handleSelectOption(3)}
-                          disabled={isUpdating || quotation.selected_option === 3}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            quotation.selected_option === 3
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          {quotation.selected_option === 3 ? 'Selected' : 'Select'}
-                        </button>
-                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
           )}

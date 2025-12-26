@@ -80,37 +80,40 @@ export default function QuotationViewModal({ isOpen, onClose, quotation }: Quota
             <InfoRow label="Shipping Method" value={quotation.shippingMethod} />
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-3">Price Options</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  title: quotation.title_option1 || "Option 1",
-                  price: parseFloat(quotation.total_price_option1 || "0"),
-                  description: quotation.description_option1,
-                  deliveryTime: quotation.delivery_time_option1,
-                },
-                {
-                  title: quotation.title_option2 || "Option 2",
-                  price: parseFloat(quotation.total_price_option2 || "0"),
-                  description: quotation.description_option2,
-                  deliveryTime: quotation.delivery_time_option2,
-                },
-                {
-                  title: quotation.title_option3 || "Option 3",
-                  price: parseFloat(quotation.total_price_option3 || "0"),
-                  description: quotation.description_option3,
-                  deliveryTime: quotation.delivery_time_option3,
-                },
-              ].map((option, index) => (
-                <PriceOption
-                  key={index}
-                  option={option}
-                  selected={quotation.selected_option === index + 1}
-                />
-              ))}
+          {/* Price Options - Only show when Approved */}
+          {quotation.status === 'Approved' && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-3">Price Options</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  {
+                    title: quotation.title_option1 || "Option 1",
+                    price: parseFloat(quotation.total_price_option1 || "0"),
+                    description: quotation.description_option1,
+                    deliveryTime: quotation.delivery_time_option1,
+                  },
+                  {
+                    title: quotation.title_option2 || "Option 2",
+                    price: parseFloat(quotation.total_price_option2 || "0"),
+                    description: quotation.description_option2,
+                    deliveryTime: quotation.delivery_time_option2,
+                  },
+                  {
+                    title: quotation.title_option3 || "Option 3",
+                    price: parseFloat(quotation.total_price_option3 || "0"),
+                    description: quotation.description_option3,
+                    deliveryTime: quotation.delivery_time_option3,
+                  },
+                ].map((option, index) => (
+                  <PriceOption
+                    key={index}
+                    option={option}
+                    selected={quotation.selected_option === index + 1}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </Modal>

@@ -264,6 +264,29 @@ const QuotationDetailsModal: React.FC<QuotationDetailsProps> = ({ isOpen, onClos
 
   // Price options section
   const renderPriceOptionsSection = () => {
+    // Only show price options when status is Approved
+    if (quotation.status !== "Approved") {
+      if (quotation.status === "Pending") {
+        return (
+          <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
+            <p className="text-yellow-700 dark:text-yellow-400 mb-2 font-medium">Waiting for price options from administrator</p>
+            <p className="text-sm text-yellow-600 dark:text-yellow-500">The administrator is currently preparing price options for this quotation. You will be notified when they are available.</p>
+          </div>
+        );
+      }
+      
+      if (quotation.status === "Rejected") {
+        return (
+          <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+            <p className="text-red-700 dark:text-red-400 mb-2 font-medium">Quotation Rejected</p>
+            <p className="text-sm text-red-600 dark:text-red-500">This quotation has been rejected. Please contact customer support for more information.</p>
+          </div>
+        );
+      }
+      
+      return null;
+    }
+    
     // If there are actual price options, display them
     if (displayPriceOptions.length > 0) {
       return (
@@ -391,25 +414,6 @@ const QuotationDetailsModal: React.FC<QuotationDetailsProps> = ({ isOpen, onClos
               );
             })}
           </div>
-        </div>
-      );
-    }
-    
-    // For different quotation statuses with no price options
-    if (quotation.status === "Pending") {
-      return (
-        <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
-          <p className="text-yellow-700 dark:text-yellow-400 mb-2 font-medium">Waiting for price options from administrator</p>
-          <p className="text-sm text-yellow-600 dark:text-yellow-500">The administrator is currently preparing price options for this quotation. You will be notified when they are available.</p>
-        </div>
-      );
-    }
-    
-    if (quotation.status === "Rejected") {
-      return (
-        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-          <p className="text-red-700 dark:text-red-400 mb-2 font-medium">Quotation Rejected</p>
-          <p className="text-sm text-red-600 dark:text-red-500">This quotation has been rejected. Please contact customer support for more information.</p>
         </div>
       );
     }

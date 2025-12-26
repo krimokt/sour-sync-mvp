@@ -786,8 +786,8 @@ export default function ClientQuotationsPage() {
                   </div>
                 )}
 
-                {/* Price Options */}
-                {fullQuotationData && (fullQuotationData.title_option1 || fullQuotationData.title_option2 || fullQuotationData.title_option3) && (
+                {/* Price Options - Only show when Approved */}
+                {fullQuotationData && fullQuotationData.status === 'Approved' && (fullQuotationData.title_option1 || fullQuotationData.title_option2 || fullQuotationData.title_option3) && (
                   <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       Available Price Options

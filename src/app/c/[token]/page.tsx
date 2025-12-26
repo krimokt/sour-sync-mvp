@@ -3,6 +3,7 @@
 import { useMagicLink } from '@/components/portal/MagicLinkProvider';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
+import CreateQuotationButton from './quotations/CreateQuotationButton';
 import { FileText, CreditCard, Truck, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -10,7 +11,8 @@ import { usePathname } from 'next/navigation';
 export default function PortalHomePage() {
   const { data } = useMagicLink();
   const pathname = usePathname();
-  const basePath = `/c/${pathname.split('/')[2]}`;
+  const token = pathname.split('/')[2];
+  const basePath = `/c/${token}`;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -29,11 +31,8 @@ export default function PortalHomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {data.scopes.includes('create') && (
-            <Link
-              href={`${basePath}/quotations`}
-              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-center gap-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-4 mb-4">
                 <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
@@ -42,7 +41,8 @@ export default function PortalHomePage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Request a new quotation</p>
                 </div>
               </div>
-            </Link>
+              <CreateQuotationButton token={token} />
+            </div>
           )}
 
           {data.scopes.includes('view') && (

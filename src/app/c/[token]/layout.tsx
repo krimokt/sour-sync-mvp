@@ -89,7 +89,7 @@ export default async function PortalLayout({ children, params }: PortalLayoutPro
     companyName: (company as { name?: string })?.name || 'Company',
     clientName: magicLink.client_name_snapshot,
     clientPhone: magicLink.client_phone_snapshot,
-    scopes: magicLink.scopes || ['view', 'pay', 'track'],
+    scopes: magicLink.scopes || ['view', 'pay', 'track', 'create'],
     company: company,
     client: client,
   };

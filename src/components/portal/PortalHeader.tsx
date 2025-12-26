@@ -38,7 +38,7 @@ export default function PortalHeader() {
               </p>
             </div>
           </div>
-          {data.scopes.includes('create') && token && (
+          {token && (
             <div className="flex items-center">
               <CreateQuotationButton token={token} />
             </div>

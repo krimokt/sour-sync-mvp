@@ -386,146 +386,217 @@ const CheckoutConfirmationModal: React.FC<CheckoutConfirmationModalProps> = ({
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
-      showCloseButton={false} 
-      className="max-w-2xl mx-auto"
+      showCloseButton={true} 
+      className="max-w-3xl mx-auto"
     >
-      <div className="flex flex-col">
-        {/* Debug Info - Comment out in production */}
-        <div className="p-2 bg-gray-100 border-b text-xs">
-          <p>Quotation ID: {quotation.quotation_id}</p>
-          <p>UUID: {quotationUuid || 'Loading...'}</p>
-          <p>Price Options: {priceOptions.length}</p>
-          <p>Selected Option: {quotation.selected_option || 'None'}</p>
+      <div className="flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Checkout</h2>
+              <p className="text-sm text-blue-100">Complete your payment</p>
+            </div>
+          </div>
         </div>
 
-        {/* Price Options Selection */}
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Select Price Option</h3>
-          {isLoadingOptions ? (
-            <div className="py-8 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#1E88E5] border-r-transparent align-[-0.125em]"></div>
-              <p className="mt-2 text-gray-600">Loading all price options...</p>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Order Summary */}
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">Order Summary</h3>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {priceOptions.map((option, index) => (
-                <button
-                  key={option.id}
-                  onClick={() => handlePriceOptionSelect(option, index)}
-                  disabled={isUpdatingOption || !quotationUuid}
-                  className={`w-full flex items-center gap-4 p-4 border rounded-lg transition-colors ${
-                    selectedPriceOption?.id === option.id
-                      ? 'border-[#1E88E5] bg-blue-50'
-                      : 'border-gray-200 hover:border-[#1E88E5]'
-                  } ${(isUpdatingOption || !quotationUuid) ? 'opacity-50 cursor-not-allowed' : ''} relative`}
-                >
-                  <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                    {isValidImageUrl(option.modelImage) ? (
-                      <Image
-                        src={option.modelImage!}
-                        alt={option.modelName || "Product Option"}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center w-full h-40 bg-gray-200 text-gray-500 rounded">
-                        <span style={{fontSize: '2rem'}}>📷</span>
-                        <span>No Photo Uploaded</span>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-gray-600">Product</span>
+                <p className="font-medium text-gray-900">{quotation.product_name || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Quotation ID</span>
+                <p className="font-medium text-gray-900">{quotation.quotation_id}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Quantity</span>
+                <p className="font-medium text-gray-900">{quotation.quantity || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Destination</span>
+                <p className="font-medium text-gray-900">{quotation.shipping_city || 'N/A'}, {quotation.shipping_country || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Shipping Method</span>
+                <p className="font-medium text-gray-900">{quotation.shipping_method || 'Sea'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Price Options Selection */}
+          <div className="px-6 py-5 border-b border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">Selected Price Option</h3>
+            </div>
+            {isLoadingOptions ? (
+              <div className="py-8 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                <p className="mt-2 text-gray-600">Loading price options...</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {priceOptions.map((option, index) => {
+                  const isSelected = selectedPriceOption?.id === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => handlePriceOptionSelect(option, index)}
+                      disabled={isUpdatingOption || !quotationUuid}
+                      className={`w-full flex items-center gap-4 p-4 border-2 rounded-xl transition-all ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-blue-400 hover:shadow-sm'
+                      } ${(isUpdatingOption || !quotationUuid) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} relative`}
+                    >
+                      <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                        {isValidImageUrl(option.modelImage) ? (
+                          <Image
+                            src={option.modelImage!}
+                            alt={option.modelName || "Product Option"}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center w-full h-full bg-gray-200 text-gray-400">
+                            <span className="text-3xl">📷</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-gray-900">
-                          {option.supplier}
-                          {option.id === String(quotation.selected_option) && (
-                            <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                              Currently Selected
-                            </span>
-                          )}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Delivery Time: {option.deliveryTime}
+                      <div className="flex-1 text-left">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-gray-900 text-base">
+                              {index + 1}
+                            </h4>
+                            {isSelected && (
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-full">
+                                Selected
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xl font-bold text-blue-600">
+                            {option.price}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {option.deliveryTime}
                         </p>
+                        {option.description && (
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                            {option.description}
+                          </p>
+                        )}
                       </div>
-                      <span className="text-lg font-bold text-[#1E88E5]">
-                        {option.price}
-                      </span>
-                    </div>
-                    {option.description && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        {option.description}
-                      </p>
-                    )}
-                  </div>
-                  {isUpdatingOption && selectedPriceOption?.id === option.id && (
-                    <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
-                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
+                      {isUpdatingOption && isSelected && (
+                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl">
+                          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Payment Method Selection */}
+          <div className="px-6 py-5 border-b border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <h4 className="text-lg font-semibold text-gray-900">Select Payment Method</h4>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {banks.map((bank) => (
+                <button
+                  key={bank}
+                  onClick={() => setSelectedBank(bank)}
+                  className={`py-3 px-4 text-sm font-medium text-center border-2 rounded-lg transition-all
+                    ${selectedBank === bank 
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm' 
+                      : 'border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50/50'
+                    }`}
+                >
+                  {bank.replace('_', ' ')}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Bank Information */}
+          {selectedBank && (
+            <div className="px-6 py-5 bg-blue-50/30">
+              <div className="bg-white rounded-lg p-4 border border-blue-100">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h4 className="font-semibold text-gray-900">Bank Information</h4>
+                </div>
+                <BankInformation bank={selectedBank} />
+              </div>
             </div>
           )}
         </div>
 
-        {/* Payment Method Selection */}
-        <div className="p-4">
-          <h4 className="text-base font-medium text-gray-900 mb-3">Select Payment Method</h4>
-          <div className="grid grid-cols-3 gap-3">
-            {banks.map((bank) => (
-              <button
-                key={bank}
-                onClick={() => setSelectedBank(bank)}
-                className={`py-2 px-4 text-center border rounded-lg transition-colors
-                  ${selectedBank === bank 
-                    ? 'border-[#1E88E5] bg-blue-50 text-[#1E88E5]' 
-                    : 'border-gray-200 hover:border-[#1E88E5]'
-                  }`}
-              >
-                {bank.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Bank Information */}
-        {selectedBank && (
-          <div className="px-4 pb-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-3">Bank Information</h4>
-              <BankInformation bank={selectedBank} />
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="border-t border-gray-200 p-4">
-          <div className="flex justify-between items-center">
+        {/* Action Buttons - Fixed Footer */}
+        <div className="border-t border-gray-200 bg-white px-6 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             {selectedPriceOption && (
               <div className="text-sm">
-                <span className="text-gray-600">Selected Option: </span>
-                <span className="font-medium">{selectedPriceOption.supplier}</span>
-                <span className="mx-2 text-gray-400">•</span>
-                <span className="font-bold text-[#1E88E5]">{selectedPriceOption.price}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">Total:</span>
+                  <span className="text-2xl font-bold text-blue-600">{selectedPriceOption.price}</span>
+                </div>
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full sm:w-auto">
               <button
                 onClick={onClose}
                 disabled={isProcessing}
-                className="px-5 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePayment}
                 disabled={isProcessing || !selectedBank || !selectedPriceOption || !quotationUuid}
-                className="px-5 py-2 bg-[#1E88E5] text-white rounded-lg hover:bg-[#1976D2] transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="flex-1 sm:flex-none px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/30"
               >
-                <CheckCircleIcon className="w-5 h-5" />
-                {isProcessing ? 'Processing...' : 'Confirm Payment'}
+                {isProcessing ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircleIcon className="w-5 h-5" />
+                    Proceed to Payment
+                  </>
+                )}
               </button>
             </div>
           </div>

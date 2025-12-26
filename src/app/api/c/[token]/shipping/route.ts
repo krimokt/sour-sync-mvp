@@ -55,6 +55,12 @@ export async function GET(
 
     const { magicLink } = validation;
 
+    console.log('[Shipping API] Magic link info:', {
+      client_id: magicLink.client_id,
+      company_id: magicLink.company_id,
+      scopes: magicLink.scopes,
+    });
+
     // Get client to find user_id
     const { data: client, error: clientError } = await supabaseAdmin
       .from('clients')
@@ -63,6 +69,7 @@ export async function GET(
       .single();
 
     if (clientError || !client) {
+      console.error('[Shipping API] Client not found:', clientError);
       return NextResponse.json(
         { error: 'Client not found' },
         { status: 404 }
@@ -70,11 +77,14 @@ export async function GET(
     }
 
     if (!client.user_id) {
+      console.error('[Shipping API] Client user ID not found');
       return NextResponse.json(
         { error: 'Client user ID not found' },
         { status: 404 }
       );
     }
+
+    console.log('[Shipping API] Client user_id:', client.user_id);
 
     // Fetch shipments for this client's quotations
     // First, get quotations for this client
@@ -86,8 +96,14 @@ export async function GET(
 
     const quotationIds = (quotations || []).map((q) => q.id);
 
+    console.log('[Shipping API] Found quotations:', {
+      count: quotationIds.length,
+      quotationIds,
+    });
+
     // If no quotations found, return empty array
     if (quotationIds.length === 0) {
+      console.log('[Shipping API] No quotations found, returning empty array');
       return NextResponse.json({ shipments: [] });
     }
 
@@ -105,6 +121,12 @@ export async function GET(
       .eq('company_id', magicLink.company_id)
       .in('quotation_id', quotationIds)
       .order('created_at', { ascending: false });
+
+    console.log('[Shipping API] Shipments query result:', {
+      count: shipments?.length || 0,
+      error: error,
+      shipments: shipments,
+    });
 
     if (error) {
       console.error('Error fetching shipments:', error);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
-import { X, CreditCard, Building2, Loader2, CheckCircle } from 'lucide-react';
+import { X, CreditCard, Building2, Loader2, CheckCircle, Package, MapPin, Truck, FileText, DollarSign, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
 
 interface BankAccount {
@@ -153,111 +153,149 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Checkout</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X className="w-6 h-6" />
-          </button>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 text-white p-6 rounded-t-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <ShoppingCart className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Checkout</h2>
+                <p className="text-blue-100 text-sm">Complete your payment</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Quotation Details */}
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Quotation Details</h3>
+        <div className="p-6 space-y-4">
+          {/* Quotation Details - Compact Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h3 className="font-bold text-gray-900 dark:text-white">Order Summary</h3>
+            </div>
             
-            {/* Product Images */}
-            {(() => {
-              const images = quotation.image_urls || quotation.product_images || (quotation.image_url ? [quotation.image_url] : []);
-              const selectedOption = quotation.selected_option;
-              let optionImages: string[] = [];
-              
-              if (selectedOption) {
-                const imageField = quotation[`image_option${selectedOption}` as keyof Quotation] as string | undefined;
-                if (imageField) {
-                  try {
-                    const parsed = JSON.parse(imageField);
-                    optionImages = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
-                  } catch {
-                    if (imageField) optionImages = [imageField];
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left Column - Images */}
+              <div>
+                {(() => {
+                  const images = quotation.image_urls || quotation.product_images || (quotation.image_url ? [quotation.image_url] : []);
+                  const selectedOption = quotation.selected_option;
+                  let optionImages: string[] = [];
+                  
+                  if (selectedOption) {
+                    const imageField = quotation[`image_option${selectedOption}` as keyof Quotation] as string | undefined;
+                    if (imageField) {
+                      try {
+                        const parsed = JSON.parse(imageField);
+                        optionImages = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+                      } catch {
+                        if (imageField) optionImages = [imageField];
+                      }
+                    }
                   }
-                }
-              }
-              
-              const displayImages = optionImages.length > 0 ? optionImages : images;
-              
-              return displayImages.length > 0 ? (
-                <div className="mb-4">
-                  <div className="grid grid-cols-3 gap-2">
-                    {displayImages.slice(0, 3).map((img, idx) => (
-                      <div key={idx} className="relative w-full h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
-                        <Image
-                          src={img}
-                          alt={`Product image ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                        />
+                  
+                  const displayImages = optionImages.length > 0 ? optionImages : images;
+                  
+                  return displayImages.length > 0 ? (
+                    <div className="mb-4">
+                      <div className="grid grid-cols-2 gap-2">
+                        {displayImages.slice(0, 4).map((img, idx) => (
+                          <div key={idx} className="relative w-full h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-600 shadow-sm">
+                            <Image
+                              src={img}
+                              alt={`Product image ${idx + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-            
-            {/* Product Info */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Product:</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {quotation.product_name || 'N/A'}
-                </span>
+                    </div>
+                  ) : (
+                    <div className="mb-4 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+                      <Package className="w-8 h-8 text-gray-400" />
+                    </div>
+                  );
+                })()}
               </div>
               
-              {quotation.quotation_id && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Quotation ID:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {quotation.quotation_id}
-                  </span>
+              {/* Right Column - Details */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <Package className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Product</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                      {quotation.product_name || 'N/A'}
+                    </p>
+                  </div>
                 </div>
-              )}
-              
-              {quotation.quantity && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Quantity:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {quotation.quantity}
-                  </span>
-                </div>
-              )}
-              
-              {quotation.destination_country && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Destination:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {quotation.destination_city ? `${quotation.destination_city}, ` : ''}
-                    {quotation.destination_country}
-                  </span>
-                </div>
-              )}
-              
-              {quotation.shipping_method && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Shipping:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {quotation.shipping_method}
-                  </span>
-                </div>
-              )}
+                
+                {quotation.quotation_id && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Quotation ID</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white font-mono">
+                        {quotation.quotation_id}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {quotation.quantity && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5">
+                      <span className="text-lg font-bold">×</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Quantity</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {quotation.quantity.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {quotation.destination_country && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Destination</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {quotation.destination_city ? `${quotation.destination_city}, ` : ''}
+                        {quotation.destination_country}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {quotation.shipping_method && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <Truck className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Shipping Method</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {quotation.shipping_method}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Selected Price Option Summary */}
+          {/* Selected Price Option Summary - Enhanced */}
           {quotation.selected_option && (() => {
             const optionNum = quotation.selected_option;
             const title = quotation[`title_option${optionNum}` as keyof Quotation] as string | undefined;
@@ -276,12 +314,17 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
             }
             
             return (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Selected Price Option</h3>
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl p-5 shadow-lg border-2 border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-blue-600 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 dark:text-white">Selected Price Option</h3>
+                </div>
                 
-                <div className="flex items-start gap-4 mb-3">
-                  {optionImages.length > 0 && (
-                    <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-blue-300 dark:border-blue-700 flex-shrink-0">
+                <div className="flex items-start gap-4 mb-4">
+                  {optionImages.length > 0 ? (
+                    <div className="relative w-28 h-28 rounded-xl overflow-hidden border-2 border-blue-300 dark:border-blue-700 flex-shrink-0 shadow-md">
                       <Image
                         src={optionImages[0]}
                         alt={title || `Option ${optionNum}`}
@@ -289,28 +332,41 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
                         className="object-cover"
                       />
                     </div>
+                  ) : (
+                    <div className="w-28 h-28 rounded-xl bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-300 dark:border-blue-700 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                    </div>
                   )}
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white mb-1">
-                      {title || `Option ${optionNum}`}
-                    </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="font-bold text-lg text-gray-900 dark:text-white">
+                        {title || `Option ${optionNum}`}
+                      </p>
+                      <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-semibold rounded-full">
+                        Selected
+                      </span>
+                    </div>
                     {description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 leading-relaxed">
                         {description}
                       </p>
                     )}
                     {deliveryTime && (
-                      <p className="text-xs text-gray-500 dark:text-gray-500">
-                        Delivery: {deliveryTime}
-                      </p>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Truck className="w-4 h-4" />
+                        <span>Delivery: {deliveryTime}</span>
+                      </div>
                     )}
                   </div>
                 </div>
                 
-                <div className="pt-3 border-t border-blue-200 dark:border-blue-700">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-blue-300 dark:border-blue-700">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Total Amount:</span>
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Amount</span>
+                    </div>
+                    <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                       ${selectedPrice.toLocaleString()}
                     </span>
                   </div>
@@ -326,10 +382,13 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
           ) : (
             <>
               {/* Payment Method Selection */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Select Payment Method
-                </h3>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                  <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Select Payment Method
+                  </h3>
+                </div>
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   {bankAccounts.length > 0 && (
                     <button
@@ -374,8 +433,11 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
 
                 {/* Bank Accounts */}
                 {selectedPaymentMethod === 'bank' && bankAccounts.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Select Bank Account</h4>
+                  <div className="space-y-3 mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Select Bank Account</h4>
+                    </div>
                     {bankAccounts.map((bank) => (
                       <div
                         key={bank.id}
@@ -428,8 +490,11 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
 
                 {/* Crypto Wallets */}
                 {selectedPaymentMethod === 'crypto' && cryptoWallets.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Select Wallet</h4>
+                  <div className="space-y-3 mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Select Wallet</h4>
+                    </div>
                     {cryptoWallets.map((wallet) => (
                       <div
                         key={wallet.id}
@@ -483,27 +548,40 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-4 p-6 border-t border-gray-200 dark:border-gray-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !selectedPaymentMethod || (!selectedBankId && !selectedCryptoId)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              'Create Payment'
-            )}
-          </button>
+        <div className="bg-white dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700 p-6 rounded-b-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <span>Total:</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">
+                ${selectedPrice.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !selectedPaymentMethod || (!selectedBankId && !selectedCryptoId)}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold shadow-lg disabled:shadow-none"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    Create Payment
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </Modal>

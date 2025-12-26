@@ -1,6 +1,7 @@
 [build]
   command = "pnpm run build"
-  publish = ".next"
+  # Note: @netlify/plugin-nextjs automatically handles the publish directory
+  # Do NOT set publish directory in Netlify UI - let the plugin handle it
 
 [build.environment]
   NODE_VERSION = "20"

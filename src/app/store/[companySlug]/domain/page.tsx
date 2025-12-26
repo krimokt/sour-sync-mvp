@@ -535,10 +535,43 @@ export default function DomainSettingsPage() {
                 onClick={checkStatus}
                 disabled={isChecking}
                 className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                title="Check DNS and SSL status"
               >
                 <RefreshCw className={`w-4 h-4 ${isChecking ? 'animate-spin' : ''}`} />
                 Check Status
               </button>
+              {settings.dns_status === 'active' && settings.ssl_status !== 'active' && (
+                <button
+                  onClick={async () => {
+                    setIsChecking(true);
+                    try {
+                      // Force SSL provisioning by calling the API
+                      const res = await fetch('/api/netlify/force-ssl', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ domain: settings.custom_domain, companyId: company?.id }),
+                      });
+                      if (res.ok) {
+                        setMessage({ type: 'success', text: 'SSL provisioning triggered. This may take a few minutes.' });
+                        setTimeout(checkStatus, 3000);
+                      } else {
+                        setMessage({ type: 'error', text: 'Failed to trigger SSL provisioning' });
+                      }
+                    } catch (e) {
+                      console.error('Error forcing SSL:', e);
+                      setMessage({ type: 'error', text: 'Failed to trigger SSL provisioning' });
+                    } finally {
+                      setIsChecking(false);
+                    }
+                  }}
+                  disabled={isChecking}
+                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                  title="Manually trigger SSL certificate provisioning"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Provision SSL
+                </button>
+              )}
               <button
                 onClick={handleRemoveDomain}
                 disabled={isSaving}

@@ -111,11 +111,53 @@ export async function POST(request: Request) {
       .single();
 
     // ============================================
-    // STEP 3: Trigger SSL provisioning if DNS is active but SSL is not
+    // STEP 3: Check Netlify's SSL certificates API for actual SSL status
+    // ============================================
+    let netlifySslActive = false;
+    try {
+      const certsRes = await fetch(`${NETLIFY_API_ENDPOINT}/sites/${siteId}/ssl`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (certsRes.ok) {
+        const certsData = await certsRes.json();
+        // Handle both array and object responses
+        const certificates = Array.isArray(certsData) ? certsData : (certsData.certificates || certsData.certs || []);
+        
+        // Check if domain has an active certificate
+        const domainCert = certificates.find((cert: { domain?: string; domains?: string[]; state?: string; status?: string }) => {
+          const state = cert.state || cert.status || '';
+          const domains = cert.domains || (cert.domain ? [cert.domain] : []);
+          return (domains.includes(cleanDomain) || domains.includes(`www.${cleanDomain}`)) &&
+                 (state === 'active' || state === 'provisioned' || state === 'ready');
+        });
+        
+        if (domainCert) {
+          const state = domainCert.state || domainCert.status || '';
+          if (state === 'active' || state === 'provisioned' || state === 'ready') {
+            netlifySslActive = true;
+            console.log(`✅ SSL certificate found for ${cleanDomain}: ${state}`);
+          } else {
+            console.log(`SSL certificate state for ${cleanDomain}: ${state}`);
+          }
+        }
+      }
+    } catch (certError) {
+      console.log('SSL certificates API check failed (non-critical):', certError);
+    }
+
+    // Use Netlify SSL status if HTTPS check failed but DNS is active
+    if (dnsActive && !sslActive && netlifySslActive) {
+      sslActive = true;
+      console.log('✅ SSL active according to Netlify API');
+    }
+
+    // ============================================
+    // STEP 4: Trigger SSL provisioning if DNS is active but SSL is not
     // ============================================
     let sslTriggered = false;
 
-    if (dnsActive && !sslActive) {
+    if (dnsActive && !sslActive && !netlifySslActive) {
       const lastAttempt = currentSettings?.ssl_last_attempt_at
         ? new Date(currentSettings.ssl_last_attempt_at)
         : null;
@@ -135,16 +177,19 @@ export async function POST(request: Request) {
             sslTriggered = true;
             console.log('✅ SSL provisioning triggered');
           } else {
-            console.log('SSL provisioning response:', sslRes.status);
+            const errorText = await sslRes.text();
+            console.log(`SSL provisioning response (${sslRes.status}):`, errorText);
           }
         } catch (sslError) {
           console.error('Error triggering SSL:', sslError);
         }
+      } else {
+        console.log(`SSL provisioning retry not yet due (last attempt: ${lastAttempt})`);
       }
     }
 
     // ============================================
-    // STEP 4: Prepare database update
+    // STEP 5: Prepare database update
     // ============================================
     const dnsStatus = dnsActive ? 'active' : 'pending';
     const sslStatus = sslActive ? 'active' : 'pending';
@@ -170,7 +215,7 @@ export async function POST(request: Request) {
     }
 
     // ============================================
-    // STEP 5: Update database
+    // STEP 6: Update database
     // ============================================
     const { error } = await supabase
       .from('website_settings')
@@ -186,7 +231,7 @@ export async function POST(request: Request) {
     console.log(`Domain check complete: DNS=${dnsStatus}, SSL=${sslStatus}`);
 
     // ============================================
-    // STEP 6: Return status
+    // STEP 7: Return status
     // ============================================
     return NextResponse.json({
       dns_status: dnsStatus,

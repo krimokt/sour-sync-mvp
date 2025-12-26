@@ -5,6 +5,23 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 // List of public routes that don't require authentication
 const publicRoutes = ['/signin', '/signup', '/reset-password', '/'];
 
+// Blocked routes - these routes are deprecated and should not be accessible
+const blockedRoutes = [
+  '/dashboard-home',
+  '/quotation',
+  '/shipment-tracking',
+  '/clients',
+  '/payment',
+  '/bank-accounts',
+  '/profile',
+  '/account-settings',
+  '/website-builder',
+  '/payment-proofs',
+    '/order',
+    '/select-store'
+    
+];
+
 // Routes that should be accessible without authentication (static assets, API, etc.)
 const alwaysPublicPatterns = [
   /^\/api\//,
@@ -18,17 +35,6 @@ const alwaysPublicPatterns = [
   /^\/c\//, // Magic link client portal (token validation in layout)
 ];
 
-// Legacy dashboard routes (keep for backward compatibility during migration)
-const legacyDashboardRoutes = [
-  '/dashboard-home',
-  '/profile',
-  '/quotation',
-  '/order',
-  '/payment',
-  '/shipment-tracking',
-  '/checkoutpage',
-  '/user-profiles',
-];
 
 // Reserved subdomains that should not be treated as company slugs
 const reservedSubdomains = ['www', 'admin', 'api', 'app', 'dashboard'];
@@ -74,6 +80,23 @@ export async function middleware(req: NextRequest) {
   
   // Initialize response early for Supabase client
   const res = NextResponse.next();
+  
+  // ----- FORCE HTTPS -----
+  // Check if request is HTTP and redirect to HTTPS
+  // This serves as a backup to netlify.toml redirects
+  const protocol = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol;
+  if (protocol === 'http' || req.nextUrl.protocol === 'http:') {
+    const httpsUrl = req.nextUrl.clone();
+    httpsUrl.protocol = 'https:';
+    return NextResponse.redirect(httpsUrl, 301);
+  }
+  
+  // ----- BLOCKED ROUTES -----
+  // Redirect users away from deprecated routes
+  if (blockedRoutes.some(route => path === route || path.startsWith(route + '/'))) {
+    const redirectUrl = new URL('/signin', req.url);
+    return NextResponse.redirect(redirectUrl);
+  }
   
   // ----- WWW TO ROOT REDIRECT -----
   // If client only configured root domain, redirect www to root
@@ -261,15 +284,6 @@ export async function middleware(req: NextRequest) {
       return res;
     }
 
-    // ----- SELECT STORE PAGE -----
-    if (path === '/select-store') {
-      if (!session) {
-        const redirectUrl = new URL('/signin', req.url);
-        return NextResponse.redirect(redirectUrl);
-      }
-      return res;
-    }
-
     // ----- PUBLIC AUTH ROUTES (/signin, /signup) -----
     if (publicRoutes.includes(path)) {
       if (session) {
@@ -301,57 +315,6 @@ export async function middleware(req: NextRequest) {
         // If we can't determine the company, just continue to the page
         // The signin/signup pages will handle the redirect
       }
-      return res;
-    }
-
-    // ----- LEGACY DASHBOARD ROUTES -----
-    // Keep these working during migration, but redirect authenticated users to new store routes
-    if (legacyDashboardRoutes.some(route => path === route || path.startsWith(route + '/'))) {
-      if (!session) {
-        const redirectUrl = new URL('/signin', req.url);
-        redirectUrl.searchParams.set('redirect', path);
-        return NextResponse.redirect(redirectUrl);
-      }
-
-      // Try to redirect to the new store route
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile?.company_id) {
-          const { data: company } = await supabase
-            .from('companies')
-            .select('slug')
-            .eq('id', profile.company_id)
-            .single();
-
-          if (company?.slug) {
-            // Map legacy routes to new store routes
-            let newPath = `/store/${company.slug}`;
-            
-            if (path === '/quotation' || path.startsWith('/quotation/')) {
-              newPath = `/store/${company.slug}/quotations`;
-            } else if (path === '/payment' || path.startsWith('/payment/')) {
-              newPath = `/store/${company.slug}/payments`;
-            } else if (path === '/shipment-tracking' || path.startsWith('/shipment-tracking/')) {
-              newPath = `/store/${company.slug}/shipping`;
-            } else if (path === '/profile' || path.startsWith('/profile/')) {
-              newPath = `/store/${company.slug}/settings`;
-            }
-            // dashboard-home and others go to main dashboard
-
-            const redirectUrl = new URL(newPath, req.url);
-            return NextResponse.redirect(redirectUrl);
-          }
-        }
-      } catch (error) {
-        console.error('Error redirecting legacy route:', error);
-      }
-
-      // If redirect fails, allow access to legacy route
       return res;
     }
 

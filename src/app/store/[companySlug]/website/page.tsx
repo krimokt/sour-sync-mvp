@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
-import ShopifyBuilder from '@/components/website/builder/ShopifyBuilder';
+import ChinaSourceBuilder from '@/components/website/builder/ChinaSourceBuilder';
 import { WebsiteSettings } from '@/types/website';
 
 export default async function WebsiteBuilderPage({ params }: { params: { companySlug: string } }) {
@@ -43,8 +43,8 @@ export default async function WebsiteBuilderPage({ params }: { params: { company
   );
 
   return (
-    <div className="h-screen -m-6 overflow-hidden">
-      <ShopifyBuilder 
+    <div className="min-h-screen -m-6 overflow-auto">
+      <ChinaSourceBuilder 
         companyId={typedCompany.id}
         companySlug={typedCompany.slug}
         initialSettings={settings as WebsiteSettings}

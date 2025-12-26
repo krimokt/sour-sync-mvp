@@ -1248,25 +1248,25 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                           : (typeof file === 'string' && isValidImageUrl(file) ? file : null);
                         
                         return (
-                          <div key={index} className="relative w-24 h-24 overflow-hidden rounded-md group">
+                        <div key={index} className="relative w-24 h-24 overflow-hidden rounded-md group">
                             {imageUrl ? (
-                              <Image
+                            <Image
                                 src={imageUrl}
-                                alt={`Product image ${index + 1}`}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center w-full h-40 bg-gray-200 text-gray-500 rounded">
-                                <span style={{fontSize: '2rem'}}>📷</span>
-                                <span>No Photo Uploaded</span>
-                              </div>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
+                              alt={`Product image ${index + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center w-full h-40 bg-gray-200 text-gray-500 rounded">
+                              <span style={{fontSize: '2rem'}}>📷</span>
+                              <span>No Photo Uploaded</span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
                               <svg
                                 className="w-3 h-3 text-white"
                                 width="12"
@@ -1282,8 +1282,8 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                                   fill="currentColor"
                                 />
                               </svg>
-                            </button>
-                          </div>
+                          </button>
+                        </div>
                         );
                       })}
                     </div>
@@ -1726,13 +1726,13 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                   Your quotation has been submitted and is being reviewed. You will receive a response via email shortly.
-                </p>
+              </p>
                 
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg px-4 py-2 mb-8 inline-block">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
                     Status: <span className="font-medium">Pending Review</span>
-                  </p>
-                </div>
+                </p>
+              </div>
 
                 <div className="flex items-center justify-center gap-3">
                   <button
@@ -1742,50 +1742,50 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   >
                     Create New Quotation
                   </button>
-                  <button
-                    type="button"
-                    onClick={onClose}
+              <button
+                type="button"
+                onClick={onClose}
                     className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full font-medium text-sm transition-colors"
-                  >
-                    Close
-                  </button>
+              >
+                Close
+              </button>
                 </div>
               </div>
             </div>
           )}
         </form>
       </div>
-      
-      {/* Navigation Buttons */}
-      {step <= 3 && (
-        <div className="flex items-center justify-center gap-4">
-          {step > 1 && (
+        
+        {/* Navigation Buttons */}
+        {step <= 3 && (
+          <div className="flex items-center justify-center gap-4">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={prevStep}
+                className="px-6 py-2.5 text-gray-700 dark:text-gray-200 flex items-center justify-center bg-gray-100 dark:bg-gray-800 font-semibold rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm border border-gray-200 dark:border-gray-700"
+              >
+                Back
+              </button>
+            )}
             <button
-              type="button"
-              onClick={prevStep}
-              className="px-6 py-2.5 text-gray-700 dark:text-gray-200 flex items-center justify-center bg-gray-100 dark:bg-gray-800 font-semibold rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm border border-gray-200 dark:border-gray-700"
-            >
-              Back
-            </button>
-          )}
-          <button
-            type={step === 3 ? "button" : "button"}
-            onClick={step === 3 ? (e) => {
-              e.preventDefault();
-              if (formRef.current) {
-                formRef.current.requestSubmit();
-              }
-            } : (e) => {
-              e.preventDefault();
-              nextStep();
-            }}
-            disabled={isSubmitting || (step === 3 && !formData.serviceType)}
+              type={step === 3 ? "button" : "button"}
+              onClick={step === 3 ? (e) => {
+                e.preventDefault();
+                if (formRef.current) {
+                  formRef.current.requestSubmit();
+                }
+              } : (e) => {
+                e.preventDefault();
+                nextStep();
+              }}
+              disabled={isSubmitting || (step === 3 && !formData.serviceType)}
             className="px-6 py-2.5 rounded-full text-white bg-[#006cff] hover:bg-[#0052cc] dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed text-sm font-semibold shadow-sm my-2.5"
-          >
-            {isSubmitting ? 'Submitting...' : (step === 3 ? 'Finish' : 'Continue')}
-          </button>
-        </div>
-      )}
+            >
+              {isSubmitting ? 'Submitting...' : (step === 3 ? 'Finish' : 'Continue')}
+            </button>
+          </div>
+        )}
     </Modal>
   );
 };

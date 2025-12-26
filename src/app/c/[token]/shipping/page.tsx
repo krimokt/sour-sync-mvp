@@ -36,15 +36,44 @@ export default function ShippingPage() {
 
     try {
       const response = await fetch(`/api/c/${token}/shipping`);
-      const result = await response.json();
-
+      
+      // Read response as text first to handle empty responses
+      const responseText = await response.text();
+      
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch shipments');
+        let errorMessage = 'Failed to fetch shipments';
+        try {
+          if (responseText && responseText.trim()) {
+            const errorJson = JSON.parse(responseText);
+            errorMessage = errorJson.error || errorMessage;
+          } else {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
+        } catch {
+          errorMessage = responseText || `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      setShipments(result.shipments || []);
+      // Check if response has content before parsing
+      if (!responseText || !responseText.trim()) {
+        // Empty response, return empty array
+        setShipments([]);
+        return;
+      }
+
+      // Parse JSON response
+      try {
+        const result = JSON.parse(responseText);
+        setShipments(result.shipments || []);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error('Invalid response format from server');
+      }
     } catch (err) {
+      console.error('Error fetching shipments:', err);
       setError(err instanceof Error ? err.message : 'Failed to load shipments');
+      setShipments([]); // Set empty array on error to prevent UI issues
     } finally {
       setIsLoading(false);
     }

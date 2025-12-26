@@ -39,23 +39,43 @@ export default function PaymentsPage() {
     try {
       const response = await fetch(`/api/c/${token}/payments`);
       
+      // Read response as text first to handle empty responses
+      const responseText = await response.text();
+      
       if (!response.ok) {
-        const errorText = await response.text();
         let errorMessage = 'Failed to fetch payments';
         try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || errorMessage;
+          if (responseText && responseText.trim()) {
+            const errorJson = JSON.parse(responseText);
+            errorMessage = errorJson.error || errorMessage;
+          } else {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
         } catch {
-          errorMessage = errorText || `HTTP ${response.status}`;
+          errorMessage = responseText || `HTTP ${response.status}: ${response.statusText}`;
         }
         throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      setPayments(result.payments || []);
+      // Check if response has content before parsing
+      if (!responseText || !responseText.trim()) {
+        // Empty response, return empty array
+        setPayments([]);
+        return;
+      }
+
+      // Parse JSON response
+      try {
+        const result = JSON.parse(responseText);
+        setPayments(result.payments || []);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error('Invalid response format from server');
+      }
     } catch (err) {
       console.error('Error fetching payments:', err);
       setError(err instanceof Error ? err.message : 'Failed to load payments');
+      setPayments([]); // Set empty array on error to prevent UI issues
     } finally {
       setIsLoading(false);
     }

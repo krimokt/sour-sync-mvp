@@ -68,6 +68,13 @@ export async function GET(
       );
     }
 
+    if (!client.user_id) {
+      return NextResponse.json(
+        { error: 'Client user ID not found' },
+        { status: 404 }
+      );
+    }
+
     // Get payments for this client
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from('payments')

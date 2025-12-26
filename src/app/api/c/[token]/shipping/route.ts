@@ -55,11 +55,25 @@ export async function GET(
     const { magicLink } = validation;
 
     // Get client to find user_id
-    const { data: client } = await supabaseAdmin
+    const { data: client, error: clientError } = await supabaseAdmin
       .from('clients')
       .select('user_id')
       .eq('id', magicLink.client_id)
       .single();
+
+    if (clientError || !client) {
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!client.user_id) {
+      return NextResponse.json(
+        { error: 'Client user ID not found' },
+        { status: 404 }
+      );
+    }
 
     // Fetch shipments for this client's quotations
     // First, get quotations for this client
@@ -67,7 +81,7 @@ export async function GET(
       .from('quotations')
       .select('id')
       .eq('company_id', magicLink.company_id)
-      .eq('user_id', client?.user_id || null);
+      .eq('user_id', client.user_id);
 
     const quotationIds = (quotations || []).map((q) => q.id);
 

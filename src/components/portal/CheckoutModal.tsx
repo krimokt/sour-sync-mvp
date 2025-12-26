@@ -135,9 +135,6 @@ export default function CheckoutModal({ isOpen, onClose, quotation, token, onSuc
     }
   };
 
-  const selectedBank = bankAccounts.find(b => b.id === selectedBankId);
-  const selectedCrypto = cryptoWallets.find(c => c.id === selectedCryptoId);
-
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">

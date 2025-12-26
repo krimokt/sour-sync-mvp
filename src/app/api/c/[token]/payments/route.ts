@@ -55,6 +55,15 @@ export async function POST(
     const { magicLink } = validation;
     const body = await request.json();
     const { quotation_id, amount, payment_method, bank_account_id, crypto_wallet_id } = body;
+    
+    // Store payment method details in metadata for future reference
+    const paymentMetadata: Record<string, unknown> = {};
+    if (bank_account_id) {
+      paymentMetadata.bank_account_id = bank_account_id;
+    }
+    if (crypto_wallet_id) {
+      paymentMetadata.crypto_wallet_id = crypto_wallet_id;
+    }
 
     if (!quotation_id || !amount) {
       return NextResponse.json(
@@ -124,6 +133,7 @@ export async function POST(
         payer_name: client.name || client.company_name || 'Client',
         payer_email: client.email || null,
         quotation_ids: [quotation_id],
+        metadata: Object.keys(paymentMetadata).length > 0 ? paymentMetadata : null,
       })
       .select()
       .single();

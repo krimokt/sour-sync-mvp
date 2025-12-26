@@ -89,8 +89,19 @@ const responseSchema = {
         phone: { type: Type.STRING },
         wechat: { type: Type.STRING },
         whatsapp: { type: Type.STRING },
+        socialMedia: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              platform: { type: Type.STRING, enum: ["instagram", "linkedin", "wechat"] },
+              url: { type: Type.STRING },
+            },
+            required: ["platform", "url"],
+          },
+        },
       },
-      required: ["title", "address", "email", "phone", "wechat", "whatsapp"],
+      required: ["title", "address", "email", "phone", "wechat", "whatsapp", "socialMedia"],
     },
     socials: {
       type: Type.OBJECT,
@@ -143,7 +154,12 @@ export const generateLandingPageContent = async (formData: FormData): Promise<Ge
   });
 
   if (response.text) {
-    return JSON.parse(response.text) as GeneratedContent;
+    const parsed = JSON.parse(response.text) as GeneratedContent;
+    // Ensure socialMedia array exists
+    if (!parsed.contact.socialMedia) {
+      parsed.contact.socialMedia = [];
+    }
+    return parsed;
   }
   throw new Error("Empty response from AI engine");
 };

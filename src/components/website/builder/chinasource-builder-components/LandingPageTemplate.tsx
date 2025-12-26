@@ -5,7 +5,7 @@ import { FormData, GeneratedContent, ThemeColor, TemplateId } from '../chinasour
 import { 
   Mail, MapPin, 
   ArrowUpRight, LogIn, ExternalLink,
-  ShieldCheck, Zap
+  ShieldCheck, Zap, Instagram, Linkedin, MessageCircle
 } from 'lucide-react';
 import { EditableText, EditableIcon, EditableImage } from './EditorComponents';
 import Sidebar from './Sidebar';
@@ -36,7 +36,15 @@ const themeStyles: Record<ThemeColor, {
 };
 
 export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({ data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false }) => {
-  const [content, setContent] = useState<GeneratedContent>(initialContent);
+  // Ensure socialMedia array exists
+  const normalizedContent = {
+    ...initialContent,
+    contact: {
+      ...initialContent.contact,
+      socialMedia: initialContent.contact.socialMedia || [],
+    },
+  };
+  const [content, setContent] = useState<GeneratedContent>(normalizedContent);
   const [activeSection, setActiveSection] = useState<string | null>('hero');
   const [themeColor, setThemeColor] = useState<ThemeColor>(data.themeColor);
   const [templateId, setTemplateId] = useState<TemplateId>(data.templateId);
@@ -291,12 +299,100 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({ data, 
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  {['linkedin', 'instagram', 'twitter', 'facebook'].map(p => (
-                    <a key={p} href="#" className="w-14 h-14 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-gray-900 transition-all">
-                      <ExternalLink size={20} />
-                    </a>
-                  ))}
+                <div className="space-y-4">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Social Media</div>
+                  <div className="flex flex-wrap gap-4">
+                    {content.contact.socialMedia && content.contact.socialMedia.length > 0 ? (
+                      content.contact.socialMedia.map((social, idx) => {
+                        const getIcon = () => {
+                          switch (social.platform) {
+                            case 'instagram':
+                              return <Instagram size={20} />;
+                            case 'linkedin':
+                              return <Linkedin size={20} />;
+                            case 'wechat':
+                              return <MessageCircle size={20} />;
+                            default:
+                              return <ExternalLink size={20} />;
+                          }
+                        };
+                        return (
+                          <a 
+                            key={idx} 
+                            href={social.url || '#'} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="w-14 h-14 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-gray-900 transition-all group relative"
+                            title={social.platform.charAt(0).toUpperCase() + social.platform.slice(1)}
+                          >
+                            {getIcon()}
+                            {!readOnly && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const newSocials = [...(content.contact.socialMedia || [])];
+                                  newSocials.splice(idx, 1);
+                                  updateContent('contact.socialMedia', newSocials);
+                                }}
+                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black"
+                                title="Delete"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </a>
+                        );
+                      })
+                    ) : (
+                      <div className="text-sm text-gray-400 italic">No social media links added</div>
+                    )}
+                    {!readOnly && (
+                      <button
+                        onClick={() => {
+                          const newSocials = [...(content.contact.socialMedia || [])];
+                          newSocials.push({ platform: 'instagram', url: '' });
+                          updateContent('contact.socialMedia', newSocials);
+                        }}
+                        className="w-14 h-14 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-gray-900 transition-all"
+                        title="Add Social Media"
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+                  {!readOnly && content.contact.socialMedia && content.contact.socialMedia.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      {content.contact.socialMedia.map((social, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <select
+                            value={social.platform}
+                            onChange={(e) => {
+                              const newSocials = [...(content.contact.socialMedia || [])];
+                              newSocials[idx].platform = e.target.value as 'instagram' | 'linkedin' | 'wechat';
+                              updateContent('contact.socialMedia', newSocials);
+                            }}
+                            className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-gray-900 outline-none"
+                          >
+                            <option value="instagram">Instagram</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="wechat">WeChat</option>
+                          </select>
+                          <input
+                            type="url"
+                            value={social.url}
+                            onChange={(e) => {
+                              const newSocials = [...(content.contact.socialMedia || [])];
+                              newSocials[idx].url = e.target.value;
+                              updateContent('contact.socialMedia', newSocials);
+                            }}
+                            placeholder="https://..."
+                            className="flex-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-gray-900 outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

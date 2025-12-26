@@ -64,6 +64,10 @@ export interface GeneratedContent {
     phone: string;
     wechat: string;
     whatsapp: string;
+    socialMedia: {
+      platform: 'instagram' | 'linkedin' | 'wechat';
+      url: string;
+    }[];
   };
   socials: {
     facebook: string;

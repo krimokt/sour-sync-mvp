@@ -1,0 +1,300 @@
+
+> free-nextjs-admin-dashboard@2.0.1 build
+> next build
+
+   ▲ Next.js 14.1.0
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/client/[companySlug]/ClientSidebar.tsx
+104:6  Warning: React Hook useEffect has a missing dependency: 'navItems'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/client/[companySlug]/checkout/page.tsx
+45:9  Warning: The 'items' logical expression could make the dependencies of useMemo Hook (at line 52) change on every render. To fix this, wrap the initialization of 'items' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+83:6  Warning: React Hook useEffect has a missing dependency: 'company'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+112:6  Warning: React Hook useEffect has a missing dependency: 'company'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/client/[companySlug]/payments/page.tsx
+1980:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/client/[companySlug]/products/page.tsx
+63:6  Warning: React Hook useEffect has a missing dependency: 'fetchProducts'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/select-store/page.tsx
+104:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/site/[companySlug]/components/StoreHeader.tsx
+42:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/site/[companySlug]/products/ProductGrid.tsx
+70:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/site/[companySlug]/track/TrackOrderClient.tsx
+251:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/store/[companySlug]/StoreSidebar.tsx
+124:6  Warning: React Hook useEffect has a missing dependency: 'navItems'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/store/[companySlug]/bank-accounts/page.tsx
+43:6  Warning: React Hook useEffect has a missing dependency: 'fetchAccounts'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/store/[companySlug]/magic-links/page.tsx
+37:6  Warning: React Hook useEffect has a missing dependency: 'fetchMagicLinks'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/store/[companySlug]/payment-proofs/page.tsx
+33:6  Warning: React Hook useEffect has a missing dependency: 'fetchProofs'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+287:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/store/[companySlug]/payments/page.tsx
+1249:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/store/[companySlug]/products/page.tsx
+52:6  Warning: React Hook useEffect has a missing dependency: 'fetchProducts'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/store/[companySlug]/quotations/page.tsx
+446:6  Warning: React Hook useEffect has a missing dependency: 'fetchQuotationData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/store/[companySlug]/settings/page.tsx
+333:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/payment/CompanyPaymentMethods.tsx
+22:6  Warning: React Hook useEffect has a missing dependency: 'fetchPaymentMethods'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/products/CheckoutCartModal.tsx
+144:9  Warning: The 'items' logical expression could make the dependencies of useMemo Hook (at line 151) change on every render. To fix this, wrap the initialization of 'items' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+232:6  Warning: React Hook useEffect has missing dependencies: 'company', 'loadAddresses', 'loadCart', and 'loadPaymentMethods'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/products/CheckoutModal.tsx
+143:6  Warning: React Hook useEffect has missing dependencies: 'company', 'fetchAddresses', and 'fetchPaymentMethods'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/products/ImageUploader.tsx
+43:6  Warning: React Hook useCallback has a missing dependency: 'handleFiles'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/products/ProductDetailModal.tsx
+50:6  Warning: React Hook useEffect has a missing dependency: 'product'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/products/ProductForm.tsx
+42:6  Warning: React Hook useEffect has a missing dependency: 'fetchCategories'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/settings/PaymentSettings.tsx
+55:6  Warning: React Hook useEffect has missing dependencies: 'fetchAccounts' and 'fetchWallets'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/storefront/blocks/BlockRenderer.tsx
+234:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/AboutSection.tsx
+28:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/HeaderSection.tsx
+22:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/HeroBanner.tsx
+94:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/HeroSection.tsx
+20:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/HeroSlider.tsx
+46:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+135:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/ImageWithText.tsx
+25:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/LogoList.tsx
+26:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/Multicolumn.tsx
+54:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/Newsletter.tsx
+34:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/ProcessSteps.tsx
+41:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/ProductCarousel.tsx
+217:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+226:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/PromoBanner.tsx
+54:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+108:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+151:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+200:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/TestimonialsCarousel.tsx
+181:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/storefront/sections/WarehouseGallery.tsx
+41:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/ui/product-card-2.tsx
+71:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/ui/sign-in.tsx
+60:5  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/website/builder/BuilderSidebar.tsx
+458:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/website/builder/TemplateSelector.tsx
+544:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/website/builder/chinasource-builder-components/BuilderForm.tsx
+183:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/website/builder/chinasource-builder-components/EditorComponents.tsx
+123:12  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+132:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/website/builder/chinasource-builder-components/LandingPageTemplate.tsx
+119:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/40) ...
+   Generating static pages (10/40) 
+   Generating static pages (20/40) 
+DashboardShippingTracking - Props received: []
+DashboardShippingTracking - Current state: { isLoading: true, hasError: false, dataLength: 0 }
+   Generating static pages (30/40) 
+ ✓ Generating static pages (40/40) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                  Size     First Load JS
+┌ ○ /                                                        2.04 kB         128 kB
+├ ○ /_not-found                                              0 B                0 B
+├ ○ /alerts                                                  191 B          91.8 kB
+├ λ /api/admin/[slug]/bank-accounts                          0 B                0 B
+├ λ /api/admin/[slug]/bank-accounts/[id]                     0 B                0 B
+├ λ /api/admin/[slug]/crypto-wallets                         0 B                0 B
+├ λ /api/admin/[slug]/crypto-wallets/[id]                    0 B                0 B
+├ λ /api/admin/payments                                      0 B                0 B
+├ λ /api/admin/payments/sql                                  0 B                0 B
+├ λ /api/auth/signup                                         0 B                0 B
+├ λ /api/c/[token]/payments                                  0 B                0 B
+├ λ /api/c/[token]/payments/[id]                             0 B                0 B
+├ λ /api/c/[token]/quotations                                0 B                0 B
+├ λ /api/c/[token]/quotations/[id]                           0 B                0 B
+├ λ /api/c/[token]/shipping                                  0 B                0 B
+├ λ /api/c/[token]/shipping/[id]                             0 B                0 B
+├ λ /api/c/[token]/validate                                  0 B                0 B
+├ λ /api/client/[slug]/addresses                             0 B                0 B
+├ λ /api/client/[slug]/auth/login                            0 B                0 B
+├ λ /api/client/[slug]/auth/signup                           0 B                0 B
+├ λ /api/client/[slug]/cart                                  0 B                0 B
+├ λ /api/client/[slug]/cart/checkout                         0 B                0 B
+├ λ /api/client/[slug]/cart/items/[itemId]                   0 B                0 B
+├ λ /api/client/[slug]/payments/[id]/invoice                 0 B                0 B
+├ λ /api/client/[slug]/payments/[id]/invoice-preview         0 B                0 B
+├ λ /api/client/[slug]/payments/[id]/status                  0 B                0 B
+├ λ /api/client/[slug]/products/order                        0 B                0 B
+├ λ /api/client/quotations                                   0 B                0 B
+├ λ /api/client/quotations/upload-image                      0 B                0 B
+├ λ /api/client/validate-token                               0 B                0 B
+├ λ /api/netlify/check-domain                                0 B                0 B
+├ λ /api/netlify/force-ssl                                   0 B                0 B
+├ λ /api/netlify/register-domain                             0 B                0 B
+├ λ /api/public/company/[slug]                               0 B                0 B
+├ λ /api/quotations                                          0 B                0 B
+├ λ /api/store/[slug]/auth/login                             0 B                0 B
+├ λ /api/store/[slug]/auth/me                                0 B                0 B
+├ λ /api/store/[slug]/auth/signup                            0 B                0 B
+├ λ /api/store/[slug]/bank-accounts                          0 B                0 B
+├ λ /api/store/[slug]/cart                                   0 B                0 B
+├ λ /api/store/[slug]/clients/[clientId]/ban                 0 B                0 B
+├ λ /api/store/[slug]/clients/[clientId]/magic-link          0 B                0 B
+├ λ /api/store/[slug]/clients/invite                         0 B                0 B
+├ λ /api/store/[slug]/clients/magic-link                     0 B                0 B
+├ λ /api/store/[slug]/crypto-wallets                         0 B                0 B
+├ λ /api/store/[slug]/payments/[id]/status                   0 B                0 B
+├ λ /api/store/[slug]/quotations/[id]/generate-link          0 B                0 B
+├ λ /api/store/[slug]/quotations/[id]/links                  0 B                0 B
+├ λ /api/store/[slug]/quotations/[id]/links/[linkId]/revoke  0 B                0 B
+├ λ /api/store/[slug]/quotations/[id]/price-options          0 B                0 B
+├ λ /api/verify-domain                                       0 B                0 B
+├ ○ /avatars                                                 200 B          96.8 kB
+├ ○ /badge                                                   1.32 kB         100 kB
+├ ○ /bar-chart                                               1.36 kB          93 kB
+├ ○ /basic-tables                                            200 B          96.8 kB
+├ ○ /blank                                                   191 B          91.8 kB
+├ ○ /buttons                                                 1.32 kB         100 kB
+├ λ /c/[token]                                               3.4 kB          100 kB
+├ λ /c/[token]/invalid                                       191 B          91.8 kB
+├ λ /c/[token]/payments                                      4.21 kB         101 kB
+├ λ /c/[token]/quotations                                    4.37 kB         101 kB
+├ λ /c/[token]/quotations/[id]                               4.79 kB         101 kB
+├ λ /c/[token]/shipping                                      4.27 kB         101 kB
+├ λ /c/[token]/shipping/[id]                                 4.64 kB         101 kB
+├ ○ /calendar                                                80.8 kB         172 kB
+├ ○ /checkoutpage                                            8.04 kB         146 kB
+├ λ /client/[companySlug]                                    4.82 kB         104 kB
+├ λ /client/[companySlug]/checkout                           4.98 kB         111 kB
+├ λ /client/[companySlug]/payments                           232 kB          406 kB
+├ λ /client/[companySlug]/products                           52.5 kB         234 kB
+├ λ /client/[companySlug]/profile                            1.22 kB        92.8 kB
+├ λ /client/[companySlug]/quotations                         23.9 kB         200 kB
+├ λ /client/[companySlug]/shipping                           9.9 kB          174 kB
+├ ○ /dashboard-home                                          8.15 kB         184 kB
+├ ○ /error-404                                               369 B          85.2 kB
+├ ○ /form-elements                                           6.95 kB         130 kB
+├ ○ /form-layout                                             21.9 kB         127 kB
+├ ○ /icon                                                    0 B                0 B
+├ ○ /images                                                  200 B          96.8 kB
+├ ○ /line-chart                                              1.45 kB        93.1 kB
+├ ○ /modals                                                  5.28 kB         104 kB
+├ ○ /order                                                   10.1 kB         114 kB
+├ ○ /payment                                                 6.53 kB         157 kB
+├ ○ /payment-details                                         2.59 kB         140 kB
+├ ○ /profile                                                 1.07 kB        85.9 kB
+├ ○ /quotation                                               16.8 kB         170 kB
+├ ○ /select-store                                            1.74 kB         134 kB
+├ ○ /shipment-tracking                                       11.5 kB         149 kB
+├ λ /signin                                                  151 B           139 kB
+├ λ /signup                                                  151 B           139 kB
+├ λ /site/[companySlug]                                      391 B           331 kB
+├ λ /site/[companySlug]/[pageSlug]                           203 B           324 kB
+├ λ /site/[companySlug]/checkout                             5.5 kB          133 kB
+├ λ /site/[companySlug]/products                             3.5 kB         95.1 kB
+├ λ /site/[companySlug]/products/[productId]                 201 B          96.8 kB
+├ λ /site/[companySlug]/services                             2.26 kB        93.9 kB
+├ λ /site/[companySlug]/signin                               4.33 kB        94.1 kB
+├ λ /site/[companySlug]/signup                               572 B          85.4 kB
+├ λ /site/[companySlug]/track                                4.68 kB        96.3 kB
+├ λ /store/[companySlug]                                     4.95 kB         104 kB
+├ λ /store/[companySlug]/bank-accounts                       4.23 kB        89.1 kB
+├ λ /store/[companySlug]/clients                             7.99 kB         124 kB
+├ λ /store/[companySlug]/domain                              6.52 kB         132 kB
+├ λ /store/[companySlug]/magic-links                         4.94 kB         154 kB
+├ λ /store/[companySlug]/payment-proofs                      3.96 kB        88.8 kB
+├ λ /store/[companySlug]/payments                            15 kB           188 kB
+├ λ /store/[companySlug]/products                            5.36 kB         150 kB
+├ λ /store/[companySlug]/products/[productId]                1.05 kB         146 kB
+├ λ /store/[companySlug]/products/new                        672 B           146 kB
+├ λ /store/[companySlug]/quotations                          15.2 kB         167 kB
+├ λ /store/[companySlug]/settings                            14.4 kB         175 kB
+├ λ /store/[companySlug]/shipping                            13.2 kB         177 kB
+├ λ /store/[companySlug]/website                             52.7 kB         194 kB
+├ ○ /user-profiles                                           7.22 kB         145 kB
+└ ○ /videos                                                  191 B          91.8 kB
++ First Load JS shared by all                                84.8 kB
+  ├ chunks/336e16d7-f4c3dda22901b221.js                      53.4 kB
+  ├ chunks/3903-da704092edd77e9c.js                          29.1 kB
+  └ other shared chunks (total)                              2.38 kB
+
+
+ƒ Middleware                                                 115 kB
+
+○  (Static)   prerendered as static content
+λ  (Dynamic)  server-rendered on demand using Node.js
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.7.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
+npm notice To update run: npm install -g npm@11.7.0
+npm notice

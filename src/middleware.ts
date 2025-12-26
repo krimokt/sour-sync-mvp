@@ -84,11 +84,15 @@ export async function middleware(req: NextRequest) {
   // ----- FORCE HTTPS -----
   // Check if request is HTTP and redirect to HTTPS
   // This serves as a backup to netlify.toml redirects
-  const protocol = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol;
-  if (protocol === 'http' || req.nextUrl.protocol === 'http:') {
-    const httpsUrl = req.nextUrl.clone();
-    httpsUrl.protocol = 'https:';
-    return NextResponse.redirect(httpsUrl, 301);
+  // Skip HTTPS redirect for localhost (local development)
+  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+  if (!isLocalhost) {
+    const protocol = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol;
+    if (protocol === 'http' || req.nextUrl.protocol === 'http:') {
+      const httpsUrl = req.nextUrl.clone();
+      httpsUrl.protocol = 'https:';
+      return NextResponse.redirect(httpsUrl, 301);
+    }
   }
   
   // ----- BLOCKED ROUTES -----

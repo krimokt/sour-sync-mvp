@@ -139,3 +139,31 @@ Your `netlify.toml` is configured as:
    - Make sure all dependencies are listed
    - Run `pnpm install` locally to verify
 
+### 6. Blob Upload Failure (Infrastructure Issue)
+**Error:** `Error uploading blobs to deploy store: fetch failed` or `Build script returned non-zero exit code: 4`
+
+**Symptoms:**
+- Build completes successfully (all pages generated)
+- Error occurs during "Uploading blobs to deploy store" stage
+- This is a Netlify infrastructure/network issue, not a code problem
+
+**Solutions:**
+1. **Retry the build** - Transient network issues often resolve on retry:
+   - Go to **Deploys** → **Trigger deploy** → **Deploy site**
+   
+2. **Clear cache and retry:**
+   - **Deploys** → **Trigger deploy** → **Clear cache and deploy site**
+   
+3. **If issue persists:**
+   - Contact Netlify support with:
+     - Build ID (found in deploy URL)
+     - Error snippet from logs
+     - Mention it's a blob upload infrastructure issue
+   
+4. **Check for build warnings:**
+   - Exit code 4 from Next.js can indicate warnings treated as errors
+   - Review build logs for any warnings that might need addressing
+   - Common warnings: `<img>` tag usage (consider using Next.js Image component)
+
+**Note:** If the build shows "Generating static pages (40/40)" successfully but then fails on blob upload, this is definitely a Netlify infrastructure issue and should be reported to Netlify support.
+

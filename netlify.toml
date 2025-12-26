@@ -10,6 +10,8 @@
   # This is a public API key intentionally exposed to the client for AI content generation
   # Disable smart detection since this is a public API key that's intentionally in client code
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  # Disable Netlify Blobs to prevent 403 errors during deployment
+  NETLIFY_SKIP_BLOBS_UPLOAD = "true"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

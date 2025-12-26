@@ -117,8 +117,8 @@ export async function middleware(req: NextRequest) {
   
   // ----- CUSTOM DOMAIN ROUTING -----
   // Check if this is a custom domain (client's own domain like mycompany.com)
-  // IMPORTANT: Exclude API routes from custom domain rewriting - they should go directly to the API
-  if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/') && !path.startsWith('/client/') && !path.startsWith('/api/')) {
+  // IMPORTANT: Exclude API routes and magic link routes from custom domain rewriting - they should go directly
+  if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/') && !path.startsWith('/client/') && !path.startsWith('/api/') && !path.startsWith('/c/')) {
     try {
       // Create Supabase client to look up custom domain
       const supabase = createMiddlewareClient({ req, res });

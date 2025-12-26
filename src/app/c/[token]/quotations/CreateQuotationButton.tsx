@@ -8,16 +8,23 @@ import QuotationFormModalWithToken from '@/components/quotation/QuotationFormMod
 interface CreateQuotationButtonProps {
   token: string;
   allowedCountries?: string[];
+  onSuccess?: () => void;
 }
 
-export default function CreateQuotationButton({ token, allowedCountries = [] }: CreateQuotationButtonProps) {
+export default function CreateQuotationButton({ token, allowedCountries = [], onSuccess }: CreateQuotationButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSuccess = () => {
-    // Refresh the page to show the new quotation
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
+    // Call the onSuccess callback if provided, otherwise reload the page
+    if (onSuccess) {
+      setTimeout(() => {
+        onSuccess();
+      }, 2000);
+    } else {
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
   };
 
   return (

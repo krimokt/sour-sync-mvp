@@ -9,8 +9,9 @@ const supabaseAdmin = createClient(
 
 // Helper to validate token and get magic link data
 async function validateToken(token: string) {
-  const tokenHash = hashToken(token);
-  
+  // Check if the token is already a hash (64 characters) or needs to be hashed
+  const tokenHash = token.length === 64 ? token : hashToken(token);
+
   const { data: magicLink, error } = await supabaseAdmin
     .from('client_magic_links')
     .select('id, company_id, client_id, scopes, expires_at, revoked_at, max_uses, use_count')

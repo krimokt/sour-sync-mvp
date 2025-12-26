@@ -90,9 +90,10 @@ interface CountryData {
 interface QuotationFormModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose }) => {
+const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
   const [countries, setCountries] = useState<CountryData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1744,7 +1745,12 @@ const QuotationFormModal: React.FC<QuotationFormModalProps> = ({ isOpen, onClose
                   </button>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => {
+                  if (onSuccess) {
+                    onSuccess();
+                  }
+                  onClose();
+                }}
                     className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full font-medium text-sm transition-colors"
               >
                 Close

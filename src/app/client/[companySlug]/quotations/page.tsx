@@ -588,6 +588,9 @@ export default function ClientQuotationsPage() {
         isOpen={isCreateModalOpen}
         onClose={() => {
           setIsCreateModalOpen(false);
+        }}
+        onSuccess={() => {
+          setIsCreateModalOpen(false);
           fetchData(); // Refresh quotations after creating
         }}
       />

@@ -6,6 +6,9 @@
 [build.environment]
   NODE_VERSION = "20"
   PNPM_VERSION = "10"
+  # Configure secrets scanner to ignore the Gemini API key pattern
+  # This is a public API key intentionally exposed to the client for AI content generation
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIza*"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

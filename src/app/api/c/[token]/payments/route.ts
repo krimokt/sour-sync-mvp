@@ -36,6 +36,74 @@ async function validateToken(token: string) {
   return { valid: true, magicLink };
 }
 
+// Get payments
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  try {
+    const { token } = await params;
+    const validation = await validateToken(token);
+
+    if (!validation.valid || !validation.magicLink) {
+      return NextResponse.json(
+        { error: validation.error || 'Invalid token' },
+        { status: 403 }
+      );
+    }
+
+    const { magicLink } = validation;
+
+    // Get client to find user_id
+    const { data: client, error: clientError } = await supabaseAdmin
+      .from('clients')
+      .select('user_id')
+      .eq('id', magicLink.client_id)
+      .single();
+
+    if (clientError || !client) {
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get payments for this client
+    const { data: payments, error: paymentsError } = await supabaseAdmin
+      .from('payments')
+      .select(`
+        *,
+        payment_quotations (
+          quotation_id,
+          quotations (
+            id,
+            quotation_id,
+            product_name
+          )
+        )
+      `)
+      .eq('company_id', magicLink.company_id)
+      .eq('user_id', client.user_id)
+      .order('created_at', { ascending: false });
+
+    if (paymentsError) {
+      console.error('Error fetching payments:', paymentsError);
+      return NextResponse.json(
+        { error: `Failed to fetch payments: ${paymentsError.message}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      payments: payments || [],
+    });
+  } catch (error) {
+    console.error('Get payments error:', error);
+    const message = error instanceof Error ? error.message : 'Server error';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 // Create payment
 export async function POST(
   request: NextRequest,

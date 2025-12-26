@@ -38,14 +38,23 @@ export default function PaymentsPage() {
 
     try {
       const response = await fetch(`/api/c/${token}/payments`);
-      const result = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch payments');
+        const errorText = await response.text();
+        let errorMessage = 'Failed to fetch payments';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          errorMessage = errorText || `HTTP ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
+      const result = await response.json();
       setPayments(result.payments || []);
     } catch (err) {
+      console.error('Error fetching payments:', err);
       setError(err instanceof Error ? err.message : 'Failed to load payments');
     } finally {
       setIsLoading(false);

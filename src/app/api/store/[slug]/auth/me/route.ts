@@ -7,7 +7,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return secret;
+}
 
 export async function GET(
   request: NextRequest
@@ -23,7 +29,7 @@ export async function GET(
     
     let decoded;
     try {
-      decoded = jwt.verify(token, JWT_SECRET) as { userId: string; companyId: string };
+      decoded = jwt.verify(token, getJwtSecret()) as { userId: string; companyId: string };
     } catch (e) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }

@@ -40,7 +40,10 @@ export default function PortalHeader() {
           </div>
           {token && (
             <div className="flex items-center">
-              <CreateQuotationButton token={token} />
+              <CreateQuotationButton 
+                token={token} 
+                allowedCountries={data.quotationCountries || []}
+              />
             </div>
           )}
         </div>

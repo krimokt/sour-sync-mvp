@@ -42,7 +42,8 @@ export default async function PortalLayout({ children, params }: PortalLayoutPro
         id,
         name,
         slug,
-        logo_url
+        logo_url,
+        quotation_countries
       ),
       clients (
         id,
@@ -82,16 +83,24 @@ export default async function PortalLayout({ children, params }: PortalLayoutPro
     ? magicLink.clients[0]
     : magicLink.clients;
 
+  const companyData = company as { name?: string; quotation_countries?: string[] | null } | undefined;
+  
+  // Normalize country codes to lowercase for filtering
+  const normalizedCountries = companyData?.quotation_countries 
+    ? companyData.quotation_countries.map(c => String(c).toLowerCase().trim()).filter(Boolean)
+    : null;
+  
   const magicLinkData = {
     magicLinkId: magicLink.id,
     companyId: magicLink.company_id,
     clientId: magicLink.client_id,
-    companyName: (company as { name?: string })?.name || 'Company',
+    companyName: companyData?.name || 'Company',
     clientName: magicLink.client_name_snapshot,
     clientPhone: magicLink.client_phone_snapshot,
     scopes: magicLink.scopes || ['view', 'pay', 'track', 'create'],
     company: company,
     client: client,
+    quotationCountries: normalizedCountries,
   };
 
   return (

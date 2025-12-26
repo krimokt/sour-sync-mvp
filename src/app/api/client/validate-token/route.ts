@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs';
+import { hashToken, verifyToken } from '@/lib/magic-link';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,43 +21,34 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get all magic links and check token hash
-    // We need to check all because we can't query by hash directly
-    const { data: magicLinks, error: linksError } = await supabase
+    // Hash the token to look it up
+    const tokenHash = hashToken(token);
+    
+    // Find the magic link by token hash
+    const { data: magicLink, error: linksError } = await supabase
       .from('client_magic_links')
       .select('*')
+      .eq('token_hash', tokenHash)
       .is('revoked_at', null)
-      .gt('expires_at', new Date().toISOString());
+      .gt('expires_at', new Date().toISOString())
+      .single();
 
-    if (linksError) {
-      console.error('Error fetching magic links:', linksError);
-      return NextResponse.json(
-        { error: 'Failed to validate token' },
-        { status: 500 }
-      );
-    }
-
-    // Find matching token by comparing hashes
-    let validLink = null;
-    for (const link of magicLinks || []) {
-      try {
-        const isMatch = await bcrypt.compare(token, link.token_hash);
-        if (isMatch) {
-          validLink = link;
-          break;
-        }
-      } catch (error) {
-        // Continue to next link if comparison fails
-        continue;
-      }
-    }
-
-    if (!validLink) {
+    if (linksError || !magicLink) {
       return NextResponse.json(
         { error: 'Invalid or expired token' },
         { status: 401 }
       );
     }
+
+    // Verify the token matches (double check with timing-safe comparison)
+    if (!verifyToken(token, magicLink.token_hash)) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    const validLink = magicLink;
 
     // Check if token is expired
     const expiresAt = new Date(validLink.expires_at);

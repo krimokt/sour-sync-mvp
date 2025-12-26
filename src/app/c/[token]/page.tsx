@@ -41,7 +41,10 @@ export default function PortalHomePage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Request a new quotation</p>
                 </div>
               </div>
-              <CreateQuotationButton token={token} />
+              <CreateQuotationButton 
+                token={token} 
+                allowedCountries={data.quotationCountries || []}
+              />
             </div>
           )}
 

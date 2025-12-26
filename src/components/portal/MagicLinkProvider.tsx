@@ -12,6 +12,7 @@ interface MagicLinkData {
   scopes: string[];
   company?: unknown;
   client?: unknown;
+  quotationCountries?: string[] | null;
 }
 
 interface MagicLinkContextType {

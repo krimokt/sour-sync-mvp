@@ -77,6 +77,7 @@ export default function QuotationsPage() {
             <CreateQuotationButton 
               token={token} 
               onSuccess={fetchQuotations}
+              allowedCountries={data.quotationCountries || []}
             />
           )}
         </div>
@@ -116,6 +117,7 @@ export default function QuotationsPage() {
               <CreateQuotationButton 
                 token={token} 
                 onSuccess={fetchQuotations}
+                allowedCountries={data.quotationCountries || []}
               />
             )}
           </div>

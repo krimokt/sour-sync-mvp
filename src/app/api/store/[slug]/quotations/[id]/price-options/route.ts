@@ -1,98 +1,129 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { parseWithSchema, readJson, slugSchema, uuidSchema, ValidationError } from '@/lib/validation';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const bodySchema = z
+  .object({
+    status: z.string().min(1).max(50).optional(),
+    selected_option: z.number().int().min(1).max(3).optional(),
+    quotation_fees: z.string().max(100).optional(),
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("Missing Supabase environment variables.");
-}
+    // Price option fields (strings)
+    title_option1: z.string().max(500).optional(),
+    total_price_option1: z.string().max(100).optional(),
+    price_per_unit_option1: z.string().max(100).optional(),
+    delivery_time_option1: z.string().max(100).optional(),
+    description_option1: z.string().max(5000).optional(),
+    image_option1: z.string().max(20000).optional(),
+    price_description_option1: z.string().max(5000).optional(),
 
-const supabaseAdmin = createClient(
-  supabaseUrl || '',
-  supabaseServiceKey || '',
-  {
-    auth: { persistSession: false }
-  }
-);
+    title_option2: z.string().max(500).optional(),
+    total_price_option2: z.string().max(100).optional(),
+    price_per_unit_option2: z.string().max(100).optional(),
+    delivery_time_option2: z.string().max(100).optional(),
+    description_option2: z.string().max(5000).optional(),
+    image_option2: z.string().max(20000).optional(),
+    price_description_option2: z.string().max(5000).optional(),
+
+    title_option3: z.string().max(500).optional(),
+    total_price_option3: z.string().max(100).optional(),
+    price_per_unit_option3: z.string().max(100).optional(),
+    delivery_time_option3: z.string().max(100).optional(),
+    description_option3: z.string().max(5000).optional(),
+    image_option3: z.string().max(20000).optional(),
+    price_description_option3: z.string().max(5000).optional(),
+  })
+  .strict();
 
 export async function PATCH(
   request: Request,
   { params }: { params: { slug: string; id: string } }
 ) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Server configuration error. Please contact support." },
-        { status: 500 }
-      );
+    const { slug, id } = parseWithSchema(
+      z.object({ slug: slugSchema, id: uuidSchema }),
+      params
+    );
+
+    const raw = await readJson(request);
+    const updateData = parseWithSchema(bodySchema, raw);
+
+    const supabase = createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const updateData = await request.json();
-    const quotationId = params.id;
-
-    if (!quotationId) {
-      return NextResponse.json(
-        { error: "Quotation ID is required" },
-        { status: 400 }
-      );
+    // Rate limit staff updates (by user + IP)
+    const ip = getClientIp(request);
+    const rl = await rateLimit({ route: 'store_quotation_price_options', userId: user.id, ip }, { limit: 60, window: '1 m' });
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
     }
 
-    // Optimized: Prepare update data - only process fields that are provided
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dataToUpdate: any = {
+    // Resolve company by slug
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    if (companyError || !company) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    // Verify staff membership for this store
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile?.company_id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (profile.company_id !== company.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const dataToUpdate: Record<string, unknown> = {
+      ...updateData,
       updated_at: new Date().toISOString(),
     };
 
-    // Add status if not already set
-    if (updateData.status) {
-      dataToUpdate.status = updateData.status;
-    }
-
-    // Process all fields from updateData (client already filtered empty values)
-    Object.keys(updateData).forEach(key => {
-      if (key === 'updated_at' || key === 'status') return; // Already handled
-      
-      const value = updateData[key];
-      
-      // Handle selected_option specially
-      if (key === 'selected_option') {
-        if (typeof value === 'number' && value >= 1 && value <= 3) {
-          dataToUpdate.selected_option = value;
-        } else {
-          dataToUpdate.selected_option = null;
-        }
-        return;
-      }
-
-      // For all other fields, use value as-is (client already processed them)
-      if (value !== null && value !== undefined && value !== '') {
-        dataToUpdate[key] = value;
-      }
-    });
-
-    // Optimized: Update and return immediately without fetching data back
-    const { error } = await supabaseAdmin
+    // Tenant-bound update (extra guard even though RLS exists)
+    const { error } = await supabase
       .from('quotations')
       .update(dataToUpdate)
-      .eq('id', quotationId);
+      .eq('id', id)
+      .eq('company_id', company.id);
 
     if (error) {
       console.error('Error updating quotation price options:', error);
-      console.error('Update data keys:', Object.keys(dataToUpdate));
       return NextResponse.json(
-        { error: error.message, details: error },
+        { error: error.message },
         { status: 500 }
       );
     }
 
-    // Return success immediately without fetching data (faster response)
     return NextResponse.json({ 
       success: true, 
       message: 'Price options saved successfully' 
     }, { status: 200 });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: error.issues },
+        { status: 400 }
+      );
+    }
     console.error('Error processing request:', error);
     return NextResponse.json(
       {

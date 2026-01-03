@@ -14,6 +14,10 @@ export interface Company {
   timezone: string;
   plan: 'starter' | 'pro' | 'enterprise';
   status: 'active' | 'suspended' | 'cancelled';
+  // Subscription (no Stripe yet - controlled from DB)
+  subscription_period_id?: string | null;
+  subscription_started_at?: string | null;
+  subscription_expires_at?: string | null;
   custom_domain: string | null;
   quotation_countries?: string[] | null;
   quotation_input_fields?: string[] | null;

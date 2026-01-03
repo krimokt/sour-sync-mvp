@@ -4,52 +4,62 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Product } from '@/types/database';
-import { supabase } from '@/lib/supabase';
+import { deleteProductOptimistic, togglePublishOptimistic } from '@/hooks/useProducts';
 
 interface ProductsTableProps {
   products: Product[];
   companySlug: string;
+  companyId?: string;
   onRefresh?: () => void;
   isReadOnly?: boolean;
 }
 
-export default function ProductsTable({ products, companySlug, onRefresh, isReadOnly = false }: ProductsTableProps) {
+export default function ProductsTable({ 
+  products, 
+  companySlug, 
+  companyId,
+  onRefresh, 
+  isReadOnly = false 
+}: ProductsTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const handleDelete = async (productId: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!companyId) {
+      // Fallback to non-optimistic delete
+      onRefresh?.();
+      return;
+    }
     
     setDeletingId(productId);
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
-
-      if (error) throw error;
-      onRefresh?.();
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      alert('Failed to delete product');
+      const result = await deleteProductOptimistic(companyId, productId, products);
+      if (!result.success) {
+        console.error('Error deleting product:', result.error);
+        alert('Failed to delete product');
+      }
     } finally {
       setDeletingId(null);
     }
   };
 
   const handleTogglePublish = async (product: Product) => {
-    try {
-      const { error } = await (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        supabase.from('products') as any
-      )
-        .update({ is_published: !product.is_published })
-        .eq('id', product.id);
-
-      if (error) throw error;
+    if (!companyId) {
+      // Fallback to non-optimistic update
       onRefresh?.();
-    } catch (error) {
-      console.error('Error updating product:', error);
-      alert('Failed to update product');
+      return;
+    }
+
+    setTogglingId(product.id);
+    try {
+      const result = await togglePublishOptimistic(companyId, product, products);
+      if (!result.success) {
+        console.error('Error updating product:', result.error);
+        alert('Failed to update product');
+      }
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -117,7 +127,12 @@ export default function ProductsTable({ products, companySlug, onRefresh, isRead
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {products.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <tr 
+                key={product.id} 
+                className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                  deletingId === product.id ? 'opacity-50' : ''
+                }`}
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-12 w-12 relative">
@@ -186,13 +201,24 @@ export default function ProductsTable({ products, companySlug, onRefresh, isRead
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleTogglePublish(product)}
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                        disabled={togglingId === product.id}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors disabled:opacity-50 ${
                           product.is_published
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'
                         }`}
                       >
-                        {product.is_published ? 'Published' : 'Draft'}
+                        {togglingId === product.id ? (
+                          <span className="flex items-center gap-1">
+                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Updating...
+                          </span>
+                        ) : (
+                          product.is_published ? 'Published' : 'Draft'
+                        )}
                       </button>
                       <Link
                         href={`/store/${companySlug}/products/${product.id}`}
@@ -218,9 +244,3 @@ export default function ProductsTable({ products, companySlug, onRefresh, isRead
     </div>
   );
 }
-
-
-
-
-
-

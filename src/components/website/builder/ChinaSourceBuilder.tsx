@@ -30,18 +30,31 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
   useEffect(() => {
     const loadSavedData = async () => {
       try {
-        // Try to load saved FormData and GeneratedContent from a custom field
-        // We'll store it in a JSON field - let's use a custom field in website_settings
-        // For now, we'll check if there's existing data in homepage_layout_draft
-        // If it's in the old format, we'll start fresh
-        // If we add a new field like 'builder_data', we can use that
-        
-        // For now, check if initialSettings has any saved builder data
-        // This is a simplified version - in production you might want to add a dedicated field
-        const savedData = (initialSettings as WebsiteSettings & { builder_data?: { formData: FormData; generatedContent: GeneratedContent } }).builder_data;
-        if (savedData) {
+        // Draft builder data is stored in website_settings_private (not publicly readable)
+        // Apply filters after casting to keep TS happy with non-generated table types
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: privateRow, error: privateError } = await (supabase.from('website_settings_private') as any)
+          .select('builder_data')
+          .eq('company_id', companyId)
+          .single();
+
+        if (privateError) {
+          // Ignore; we'll fall back to legacy or starting fresh
+        }
+
+        const savedData = privateRow?.builder_data as { formData: FormData; generatedContent: GeneratedContent } | null | undefined;
+        if (savedData?.formData && savedData?.generatedContent) {
           setFormData(savedData.formData);
           setGeneratedContent(savedData.generatedContent);
+          setAppState('preview');
+          return;
+        }
+
+        // Backwards compat: if initial settings still contains builder_data (older schema), use it
+        const legacySaved = (initialSettings as WebsiteSettings & { builder_data?: { formData: FormData; generatedContent: GeneratedContent } }).builder_data;
+        if (legacySaved?.formData && legacySaved?.generatedContent) {
+          setFormData(legacySaved.formData);
+          setGeneratedContent(legacySaved.generatedContent);
           setAppState('preview');
         }
       } catch (error) {
@@ -50,7 +63,7 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
     };
 
     loadSavedData();
-  }, [initialSettings]);
+  }, [companyId, initialSettings]);
 
   const handleFormSubmit = async (data: FormData) => {
     setFormData(data);
@@ -79,8 +92,9 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
 
     setIsSaving(true);
     try {
+      // Draft data goes to the private table
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('website_settings') as any)
+      const { error } = await (supabase.from('website_settings_private') as any)
         .update({ 
           builder_data: {
             formData,
@@ -108,23 +122,34 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
 
     setIsPublishing(true);
     try {
+      // Save draft to private table
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('website_settings') as any)
+      const { error: privateError } = await (supabase.from('website_settings_private') as any)
         .update({ 
           builder_data: {
             formData,
             generatedContent,
           },
+          updated_at: new Date().toISOString() 
+        })
+        .eq('company_id', companyId);
+
+      if (privateError) throw privateError;
+
+      // Published builder data is stored on website_settings (public, but gated by is_published)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: publicError } = await (supabase.from('website_settings') as any)
+        .update({
           published_builder_data: {
             formData,
             generatedContent,
           },
           is_published: true,
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString(),
         })
         .eq('company_id', companyId);
 
-      if (error) throw error;
+      if (publicError) throw publicError;
       showSuccessToast('Website published successfully! Your site is now live.');
     } catch (err) {
       console.error(err);

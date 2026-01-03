@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { hashToken, verifyToken } from '@/lib/magic-link';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,6 +54,13 @@ async function validateTokenAndGetClient(token: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit uploads (by IP)
+    const ip = getClientIp(request);
+    const rl = await rateLimit({ route: 'client_quote_upload_image', ip }, { limit: 20, window: '1 m' });
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many uploads. Please try again later.' }, { status: 429 });
+    }
+
     const formData = await request.formData();
     const token = formData.get('token') as string;
     const file = formData.get('file') as File;
@@ -69,6 +77,15 @@ export async function POST(request: NextRequest) {
         { error: 'File is required' },
         { status: 400 }
       );
+    }
+
+    // Basic upload validation
+    if (typeof file.type !== 'string' || !file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 });
+    }
+    const maxBytes = 5 * 1024 * 1024; // 5MB
+    if (typeof file.size === 'number' && file.size > maxBytes) {
+      return NextResponse.json({ error: 'Image is too large (max 5MB)' }, { status: 400 });
     }
 
     // Validate token

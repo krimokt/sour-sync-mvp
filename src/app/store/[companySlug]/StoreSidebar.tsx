@@ -12,6 +12,7 @@ import {
   Send,
   Truck,
   CreditCard,
+  BadgeDollarSign,
   Globe,
   Link2,
   Settings,
@@ -33,17 +34,30 @@ interface StoreSidebarProps {
 
 const StoreSidebar: React.FC<StoreSidebarProps> = ({ companySlug }) => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered, isManuallyToggled } = useSidebar();
-  useStore(); // Hook called for context but company data not used directly in sidebar
+  const { company } = useStore();
   const pathname = usePathname();
 
   const basePath = `/store/${companySlug}`;
 
+  const isSubscriptionExpired = (() => {
+    const expiresAt = company?.subscription_expires_at;
+    if (!expiresAt) return false;
+    const dt = new Date(expiresAt);
+    if (Number.isNaN(dt.getTime())) return false;
+    return dt.getTime() <= Date.now();
+  })();
+
   // Navigation items with dynamic paths based on company slug
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     {
       icon: <LayoutDashboard className="w-5 h-5" />,
       name: 'Dashboard',
       path: basePath,
+    },
+    {
+      icon: <BadgeDollarSign className="w-5 h-5" />,
+      name: 'Subscription',
+      path: `${basePath}/subscription`,
     },
     {
       icon: <Package className="w-5 h-5" />,
@@ -86,6 +100,10 @@ const StoreSidebar: React.FC<StoreSidebarProps> = ({ companySlug }) => {
       path: `${basePath}/settings`,
     },
   ];
+
+  const navItems: NavItem[] = isSubscriptionExpired
+    ? allNavItems.filter((i) => i.name === 'Dashboard' || i.name === 'Subscription')
+    : allNavItems;
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: 'main' | 'others';

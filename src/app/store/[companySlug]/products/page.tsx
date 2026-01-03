@@ -1,55 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
-import { supabase } from '@/lib/supabase';
-import { Product } from '@/types/database';
+import { useProducts } from '@/hooks/useProducts';
+import { useDebounce } from '@/hooks/useDebounce';
 import ProductsTable from '@/components/products/ProductsTable';
 import StatCard from '@/components/common/StatCard';
 
 export default function ProductsPage() {
   const { company } = useStore();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
+  
+  // Debounce search term to avoid API calls on every keystroke
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const fetchProducts = async () => {
-    if (!company) return;
-    
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('company_id', company.id)
-        .order('created_at', { ascending: false });
-
-      if (filterStatus === 'published') {
-        query = query.eq('is_published', true);
-      } else if (filterStatus === 'draft') {
-        query = query.eq('is_published', false);
-      }
-
-      if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, [company, filterStatus, searchTerm]);
+  // Use SWR hook for data fetching with caching
+  const { products, isLoading, isValidating, mutate } = useProducts({
+    companyId: company?.id,
+    filter: {
+      status: filterStatus,
+      searchTerm: debouncedSearchTerm,
+    },
+  });
 
   if (!company) return null;
 
@@ -57,7 +31,6 @@ export default function ProductsPage() {
   const draftCount = products.filter(p => !p.is_published).length;
 
   // Calculate mock trend data (in a real app, this would come from historical data)
-  // For demonstration, we'll use static trends
   const totalTrend = { value: 12, direction: 'up' as const };
   const publishedTrend = { value: 8, direction: 'up' as const };
   const draftTrend = { value: 2, direction: 'down' as const };
@@ -130,6 +103,12 @@ export default function ProductsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-gray-50 dark:bg-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm dark:border-gray-600 dark:text-white transition-colors"
           />
+          {/* Show loading indicator when validating in background */}
+          {isValidating && !isLoading && (
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500"></div>
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
@@ -175,7 +154,8 @@ export default function ProductsPage() {
         <ProductsTable
           products={products}
           companySlug={company.slug}
-          onRefresh={fetchProducts}
+          companyId={company.id}
+          onRefresh={() => mutate()}
         />
       )}
     </div>

@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
 
 const NETLIFY_API_ENDPOINT = 'https://api.netlify.com/api/v1';
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rl = await rateLimit({ route: 'netlify_register_domain', ip }, { limit: 10, window: '1 m' });
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    }
+
     const { domain, companyId } = await request.json();
 
     // Validate inputs
@@ -128,25 +135,41 @@ export async function POST(request: Request) {
     ];
 
     // Step 6: Save to database
+    // Public table: store the custom domain mapping
     const { error: dbError } = await supabase
       .from('website_settings')
       .update({
         custom_domain: cleanDomain,
         custom_domain_verified: false,
-        dns_status: 'pending',
-        ssl_status: 'pending',
-        netlify_dns_records: dnsRecords,
-        netlify_domain_id: null,
-        domain_registered_at: new Date().toISOString(),
-        dns_verified_at: null,
-        ssl_provisioned_at: null,
-        ssl_last_attempt_at: null,
       })
       .eq('company_id', companyId);
 
     if (dbError) {
       console.error('Database error:', dbError);
       throw dbError;
+    }
+
+    // Private table: store domain ops status + dns records
+    const { error: privateError } = await supabase
+      .from('website_settings_private')
+      .upsert(
+        {
+          company_id: companyId,
+          dns_status: 'pending',
+          ssl_status: 'pending',
+          netlify_dns_records: dnsRecords,
+          netlify_domain_id: null,
+          domain_registered_at: new Date().toISOString(),
+          dns_verified_at: null,
+          ssl_provisioned_at: null,
+          ssl_last_attempt_at: null,
+        },
+        { onConflict: 'company_id' }
+      );
+
+    if (privateError) {
+      console.error('Private settings error:', privateError);
+      throw privateError;
     }
 
     // Step 7: Return success with DNS records

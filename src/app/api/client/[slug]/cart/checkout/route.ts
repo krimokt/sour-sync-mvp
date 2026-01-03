@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types/supabase';
+import { z } from 'zod';
+import { parseWithSchema, readJson, slugSchema, uuidSchema, ValidationError } from '@/lib/validation';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
 
 interface CartItemWithProduct {
   id: string;
@@ -32,8 +35,23 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = await params;
-    const { payment_method_type, payment_method_id, address_id } = await request.json();
+    // Rate limit checkout attempts (by IP)
+    const ip = getClientIp(request);
+    const rl = await rateLimit({ route: 'client_cart_checkout', ip }, { limit: 30, window: '1 m' });
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    }
+
+    const { slug } = parseWithSchema(z.object({ slug: slugSchema }), await params);
+    const raw = await readJson(request);
+    const { payment_method_type, payment_method_id, address_id } = parseWithSchema(
+      z.object({
+        payment_method_type: z.enum(['bank', 'crypto']).optional(),
+        payment_method_id: uuidSchema.optional(),
+        address_id: uuidSchema.optional(),
+      }),
+      raw
+    );
 
     // Get company by slug
     const { data: company, error: companyError } = await supabaseAdmin
@@ -288,6 +306,12 @@ export async function POST(
         'The order is now in the payment page. The payment department will review your order payment.',
     });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: error.issues },
+        { status: 400 }
+      );
+    }
     console.error('Cart checkout error:', error);
     const errorMessage = error instanceof Error ? error.message : 'An error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 500 });

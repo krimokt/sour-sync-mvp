@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
 
 const NETLIFY_API_ENDPOINT = 'https://api.netlify.com/api/v1';
 
@@ -8,6 +9,12 @@ const SSL_RETRY_INTERVAL_MS = 30 * 60 * 1000;
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rl = await rateLimit({ route: 'netlify_check_domain', ip }, { limit: 30, window: '1 m' });
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    }
+
     const { domain, companyId } = await request.json();
 
     if (!domain || !companyId) {
@@ -103,11 +110,23 @@ export async function POST(request: Request) {
     // ============================================
     // STEP 2: Get current database state
     // ============================================
-    const { data: currentSettings } = await supabase
+    // Confirm the domain belongs to the company (prevents cross-tenant updates)
+    const { data: currentPublic } = await supabase
       .from('website_settings')
-      .select('ssl_last_attempt_at, dns_verified_at, ssl_provisioned_at, dns_status, ssl_status')
+      .select('company_id, custom_domain')
       .eq('company_id', companyId)
       .eq('custom_domain', cleanDomain)
+      .single();
+
+    if (!currentPublic) {
+      return NextResponse.json({ error: 'Domain is not registered for this company' }, { status: 404 });
+    }
+
+    // Domain operation state is stored in website_settings_private
+    const { data: currentSettings } = await supabase
+      .from('website_settings_private')
+      .select('ssl_last_attempt_at, dns_verified_at, ssl_provisioned_at, dns_status, ssl_status')
+      .eq('company_id', companyId)
       .single();
 
     // ============================================
@@ -194,7 +213,7 @@ export async function POST(request: Request) {
     const dnsStatus = dnsActive ? 'active' : 'pending';
     const sslStatus = sslActive ? 'active' : 'pending';
 
-    const updateData: Record<string, unknown> = {
+    const updateDataPrivate: Record<string, unknown> = {
       dns_status: dnsStatus,
       ssl_status: sslStatus,
       last_checked_at: now.toISOString(),
@@ -202,31 +221,45 @@ export async function POST(request: Request) {
 
     // Track verification timestamps
     if (dnsActive && !currentSettings?.dns_verified_at) {
-      updateData.dns_verified_at = now.toISOString();
+      updateDataPrivate.dns_verified_at = now.toISOString();
     }
 
     if (sslActive && !currentSettings?.ssl_provisioned_at) {
-      updateData.ssl_provisioned_at = now.toISOString();
-      updateData.custom_domain_verified = true;
+      updateDataPrivate.ssl_provisioned_at = now.toISOString();
     }
 
     if (sslTriggered) {
-      updateData.ssl_last_attempt_at = now.toISOString();
+      updateDataPrivate.ssl_last_attempt_at = now.toISOString();
     }
 
     // ============================================
     // STEP 6: Update database
     // ============================================
-    const { error } = await supabase
-      .from('website_settings')
-      .update(updateData)
-      .eq('company_id', companyId)
-      .eq('custom_domain', cleanDomain);
+    // Upsert private status fields (company_id is unique)
+    const { error: privateError } = await supabase
+      .from('website_settings_private')
+      .upsert({ company_id: companyId, ...updateDataPrivate }, { onConflict: 'company_id' });
 
-    if (error) {
-      console.error('Database update error:', error);
-      throw error;
+    if (privateError) {
+      console.error('Private settings update error:', privateError);
+      throw privateError;
     }
+
+    // Mark custom_domain_verified on the public table once SSL is active
+    if (sslActive) {
+      const { error: publicError } = await supabase
+        .from('website_settings')
+        .update({ custom_domain_verified: true })
+        .eq('company_id', companyId)
+        .eq('custom_domain', cleanDomain);
+
+      if (publicError) {
+        console.error('Public settings update error:', publicError);
+        throw publicError;
+      }
+    }
+
+    // (No further DB updates required)
 
     console.log(`Domain check complete: DNS=${dnsStatus}, SSL=${sslStatus}`);
 

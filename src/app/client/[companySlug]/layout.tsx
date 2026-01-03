@@ -36,14 +36,8 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
   const companyData = company as Company;
 
   // 3. Check if user is a client of this company
-  // Use service role to bypass RLS for this check (user is authenticated, just verifying client status)
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabaseService = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  
-  const { data: client, error: clientError } = await supabaseService
+  // Use the user session + RLS (tenant boundary enforced in DB, not UI)
+  const { data: client, error: clientError } = await supabase
     .from('clients')
     .select('*')
     .eq('company_id', companyData.id)
@@ -81,6 +75,7 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
     </ClientProvider>
   );
 }
+
 
 
 

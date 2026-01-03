@@ -110,41 +110,55 @@ export default function DomainSettingsPage() {
     if (!company?.id) return;
     
     try {
-      const { data, error } = await supabase
+      // Public settings (safe to keep in website_settings)
+      const { data: publicData, error: publicError } = await supabase
         .from('website_settings')
-        .select('custom_domain, custom_domain_verified, ssl_status, dns_status, last_checked_at, netlify_dns_records, netlify_domain_id, domain_registered_at, dns_verified_at, ssl_provisioned_at')
+        .select('custom_domain, custom_domain_verified')
         .eq('company_id', company.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (publicError && publicError.code !== 'PGRST116') throw publicError;
 
-      if (data) {
-        const typedData = data as {
-          custom_domain?: string | null;
-          custom_domain_verified?: boolean | null;
-          ssl_status?: string | null;
-          dns_status?: string | null;
-          last_checked_at?: string | null;
-          netlify_dns_records?: unknown;
-          netlify_domain_id?: string | null;
-          domain_registered_at?: string | null;
-          dns_verified_at?: string | null;
-          ssl_provisioned_at?: string | null;
-        };
-        setSettings({
-          custom_domain: typedData.custom_domain ?? null,
-          custom_domain_verified: typedData.custom_domain_verified ?? false,
-          ...(typedData.ssl_status != null && { ssl_status: typedData.ssl_status }),
-          ...(typedData.dns_status != null && { dns_status: typedData.dns_status }),
-          ...(typedData.last_checked_at != null && { last_checked_at: typedData.last_checked_at }),
-          ...(typedData.netlify_dns_records != null && { netlify_dns_records: typedData.netlify_dns_records as DnsRecord[] }),
-          ...(typedData.netlify_domain_id != null && { netlify_domain_id: typedData.netlify_domain_id }),
-          ...(typedData.domain_registered_at != null && { domain_registered_at: typedData.domain_registered_at }),
-          ...(typedData.dns_verified_at != null && { dns_verified_at: typedData.dns_verified_at }),
-          ...(typedData.ssl_provisioned_at != null && { ssl_provisioned_at: typedData.ssl_provisioned_at }),
-        } as DomainSettings);
-        setCustomDomain(typedData.custom_domain || '');
-      }
+      // Private settings (domain ops, netlify records)
+      const { data: privateData, error: privateError } = await supabase
+        .from('website_settings_private')
+        .select('ssl_status, dns_status, last_checked_at, netlify_dns_records, netlify_domain_id, domain_registered_at, dns_verified_at, ssl_provisioned_at')
+        .eq('company_id', company.id)
+        .single();
+
+      if (privateError && privateError.code !== 'PGRST116') throw privateError;
+
+      const typedPublic = (publicData || {}) as {
+        custom_domain?: string | null;
+        custom_domain_verified?: boolean | null;
+      };
+
+      const typedPrivate = (privateData || {}) as {
+        ssl_status?: string | null;
+        dns_status?: string | null;
+        last_checked_at?: string | null;
+        netlify_dns_records?: unknown;
+        netlify_domain_id?: string | null;
+        domain_registered_at?: string | null;
+        dns_verified_at?: string | null;
+        ssl_provisioned_at?: string | null;
+      };
+
+      // Merge into UI state
+      setSettings({
+        custom_domain: typedPublic.custom_domain ?? null,
+        custom_domain_verified: typedPublic.custom_domain_verified ?? false,
+        ...(typedPrivate.ssl_status != null && { ssl_status: typedPrivate.ssl_status }),
+        ...(typedPrivate.dns_status != null && { dns_status: typedPrivate.dns_status }),
+        ...(typedPrivate.last_checked_at != null && { last_checked_at: typedPrivate.last_checked_at }),
+        ...(typedPrivate.netlify_dns_records != null && { netlify_dns_records: typedPrivate.netlify_dns_records as DnsRecord[] }),
+        ...(typedPrivate.netlify_domain_id != null && { netlify_domain_id: typedPrivate.netlify_domain_id }),
+        ...(typedPrivate.domain_registered_at != null && { domain_registered_at: typedPrivate.domain_registered_at }),
+        ...(typedPrivate.dns_verified_at != null && { dns_verified_at: typedPrivate.dns_verified_at }),
+        ...(typedPrivate.ssl_provisioned_at != null && { ssl_provisioned_at: typedPrivate.ssl_provisioned_at }),
+      } as DomainSettings);
+
+      setCustomDomain(typedPublic.custom_domain || '');
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {

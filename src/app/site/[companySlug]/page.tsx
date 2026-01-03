@@ -20,7 +20,7 @@ async function getCompanyWithSettings(slug: string) {
       settings:website_settings (
         id, theme_name, logo_url, primary_color, secondary_color,
         homepage_layout_draft, homepage_layout_published, is_published,
-        builder_data, published_builder_data
+        published_builder_data
       )
     `)
     .eq('slug', slug)
@@ -47,7 +47,6 @@ export default async function SiteHomePage({
   const settingsData = typedCompany?.settings;
   const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData as { 
     primary_color?: string; 
-    builder_data?: { formData: unknown; generatedContent: unknown };
     published_builder_data?: { formData: unknown; generatedContent: unknown };
     homepage_layout_draft?: unknown;
     homepage_layout_published?: unknown;
@@ -58,9 +57,7 @@ export default async function SiteHomePage({
   const isPreview = searchParams.preview === 'true';
 
   // Check if this is a ChinaSource builder website
-  const builderData = isPreview 
-    ? settings?.builder_data 
-    : settings?.published_builder_data;
+  const builderData = settings?.published_builder_data;
 
   // If builder data exists, render the builder site
   if (builderData && typeof builderData === 'object' && 'formData' in builderData && 'generatedContent' in builderData) {

@@ -37,6 +37,8 @@
     "@supabase/supabase-js": "^2.49.4",
     "@swc/helpers": "^0.5.17",
     "@tanstack/react-table": "^8.21.3",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.36.0",
     "apexcharts": "^4.3.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -62,8 +64,10 @@
     "react-hot-toast": "^2.5.2",
     "sonner": "^2.0.3",
     "swiper": "^11.2.0",
+    "swr": "^2.3.8",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.3.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^2.1.4",

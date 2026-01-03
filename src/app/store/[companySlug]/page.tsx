@@ -6,6 +6,7 @@ import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import StatCard from '@/components/common/StatCard';
 import Link from 'next/link';
 import { Building2, UserCircle, Award, Circle } from 'lucide-react';
+import SubscriptionPlansPanel from '@/components/subscription/SubscriptionPlansPanel';
 
 export default function StoreDashboard() {
   const { company, profile, canManage } = useStore();
@@ -13,6 +14,14 @@ export default function StoreDashboard() {
   if (!company || !profile) {
     return <div>Loading...</div>;
   }
+
+  const isSubscriptionExpired = (() => {
+    const expiresAt = company.subscription_expires_at;
+    if (!expiresAt) return false;
+    const dt = new Date(expiresAt);
+    if (Number.isNaN(dt.getTime())) return false;
+    return dt.getTime() <= Date.now();
+  })();
 
   return (
     <>
@@ -53,8 +62,18 @@ export default function StoreDashboard() {
         />
       </div>
 
+      {isSubscriptionExpired && (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-200">
+          <div className="text-sm font-semibold uppercase tracking-wider">Subscription expired</div>
+          <div className="text-sm mt-1">
+            Your store features are locked. Please go to the Subscription section to contact SourSync and renew.
+          </div>
+        </div>
+      )}
+
       {/* Welcome Section */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
+      {!isSubscriptionExpired && (
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Welcome to <span className="uppercase tracking-wider text-[#06b6d4]">{company.name}</span>
@@ -121,6 +140,20 @@ export default function StoreDashboard() {
             </div>
           </Link>
         </div>
+      </div>
+      )}
+
+      {/* Subscription plan cards (DB-driven, no Stripe required yet) */}
+      <div className="mt-6">
+        <SubscriptionPlansPanel
+          companyId={company.id}
+          planName={company.plan}
+          canManage={canManage}
+          companySlug={company.slug}
+          subscriptionPeriodId={company.subscription_period_id ?? null}
+          subscriptionStartedAt={company.subscription_started_at ?? null}
+          subscriptionExpiresAt={company.subscription_expires_at ?? null}
+        />
       </div>
     </>
   );

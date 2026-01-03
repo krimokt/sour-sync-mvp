@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -18,40 +17,11 @@ import StatCard from '@/components/common/StatCard';
 import { Send, CheckCircle, Clock, X, Eye, Edit, Save, Loader2, Upload, Trash2 } from 'lucide-react';
 import QuotationReviewModal from '@/components/quotation/QuotationReviewModal';
 import { Modal } from '@/components/ui/modal';
-import { VariantGroup } from '@/types/database';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useQuotations, type QuotationData } from '@/hooks/useQuotations';
 
-// Constants
-const ITEMS_PER_PAGE = 10;
 const STATUS_OPTIONS = ['All', 'Pending', 'Approved', 'Rejected'] as const;
 type StatusOption = (typeof STATUS_OPTIONS)[number];
-
-interface QuotationData {
-  id: string;
-  quotation_id: string;
-  product_name: string;
-  product_url?: string;
-  quantity: number;
-  status: string;
-  created_at: string;
-  destination_country: string;
-  destination_city: string;
-  shipping_method: string;
-  service_type: string;
-  image_url?: string;
-  product_images?: string[];
-  variant_specs?: string;
-  notes?: string;
-  total_price_option1?: string;
-  user_id?: string;
-  variant_groups?: VariantGroup[];
-}
-
-interface QuotationMetrics {
-  total: number;
-  approved: number;
-  pending: number;
-  rejected: number;
-}
 
 interface CustomTableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
   className?: string;
@@ -77,92 +47,31 @@ const TableCell = ({ className, children, colSpan, isHeader, ...props }: CustomT
 
 export default function QuotationsPage() {
   const { company } = useStore();
-  const [quotations, setQuotations] = useState<QuotationData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<StatusOption>('All');
-  const [metrics, setMetrics] = useState<QuotationMetrics>({
-    total: 0,
-    approved: 0,
-    pending: 0,
-    rejected: 0,
-  });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuotation, setSelectedQuotation] = useState<QuotationData | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isPriceOptionsModalOpen, setIsPriceOptionsModalOpen] = useState(false);
   const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    if (!company?.id) {
-      setError('No company found');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Build query with company filter
-      let query = supabase
-        .from('quotations')
-        .select('*', { count: 'exact' })
-        .eq('company_id', company.id)
-        .order('created_at', { ascending: false });
-
-      // Apply status filter
-      if (selectedStatus !== 'All') {
-        query = query.eq('status', selectedStatus);
-      }
-
-      // Apply search filter
-      if (searchQuery) {
-        query = query.or(`product_name.ilike.%${searchQuery}%,quotation_id.ilike.%${searchQuery}%`);
-      }
-
-      // Apply pagination
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
-      query = query.range(from, to);
-
-      const { data, error: fetchError, count } = await query;
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      setQuotations(data || []);
-      setTotalPages(Math.ceil((count || 0) / ITEMS_PER_PAGE));
-
-      // Fetch metrics
-      const { data: metricsData } = await supabase
-        .from('quotations')
-        .select('status')
-        .eq('company_id', company.id);
-
-      if (metricsData) {
-        const typedMetricsData = metricsData as Array<{ status?: string | null }>;
-        setMetrics({
-          total: typedMetricsData.length,
-          approved: typedMetricsData.filter((q) => q.status === 'Approved').length,
-          pending: typedMetricsData.filter((q) => q.status === 'Pending').length,
-          rejected: typedMetricsData.filter((q) => q.status === 'Rejected').length,
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching quotations:', err);
-      setError('Failed to load quotations');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [company?.id, currentPage, selectedStatus, searchQuery]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const {
+    quotations,
+    metrics,
+    totalPages,
+    isLoading,
+    isValidating,
+    error,
+    mutate,
+  } = useQuotations({
+    companyId: company?.id,
+    filter: {
+      status: selectedStatus,
+      searchQuery: debouncedSearchQuery,
+      page: currentPage,
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusColors: Record<string, 'success' | 'warning' | 'error'> = {
@@ -232,22 +141,29 @@ export default function QuotationsPage() {
             </Button>
           ))}
         </div>
-        <input
-          type="text"
-          placeholder="Search quotations..."
-          className="px-4 py-2 border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setCurrentPage(1);
-          }}
-        />
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search quotations..."
+            className="px-4 py-2 pr-10 border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+          {isValidating && !isLoading && (
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Table */}
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         {error ? (
-          <div className="p-6 text-center text-red-500">{error}</div>
+          <div className="p-6 text-center text-red-500">Failed to load quotations</div>
         ) : isLoading ? (
           <div className="p-6 text-center">Loading quotations...</div>
         ) : quotations.length === 0 ? (
@@ -388,7 +304,7 @@ export default function QuotationsPage() {
           }}
           quotationId={editingQuotationId}
           onSave={() => {
-            fetchData();
+            mutate();
             setIsPriceOptionsModalOpen(false);
             setEditingQuotationId(null);
           }}

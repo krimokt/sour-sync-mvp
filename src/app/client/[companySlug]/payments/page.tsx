@@ -623,7 +623,20 @@ export default function ClientPaymentsPage() {
       const to = from + ITEMS_PER_PAGE;
       const paginatedPayments = filteredPayments.slice(from, to);
 
-      setPayments(paginatedPayments);
+      // Resolve signed URLs for private payment proofs (stored as storage paths)
+      const paymentsWithSignedProofs = await Promise.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        paginatedPayments.map(async (p: any) => {
+          const proof = p.payment_proof_url;
+          if (typeof proof === 'string' && proof && !proof.startsWith('http')) {
+            const { data } = await supabase.storage.from('payment-proofs').createSignedUrl(proof, 60 * 60);
+            return { ...p, payment_proof_url: data?.signedUrl || proof };
+          }
+          return p;
+        })
+      );
+
+      setPayments(paymentsWithSignedProofs);
       setTotalPages(Math.ceil(filteredPayments.length / ITEMS_PER_PAGE));
 
       // Metrics - fetch all and filter
@@ -804,24 +817,29 @@ export default function ClientPaymentsPage() {
       toast.error('Please select a file to upload');
       return;
     }
+    if (!company?.id || !client?.user_id) {
+      toast.error('Missing company or user information');
+      return;
+    }
 
     setIsUploading(true);
     try {
       const fileExt = uploadFile.name.split('.').pop();
       const fileName = `payment_proof_${uploadPaymentId}_${Date.now()}.${fileExt}`;
+      const filePath = `${company.id}/${client.user_id}/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
         .from('payment-proofs')
-        .upload(fileName, uploadFile);
+        .upload(filePath, uploadFile);
 
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
         throw new Error(`Failed to upload file: ${uploadError.message}`);
       }
 
-      const { data: urlData } = supabase.storage
+      const { data: signed } = await supabase.storage
         .from('payment-proofs')
-        .getPublicUrl(fileName);
+        .createSignedUrl(filePath, 60 * 60);
 
       // Update the payment_proof_url in the payments table using MCP Supabase
       const { error: updateError } = await (
@@ -829,7 +847,8 @@ export default function ClientPaymentsPage() {
         supabase.from('payments') as any
       )
         .update({ 
-          payment_proof_url: urlData.publicUrl,
+          // Store the storage path; we render via signed URLs
+          payment_proof_url: filePath,
           updated_at: new Date().toISOString()
         })
         .eq('id', uploadPaymentId);
@@ -845,7 +864,7 @@ export default function ClientPaymentsPage() {
       setPayments(prevPayments => 
         prevPayments.map(p => 
           p.id === uploadPaymentId 
-            ? { ...p, payment_proof_url: urlData.publicUrl }
+            ? { ...p, payment_proof_url: signed?.signedUrl || filePath }
             : p
         )
       );
@@ -853,7 +872,7 @@ export default function ClientPaymentsPage() {
       // Open the payment details modal to show the uploaded proof
       const updatedPayment = payments.find(p => p.id === uploadPaymentId);
       if (updatedPayment) {
-        setSelectedPayment({ ...updatedPayment, payment_proof_url: urlData.publicUrl });
+        setSelectedPayment({ ...updatedPayment, payment_proof_url: signed?.signedUrl || filePath });
       }
       
       setIsUploadModalOpen(false);
@@ -900,31 +919,36 @@ export default function ClientPaymentsPage() {
       toast.error('Please select a file to replace');
       return;
     }
+    if (!company?.id || !client?.user_id) {
+      toast.error('Missing company or user information');
+      return;
+    }
 
     setIsReplacing(true);
     try {
       const fileExt = replaceFile.name.split('.').pop();
       const fileName = `payment_proof_${viewReplaceProof.paymentId}_${Date.now()}.${fileExt}`;
+      const filePath = `${company.id}/${client.user_id}/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
         .from('payment-proofs')
-        .upload(fileName, replaceFile);
+        .upload(filePath, replaceFile);
 
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
         throw new Error(`Failed to upload file: ${uploadError.message}`);
       }
 
-      const { data: urlData } = supabase.storage
+      const { data: signed } = await supabase.storage
         .from('payment-proofs')
-        .getPublicUrl(fileName);
+        .createSignedUrl(filePath, 60 * 60);
 
       const { error: updateError } = await (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase.from('payments') as any
       )
         .update({ 
-          payment_proof_url: urlData.publicUrl,
+          payment_proof_url: filePath,
           updated_at: new Date().toISOString()
         })
         .eq('id', viewReplaceProof.paymentId);
@@ -940,13 +964,13 @@ export default function ClientPaymentsPage() {
       setPayments(prevPayments => 
         prevPayments.map(p => 
           p.id === viewReplaceProof.paymentId 
-            ? { ...p, payment_proof_url: urlData.publicUrl }
+            ? { ...p, payment_proof_url: signed?.signedUrl || filePath }
             : p
         )
       );
       
       // Update the view/replace modal with new URL
-      setViewReplaceProof({ ...viewReplaceProof, proofUrl: urlData.publicUrl });
+      setViewReplaceProof({ ...viewReplaceProof, proofUrl: signed?.signedUrl || filePath });
       setReplaceFile(null);
       fetchData();
     } catch (error) {

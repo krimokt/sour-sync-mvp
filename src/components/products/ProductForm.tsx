@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Product, ProductInsert, ProductVariant, VariantGroup, VariantValue, PriceTier, Category } from '@/types/database';
 import ImageUploader from './ImageUploader';
 import { Plus, X, Package, DollarSign, Layers, Tag, CheckCircle2 } from 'lucide-react';
+import { invalidateProductsCache } from '@/hooks/useProducts';
 
 interface ProductFormProps {
   product?: Product;
@@ -217,8 +218,11 @@ export default function ProductForm({ product, companyId, companySlug }: Product
           .eq('product_id', productId);
       }
 
+      // Invalidate SWR cache so products list updates without full page refresh
+      invalidateProductsCache(companyId);
+      
+      // Navigate back to products list
       router.push(`/store/${companySlug}/products`);
-      router.refresh();
     } catch (err) {
       console.error('Error saving product:', err);
       setError(err instanceof Error ? err.message : 'Failed to save product');

@@ -21,6 +21,9 @@ export interface Database {
           timezone: string
           plan: 'starter' | 'pro' | 'enterprise'
           status: 'active' | 'suspended' | 'cancelled'
+          subscription_period_id: string | null
+          subscription_started_at: string | null
+          subscription_expires_at: string | null
           custom_domain: string | null
           website_settings: {
             hero_title?: string
@@ -43,6 +46,9 @@ export interface Database {
           timezone?: string
           plan?: 'starter' | 'pro' | 'enterprise'
           status?: 'active' | 'suspended' | 'cancelled'
+          subscription_period_id?: string | null
+          subscription_started_at?: string | null
+          subscription_expires_at?: string | null
           custom_domain?: string | null
           website_settings?: {
             hero_title?: string
@@ -65,6 +71,9 @@ export interface Database {
           timezone?: string
           plan?: 'starter' | 'pro' | 'enterprise'
           status?: 'active' | 'suspended' | 'cancelled'
+          subscription_period_id?: string | null
+          subscription_started_at?: string | null
+          subscription_expires_at?: string | null
           custom_domain?: string | null
           website_settings?: {
             hero_title?: string
@@ -75,6 +84,38 @@ export interface Database {
           } | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      subscription_periods: {
+        Row: {
+          id: string
+          code: string
+          name: string
+          duration_days: number
+          is_trial: boolean
+          sort_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          name: string
+          duration_days: number
+          is_trial?: boolean
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          name?: string
+          duration_days?: number
+          is_trial?: boolean
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
         }
       }
       profiles: {

@@ -98,6 +98,7 @@ export default function ShippingPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [signedMediaUrls, setSignedMediaUrls] = useState<Record<string, string>>({});
   
   // Edit state for shipment details
   const [editLocation, setEditLocation] = useState('');
@@ -262,6 +263,13 @@ export default function ShippingPage() {
     setUploadProgress(0);
     
     try {
+      // Get current user (required for scoped storage paths in private buckets)
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      const user = authData?.user;
+      if (authError || !user || !company?.id) {
+        throw new Error('Authentication required to upload files');
+      }
+
       const fileArray = Array.from(files);
       const totalFiles = fileArray.length;
       let completedCount = 0;
@@ -299,7 +307,8 @@ export default function ShippingPage() {
       const uploadPromises = fileArray.map(async (file, index) => {
         const fileExt = file.name.split('.').pop()?.toLowerCase();
         const uniqueId = `${Date.now()}-${index}-${Math.random().toString(36).substring(2, 15)}`;
-        const fileName = `shipment-${uploadShipment.id}/${type}/${uniqueId}.${fileExt}`;
+        // Path format: {companyId}/{userId}/shipment-{shipmentId}/{type}/{...}
+        const fileName = `${company.id}/${user.id}/shipment-${uploadShipment.id}/${type}/${uniqueId}.${fileExt}`;
         
         try {
           // Upload the file to shipment_updates bucket
@@ -321,21 +330,13 @@ export default function ShippingPage() {
             throw new Error(`Failed to get upload path for ${file.name}`);
           }
 
-          // Get the public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('shipment_updates')
-            .getPublicUrl(data.path);
-              
-          if (!publicUrl) {
-            throw new Error(`Failed to get public URL for ${file.name}`);
-          }
-
           // Update progress
           completedCount++;
           const progress = (completedCount / totalFiles) * 100;
           setUploadProgress(Math.round(progress));
 
-          return publicUrl;
+          // Store storage path (render using signed URLs)
+          return data.path;
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error);
           throw error;
@@ -343,13 +344,13 @@ export default function ShippingPage() {
       });
 
       // Wait for all uploads to complete
-      const uploadedUrls = await Promise.all(uploadPromises);
+      const uploadedPaths = await Promise.all(uploadPromises);
       
-      if (uploadedUrls.length === 0) {
+      if (uploadedPaths.length === 0) {
         throw new Error("No files were uploaded successfully");
       }
 
-      // Update the shipping record with new URLs
+      // Update the shipping record with new storage paths
       const existingUrls = type === 'images' 
         ? (uploadShipment.images_urls || [])
         : (uploadShipment.videos_urls || []);
@@ -359,7 +360,7 @@ export default function ShippingPage() {
         supabase.from('shipping') as any
       )
         .update({
-          [`${type}_urls`]: [...existingUrls, ...uploadedUrls]
+          [`${type}_urls`]: [...existingUrls, ...uploadedPaths]
         })
         .eq('id', uploadShipment.id);
         
@@ -370,7 +371,7 @@ export default function ShippingPage() {
       // Update local state
       const updatedShipment = {
         ...uploadShipment,
-        [`${type}_urls`]: [...existingUrls, ...uploadedUrls]
+        [`${type}_urls`]: [...existingUrls, ...uploadedPaths]
       };
       
       setUploadShipment(updatedShipment);
@@ -427,14 +428,16 @@ export default function ShippingPage() {
 
       // Try to delete the file from storage (optional - don't fail if this doesn't work)
       try {
-        // Extract the file path from the URL
-        const urlObj = new URL(url);
-        const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/shipment_updates\/(.+)/);
-        if (pathMatch && pathMatch[1]) {
-          const filePath = decodeURIComponent(pathMatch[1]);
-          await supabase.storage
-            .from('shipment_updates')
-            .remove([filePath]);
+        const filePath = url.startsWith('http')
+          ? (() => {
+              const urlObj = new URL(url);
+              const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/shipment_updates\/(.+)/);
+              return pathMatch && pathMatch[1] ? decodeURIComponent(pathMatch[1]) : null;
+            })()
+          : url;
+
+        if (filePath) {
+          await supabase.storage.from('shipment_updates').remove([filePath]);
         }
       } catch (storageError) {
         // Log but don't fail - the database update succeeded
@@ -479,6 +482,33 @@ export default function ShippingPage() {
       );
     }
   }, [selectedShipment]);
+
+  // Create signed URLs for any stored storage paths (shipment_updates is private)
+  useEffect(() => {
+    const run = async () => {
+      const urls = [
+        ...(uploadShipment?.images_urls || []),
+        ...(uploadShipment?.videos_urls || []),
+      ];
+      const pathsToSign = urls.filter((u) => u && !u.startsWith('http') && !signedMediaUrls[u]);
+      if (pathsToSign.length === 0) return;
+
+      for (const path of pathsToSign) {
+        const { data } = await supabase.storage.from('shipment_updates').createSignedUrl(path, 60 * 60);
+        if (data?.signedUrl) {
+          setSignedMediaUrls((prev) => ({ ...prev, [path]: data.signedUrl }));
+        }
+      }
+    };
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadShipment?.id, uploadShipment?.images_urls, uploadShipment?.videos_urls]);
+
+  const resolveMediaUrl = (urlOrPath: string) => {
+    if (!urlOrPath) return urlOrPath;
+    if (urlOrPath.startsWith('http')) return urlOrPath;
+    return signedMediaUrls[urlOrPath] || urlOrPath;
+  };
 
   // Function to save shipment edits (with parameters for auto-save)
   const handleSaveShipmentEdits = async (
@@ -1298,7 +1328,7 @@ export default function ShippingPage() {
                         {uploadShipment.images_urls.map((url, idx) => (
                           <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                             <Image
-                              src={url}
+                              src={resolveMediaUrl(url)}
                               alt={`Shipment image ${idx + 1}`}
                               fill
                               className="object-cover"
@@ -1326,7 +1356,7 @@ export default function ShippingPage() {
                         {uploadShipment.videos_urls.map((url, idx) => (
                           <div key={idx} className="relative group aspect-video rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black">
                             <video
-                              src={url}
+                              src={resolveMediaUrl(url)}
                               controls
                               className="w-full h-full"
                             />

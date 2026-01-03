@@ -89,7 +89,7 @@ const TableCell = ({ className, children, colSpan, isHeader, ...props }: CustomT
 };
 
 export default function PaymentsPage() {
-  const { company } = useStore();
+  const { company, profile } = useStore();
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,26 +146,31 @@ export default function PaymentsPage() {
       toast.error('Please select a file to upload');
       return;
     }
+    if (!company?.id || !profile?.id) {
+      toast.error('Missing company or user information');
+      return;
+    }
 
     setIsUploading(true);
     try {
       const fileExt = uploadFile.name.split('.').pop();
       const fileName = `payment_proof_${selectedPayment.id}_${Date.now()}.${fileExt}`;
+      const filePath = `${company.id}/${profile.id}/${fileName}`;
       
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('payment-proofs')
-        .upload(fileName, uploadFile);
+        .upload(filePath, uploadFile);
 
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
         throw new Error(`Failed to upload file: ${uploadError.message}`);
       }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
+      // Create signed URL for immediate display
+      const { data: signed } = await supabase.storage
         .from('payment-proofs')
-        .getPublicUrl(fileName);
+        .createSignedUrl(filePath, 60 * 60);
 
       // Update payment record using Supabase client
       const { error: updateError } = await (
@@ -173,7 +178,8 @@ export default function PaymentsPage() {
         supabase.from('payments') as any
       )
         .update({ 
-          payment_proof_url: urlData.publicUrl,
+          // Store the storage path; UIs should resolve via signed URLs
+          payment_proof_url: filePath,
           updated_at: new Date().toISOString()
         })
         .eq('id', selectedPayment.id);
@@ -186,12 +192,12 @@ export default function PaymentsPage() {
       toast.success('Payment proof uploaded successfully');
       
       // Update local state
-      const updatedPayment = { ...selectedPayment, payment_proof_url: urlData.publicUrl };
+      const updatedPayment = { ...selectedPayment, payment_proof_url: signed?.signedUrl || filePath };
       setSelectedPayment(updatedPayment);
       setPayments(prevPayments => 
         prevPayments.map(p => 
           p.id === selectedPayment.id 
-            ? { ...p, payment_proof_url: urlData.publicUrl }
+            ? { ...p, payment_proof_url: signed?.signedUrl || filePath }
             : p
         )
       );

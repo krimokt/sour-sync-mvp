@@ -31,7 +31,9 @@ export async function rateLimit(
 ) {
   const redis = getRedis();
   if (!redis) {
-    // If not configured, do not block (safe default for dev), but caller can log.
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[ratelimit] Rate limiting is DISABLED: UPSTASH_REDIS_REST_URL/TOKEN not configured.');
+    }
     return { ok: true as const, reset: 0, remaining: 0 };
   }
 

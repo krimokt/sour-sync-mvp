@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,6 +12,12 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
+    const rl = await rateLimit({ route: 'client_signup', ip }, { limit: 10, window: '1 m' });
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 });
+    }
+
     const { slug } = await params;
     const { email, password, fullName, companyName } = await request.json();
 

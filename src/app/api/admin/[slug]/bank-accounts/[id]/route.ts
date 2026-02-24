@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireCompanyMember } from '@/lib/route-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,21 +10,14 @@ const supabase = createClient(
 // Update bank account
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string; id: string } }
+  { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
+  const { slug, id } = await params;
+  const auth = await requireCompanyMember(request, slug, ['owner', 'admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
-
-    // Get company
-    const { data: company } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('slug', params.slug)
-      .single();
-
-    if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
-    }
 
     // Update bank account
     const { data: account, error } = await supabase
@@ -43,8 +37,8 @@ export async function PUT(
         is_active: body.is_active,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
-      .eq('company_id', company.id)
+      .eq('id', id)
+      .eq('company_id', auth.company.id)
       .select()
       .single();
 
@@ -63,26 +57,19 @@ export async function PUT(
 // Delete bank account
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string; id: string } }
+  { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
+  const { slug, id } = await params;
+  const auth = await requireCompanyMember(request, slug, ['owner', 'admin']);
+  if (!auth.ok) return auth.response;
+
   try {
-    // Get company
-    const { data: company } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('slug', params.slug)
-      .single();
-
-    if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
-    }
-
     // Delete bank account
     const { error } = await supabase
       .from('bank_accounts')
       .delete()
-      .eq('id', params.id)
-      .eq('company_id', company.id);
+      .eq('id', id)
+      .eq('company_id', auth.company.id);
 
     if (error) {
       console.error('Error deleting bank account:', error);
@@ -95,8 +82,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
-
-
-
-
-

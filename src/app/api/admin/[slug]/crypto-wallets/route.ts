@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireCompanyMember } from '@/lib/route-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,25 +10,18 @@ const supabase = createClient(
 // Get all crypto wallets for admin
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
+  const auth = await requireCompanyMember(request, slug, ['owner', 'admin']);
+  if (!auth.ok) return auth.response;
+
   try {
-    // Get company
-    const { data: company } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('slug', params.slug)
-      .single();
-
-    if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
-    }
-
     // Get all crypto wallets
     const { data: wallets, error } = await supabase
       .from('crypto_wallets')
       .select('*')
-      .eq('company_id', company.id)
+      .eq('company_id', auth.company.id)
       .order('sort_order');
 
     if (error) {
@@ -45,27 +39,20 @@ export async function GET(
 // Create crypto wallet
 export async function POST(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
+  const auth = await requireCompanyMember(request, slug, ['owner', 'admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
-
-    // Get company
-    const { data: company } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('slug', params.slug)
-      .single();
-
-    if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
-    }
 
     // Check limit of 4 crypto wallets
     const { count } = await supabase
       .from('crypto_wallets')
       .select('*', { count: 'exact', head: true })
-      .eq('company_id', company.id);
+      .eq('company_id', auth.company.id);
 
     if (count && count >= 4) {
       return NextResponse.json(
@@ -78,7 +65,7 @@ export async function POST(
     const { data: wallet, error } = await supabase
       .from('crypto_wallets')
       .insert({
-        company_id: company.id,
+        company_id: auth.company.id,
         wallet_name: body.wallet_name,
         wallet_address: body.wallet_address,
         cryptocurrency: body.cryptocurrency,
@@ -101,18 +88,3 @@ export async function POST(
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

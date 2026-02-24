@@ -31,10 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Ensure we have a valid session before querying
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session status when fetching profile:', session ? 'Active' : 'None', 'User ID:', userId);
-      
+
       if (!session) {
-        console.log('No active session, skipping profile fetch');
         setProfile(null);
         setCompany(null);
         return;
@@ -55,7 +53,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (!profileData) {
-        console.log('No profile data returned for user:', userId);
         setProfile(null);
         setCompany(null);
         return;
@@ -93,18 +90,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const getSession = async () => {
       try {
-        console.log('AuthContext: Getting session...');
         setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('AuthContext: Session result -', session ? 'Found' : 'None');
 
         if (!isMounted) return;
 
         if (session?.user) {
           setUser(session.user);
-          console.log('AuthContext: Fetching profile for user...');
           await fetchProfileAndCompany(session.user.id);
-          console.log('AuthContext: Profile fetch complete');
         } else {
           setUser(null);
           setProfile(null);
@@ -119,7 +112,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } finally {
         if (isMounted) {
-          console.log('AuthContext: Setting loading to false');
           setLoading(false);
         }
       }
@@ -130,7 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event);
         
         // Only handle SIGNED_IN if we don't already have a user
         // (to avoid duplicate profile fetches with getSession)

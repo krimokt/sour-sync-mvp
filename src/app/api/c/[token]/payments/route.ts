@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { hashToken } from '@/lib/magic-link';
+import crypto from 'crypto';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,8 +10,7 @@ const supabaseAdmin = createClient(
 
 // Helper to validate token and get magic link data
 async function validateToken(token: string) {
-  // Check if the token is already a hash (64 characters) or needs to be hashed
-  const tokenHash = token.length === 64 ? token : hashToken(token);
+  const tokenHash = hashToken(token);
 
   const { data: magicLink, error } = await supabaseAdmin
     .from('client_magic_links')
@@ -97,7 +97,7 @@ export async function GET(
     if (paymentsError) {
       console.error('Error fetching payments:', paymentsError);
       return NextResponse.json(
-        { error: `Failed to fetch payments: ${paymentsError.message}` },
+        { error: 'Failed to fetch payments' },
         { status: 500 }
       );
     }
@@ -107,8 +107,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('Get payments error:', error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -193,7 +192,7 @@ export async function POST(
     }
 
     // Generate reference number
-    const referenceNumber = `PAY-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
+    const referenceNumber = `PAY-${new Date().getFullYear()}-${(parseInt(crypto.randomBytes(3).toString('hex'), 16) % 100000).toString().padStart(6, '0')}`;
 
     // Create payment
     const { data: payment, error: paymentError } = await supabaseAdmin
@@ -217,7 +216,7 @@ export async function POST(
     if (paymentError) {
       console.error('Error creating payment:', paymentError);
       return NextResponse.json(
-        { error: `Failed to create payment: ${paymentError.message}` },
+        { error: 'Failed to create payment' },
         { status: 500 }
       );
     }
@@ -243,7 +242,6 @@ export async function POST(
     }, { status: 201 });
   } catch (error) {
     console.error('Create payment error:', error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

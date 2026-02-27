@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import React from 'react';
-import html2pdf from 'html2pdf.js';
 import { Table, TableBody, TableHeader, TableRow } from '@/components/ui/table';
 import Button from '@/components/ui/button/Button';
 import { Badge } from '@/components/ui/badge';
@@ -743,7 +742,10 @@ export default function ClientPaymentsPage() {
     try {
       // Show loading state
       toast.loading('Generating invoice PDF...', { id: 'invoice-download' });
-      
+
+      // Dynamically load html2pdf only when needed
+      const html2pdf = (await import('html2pdf.js')).default;
+
       // Get the invoice content element
       const element = invoicePreviewRef.current;
       

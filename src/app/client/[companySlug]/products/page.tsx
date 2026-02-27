@@ -13,8 +13,15 @@ import { ProductCard } from '@/components/ui/product-card-2';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import ProductDetailModal from '@/components/products/ProductDetailModal';
-import CheckoutModal from '@/components/products/CheckoutModal';
-import CheckoutCartModal from '@/components/products/CheckoutCartModal';
+import dynamic from 'next/dynamic';
+const CheckoutModal = dynamic(
+  () => import('@/components/products/CheckoutModal'),
+  { ssr: false }
+);
+const CheckoutCartModal = dynamic(
+  () => import('@/components/products/CheckoutCartModal'),
+  { ssr: false }
+);
 
 export default function ClientProductsPage() {
   const router = useRouter();

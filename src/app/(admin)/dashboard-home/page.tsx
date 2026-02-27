@@ -20,7 +20,18 @@ import {
 import Button from "@/components/ui/button/Button";
 import Image from "next/image";
 import DashboardShippingTracking from "@/components/shipping/DashboardShippingTracking";
-import QuotationFormModal from "@/components/quotation/QuotationFormModal";
+import dynamic from "next/dynamic";
+const QuotationFormModal = dynamic(
+  () => import("@/components/quotation/QuotationFormModal"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    ),
+  }
+);
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -246,9 +257,6 @@ export default function DashboardHome() {
       const shippingData = (shippingRes.data ?? []) as unknown as ShippingRow[];
       const shippingError = shippingRes.error as unknown;
 
-      console.log('Raw shipping data:', shippingData);
-      console.log('Shipping error:', shippingError);
-
       if (shippingRes.error) {
         console.error('Error fetching shipping data:', shippingError);
         setShipmentData([]);
@@ -294,87 +302,72 @@ export default function DashboardHome() {
           }
         }));
 
-        console.log('Formatted shipping data:', formattedShippingData);
         setShipmentData(formattedShippingData);
       } else {
         // No shipping data
         setShipmentData([]);
       }
 
-      // Calculate metrics
-      const metricsRes = await supabase
-        .from('quotations')
-        .select('status');
-
-      const metricsData = (metricsRes.data ?? []) as unknown as Array<{ status?: string | null }>
-
-      if (metricsData && Array.isArray(metricsData)) {
-        const approved = metricsData.filter(item => item.status === "Approved").length;
-        const pending = metricsData.filter(item => item.status === "Pending").length;
-        
-        const newMetrics = {
-          pendingQuotations: pending,
-          activeShipments: 0,
-          deliveredProducts: approved,
-          totalSpend: 0
-        };
-
-        // Get active shipments count
-        const { data: activeShipments, error: shipmentsError } = await supabase
+      // Calculate metrics in parallel using server-side counting
+      const [pendingCountRes, approvedCountRes, activeShipmentsRes, paymentsRes] = await Promise.all([
+        supabase
+          .from('quotations')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'Pending'),
+        supabase
+          .from('quotations')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'Approved'),
+        supabase
           .from('shipping')
-          .select('status')
-          .eq('status', 'In Transit');
-
-        if (!shipmentsError && activeShipments) {
-          newMetrics.activeShipments = activeShipments.length;
-        }
-
-        // Calculate total spend from approved payments
-        const paymentsRes = await supabase
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'In Transit'),
+        supabase
           .from('payments')
           .select('total_amount')
-          .eq('status', 'Approved');
+          .eq('status', 'Approved'),
+      ]);
 
-        if (!paymentsRes.error && paymentsRes.data) {
-          const approvedPayments = (paymentsRes.data ?? []) as unknown as Array<{ total_amount: number | string | null }>
-          const totalSpend = approvedPayments.reduce((sum, payment) => {
-            const value = payment.total_amount
-            if (typeof value === 'number') {
-              return sum + value
-            }
-            if (typeof value === 'string') {
-              const parsed = parseFloat(value)
-              return sum + (isNaN(parsed) ? 0 : parsed)
-            }
-            return sum
-          }, 0)
-          
-          newMetrics.totalSpend = totalSpend;
+      const approvedPayments = (paymentsRes.data ?? []) as unknown as Array<{ total_amount: number | string | null }>;
+      const totalSpend = approvedPayments.reduce((sum, payment) => {
+        const value = payment.total_amount;
+        if (typeof value === 'number') return sum + value;
+        if (typeof value === 'string') {
+          const parsed = parseFloat(value);
+          return sum + (isNaN(parsed) ? 0 : parsed);
         }
-        
-        setMetrics(newMetrics);
-        
-        // Save data to cache
-        saveToCache(userId, {
-          quotationData: formattedData,
-          shipmentData: Array.isArray(shippingData) ? shippingData.map(item => ({
-            id: item.id,
-            tracking_id: item.id.substring(0, 8) || `TR-${item.id.substring(0, 6)}`,
-            user_id: item.user_id,
-            quotation_id: item.quotation_id ?? undefined,
-            status: item.status || "In Transit",
-            location: item.location || "Processing",
-            created_at: item.created_at,
-            estimated_delivery: item.estimated_delivery ?? undefined,
-            quotation: {
-              product_name: "Processing Order",
-              shipping_country: "Processing",
-              shipping_city: "Processing"
-            }
-          })) : [],
-          metrics: newMetrics
-        });
-      }
+        return sum;
+      }, 0);
+
+      const newMetrics = {
+        pendingQuotations: pendingCountRes.count ?? 0,
+        activeShipments:   activeShipmentsRes.count ?? 0,
+        deliveredProducts: approvedCountRes.count ?? 0,
+        totalSpend,
+      };
+
+      setMetrics(newMetrics);
+
+      // Save data to cache
+      saveToCache(userId, {
+        quotationData: formattedData,
+        shipmentData: Array.isArray(shippingData) ? shippingData.map(item => ({
+          id: item.id,
+          tracking_id: item.id.substring(0, 8) || `TR-${item.id.substring(0, 6)}`,
+          user_id: item.user_id,
+          quotation_id: item.quotation_id ?? undefined,
+          status: item.status || "In Transit",
+          location: item.location || "Processing",
+          created_at: item.created_at,
+          estimated_delivery: item.estimated_delivery ?? undefined,
+          quotation: {
+            product_name: "Processing Order",
+            shipping_country: "Processing",
+            shipping_city: "Processing"
+          }
+        })) : [],
+        metrics: newMetrics
+      });
       
     } catch (error) {
       console.error("Exception in fetchDashboardData:", error);

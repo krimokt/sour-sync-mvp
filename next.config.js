@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@tanstack/react-table'],
+
   compress: true,
 
   compiler: {
@@ -61,11 +63,21 @@ const nextConfig = {
       },
     ],
   },
-  webpack(config) {
+  webpack(config, { isServer }) {
+    // Fix SVG imports
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
     });
+
+    // Fix for @tanstack/react-table ESM module parsing
+    // Add this rule BEFORE other rules to ensure proper handling
+    config.module.rules.unshift({
+      test: /@tanstack\/react-table/,
+      type: 'javascript/esm',
+      sideEffects: false,
+    });
+
     return config;
   },
 };

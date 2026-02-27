@@ -1983,143 +1983,226 @@ export default function ClientPaymentsPage() {
                   </div>
                 </div>
               ) : invoicePreview ? (
-                <div 
-                  ref={invoicePreviewRef} 
-                  className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                <div
+                  ref={invoicePreviewRef}
                   style={{
                     width: '210mm',
-                    minHeight: 'auto',
                     maxWidth: '100%',
                     margin: '0 auto',
-                    boxSizing: 'border-box',
-                    padding: '20mm',
-                    fontSize: '11px',
                     backgroundColor: '#ffffff',
-                    color: '#000000'
+                    color: '#111827',
+                    fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+                    fontSize: '11px',
+                    boxShadow: '0 4px 32px rgba(0,0,0,0.10)',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {/* Header */}
-                  <div className="flex items-start justify-between border-b border-gray-200 dark:border-gray-700 pb-4 mb-3">
-                    <div className="flex items-start gap-4 flex-1">
+                  {/* Dark header bar */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+                    padding: '28px 32px 24px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                  }}>
+                    {/* Company info */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
                       {invoicePreview.company.logo_url && (
                         <img
                           src={invoicePreview.company.logo_url}
                           alt={invoicePreview.company.name}
-                          className="object-contain"
-                          style={{ width: '60px', height: '60px', maxWidth: '60px', maxHeight: '60px' }}
+                          style={{
+                            width: '56px', height: '56px', objectFit: 'contain',
+                            borderRadius: '8px', background: 'rgba(255,255,255,0.08)',
+                            padding: '4px',
+                          }}
                         />
                       )}
-                      <div className="flex-1">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                      <div>
+                        <div style={{ fontSize: '17px', fontWeight: '700', color: '#ffffff', marginBottom: '6px', letterSpacing: '-0.3px' }}>
                           {invoicePreview.company.name}
-                        </h2>
+                        </div>
                         {invoicePreview.company.email && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Email: {invoicePreview.company.email}</p>
+                          <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '2px' }}>{invoicePreview.company.email}</div>
                         )}
                         {invoicePreview.company.phone && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Phone: {invoicePreview.company.phone}</p>
+                          <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '2px' }}>{invoicePreview.company.phone}</div>
                         )}
                         {invoicePreview.company.address && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{invoicePreview.company.address}</p>
+                          <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', maxWidth: '220px', lineHeight: '1.5' }}>
+                            {invoicePreview.company.address}
+                          </div>
                         )}
                       </div>
                     </div>
-                    <div className="text-right ml-6">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">INVOICE</h1>
-                      <div className="space-y-1 text-xs">
-                        <p className="font-semibold text-gray-900 dark:text-white">Invoice Details</p>
-                        <p className="text-gray-600 dark:text-gray-400">Invoice #: {invoicePreview.payment.reference_number}</p>
-                        <p className="text-gray-600 dark:text-gray-400">Date: {invoicePreview.payment.date}</p>
-                        <p className="text-gray-600 dark:text-gray-400">Payment Method: {invoicePreview.payment.payment_method}</p>
+                    {/* Invoice title + details */}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '32px', fontWeight: '800', color: '#ffffff', letterSpacing: '-1px', lineHeight: '1' }}>
+                        INVOICE
+                      </div>
+                      <div style={{ width: '60px', height: '3px', background: 'linear-gradient(90deg, #7c3aed, #a78bfa)', marginLeft: 'auto', marginTop: '8px', borderRadius: '2px' }} />
+                      <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+                          Invoice <span style={{ color: '#c4b5fd', fontWeight: '600' }}>#{invoicePreview.payment.reference_number}</span>
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#94a3b8' }}>Date: <span style={{ color: '#e2e8f0' }}>{invoicePreview.payment.date}</span></div>
+                        <div style={{ fontSize: '10px', color: '#94a3b8' }}>Method: <span style={{ color: '#e2e8f0' }}>{invoicePreview.payment.payment_method}</span></div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Bill To */}
-                  {(invoicePreview.payment.payer_name || invoicePreview.payment.payer_email) && (
-                    <div className="border-b border-gray-200 dark:border-gray-700 pb-3 mb-4">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Bill To:</h3>
-                      {invoicePreview.payment.payer_name && (
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{invoicePreview.payment.payer_name}</p>
-                      )}
-                      {invoicePreview.payment.payer_email && (
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{invoicePreview.payment.payer_email}</p>
-                      )}
-                    </div>
-                  )}
+                  {/* Purple accent stripe */}
+                  <div style={{ height: '4px', background: 'linear-gradient(90deg, #7c3aed 0%, #a78bfa 50%, #7c3aed 100%)' }} />
 
-                  {/* Products Table */}
-                  {invoicePreview.items && invoicePreview.items.length > 0 ? (
-                    <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-3">
-                      <table className="w-full" style={{ fontSize: '11px', borderCollapse: 'collapse' }}>
+                  {/* Body */}
+                  <div style={{ padding: '28px 32px' }}>
+
+                    {/* Bill To + Status row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
+                      {(invoicePreview.payment.payer_name || invoicePreview.payment.payer_email) ? (
+                        <div>
+                          <div style={{ fontSize: '9px', fontWeight: '700', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '8px' }}>
+                            Bill To
+                          </div>
+                          {invoicePreview.payment.payer_name && (
+                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', marginBottom: '3px' }}>
+                              {invoicePreview.payment.payer_name}
+                            </div>
+                          )}
+                          {invoicePreview.payment.payer_email && (
+                            <div style={{ fontSize: '11px', color: '#6b7280' }}>{invoicePreview.payment.payer_email}</div>
+                          )}
+                        </div>
+                      ) : <div />}
+
+                      {/* Status badge */}
+                      <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '6px 14px', borderRadius: '999px',
+                        background: invoicePreview.payment.status === 'Approved' || invoicePreview.payment.status === 'approved'
+                          ? 'linear-gradient(135deg, #d1fae5, #a7f3d0)'
+                          : invoicePreview.payment.status === 'pending' || invoicePreview.payment.status === 'Pending'
+                          ? 'linear-gradient(135deg, #fef3c7, #fde68a)'
+                          : 'linear-gradient(135deg, #ede9fe, #ddd6fe)',
+                        border: '1px solid',
+                        borderColor: invoicePreview.payment.status === 'Approved' || invoicePreview.payment.status === 'approved'
+                          ? '#6ee7b7'
+                          : invoicePreview.payment.status === 'pending' || invoicePreview.payment.status === 'Pending'
+                          ? '#fcd34d'
+                          : '#c4b5fd',
+                      }}>
+                        <div style={{
+                          width: '6px', height: '6px', borderRadius: '50%',
+                          background: invoicePreview.payment.status === 'Approved' || invoicePreview.payment.status === 'approved'
+                            ? '#059669'
+                            : invoicePreview.payment.status === 'pending' || invoicePreview.payment.status === 'Pending'
+                            ? '#d97706'
+                            : '#7c3aed',
+                        }} />
+                        <span style={{
+                          fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px',
+                          color: invoicePreview.payment.status === 'Approved' || invoicePreview.payment.status === 'approved'
+                            ? '#065f46'
+                            : invoicePreview.payment.status === 'pending' || invoicePreview.payment.status === 'Pending'
+                            ? '#92400e'
+                            : '#5b21b6',
+                        }}>
+                          {invoicePreview.payment.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Section label */}
+                    <div style={{ fontSize: '9px', fontWeight: '700', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '10px' }}>
+                      Order Summary
+                    </div>
+
+                    {/* Products Table */}
+                    {invoicePreview.items && invoicePreview.items.length > 0 ? (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px' }}>
                         <thead>
-                          <tr className="bg-gray-50 dark:bg-gray-700/50">
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '45%' }}>PRODUCT</th>
-                            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '15%' }}>QUANTITY</th>
-                            <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '20%' }}>UNIT PRICE</th>
-                            <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700" style={{ width: '20%' }}>TOTAL</th>
+                          <tr style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
+                            <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '9px', fontWeight: '700', color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '1px', width: '45%', borderRadius: '0' }}>Product</th>
+                            <th style={{ padding: '10px 10px', textAlign: 'center', fontSize: '9px', fontWeight: '700', color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '1px', width: '15%' }}>Qty</th>
+                            <th style={{ padding: '10px 10px', textAlign: 'right', fontSize: '9px', fontWeight: '700', color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '1px', width: '20%' }}>Unit Price</th>
+                            <th style={{ padding: '10px 14px', textAlign: 'right', fontSize: '9px', fontWeight: '700', color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '1px', width: '20%' }}>Total</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody>
                           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           {invoicePreview.items.map((item: any, index: number) => (
-                            <tr key={index}>
-                              <td className="px-4 py-3 text-xs text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800">{item.product_name}</td>
-                              <td className="px-3 py-3 text-xs text-center text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">{item.quantity}</td>
-                              <td className="px-3 py-3 text-xs text-right text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
+                            <tr key={index} style={{ background: index % 2 === 0 ? '#ffffff' : '#f8f7ff' }}>
+                              <td style={{ padding: '11px 14px', fontSize: '11px', color: '#1f2937', fontWeight: '500', borderBottom: '1px solid #e9e7fd' }}>{item.product_name}</td>
+                              <td style={{ padding: '11px 10px', fontSize: '11px', color: '#6b7280', textAlign: 'center', borderBottom: '1px solid #e9e7fd' }}>{item.quantity}</td>
+                              <td style={{ padding: '11px 10px', fontSize: '11px', color: '#6b7280', textAlign: 'right', borderBottom: '1px solid #e9e7fd' }}>
                                 {invoicePreview.payment.currency} {item.unit_price.toFixed(2)}
                               </td>
-                              <td className="px-3 py-3 text-xs text-right font-medium text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800">
+                              <td style={{ padding: '11px 14px', fontSize: '11px', color: '#1f2937', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid #e9e7fd' }}>
                                 {invoicePreview.payment.currency} {item.total_price.toFixed(2)}
                               </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                    </div>
-                  ) : (
-                    <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
-                      <p className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">No items in this invoice</p>
-                    </div>
-                  )}
+                    ) : (
+                      <div style={{ padding: '24px', textAlign: 'center', color: '#9ca3af', fontSize: '12px', border: '1px dashed #e5e7eb', borderRadius: '8px', marginBottom: '24px' }}>
+                        No items in this invoice
+                      </div>
+                    )}
 
-                  {/* Totals */}
-                  <div className="flex justify-end mb-3">
-                    <div className="w-64 space-y-2">
-                      {invoicePreview.items && invoicePreview.items.length > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400 font-medium">Subtotal:</span>
-                          <span className="text-gray-900 dark:text-white">
-                            {invoicePreview.payment.currency} {invoicePreview.subtotal.toFixed(2)}
+                    {/* Totals */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+                      <div style={{ minWidth: '240px' }}>
+                        {invoicePreview.items && invoicePreview.items.length > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 14px', color: '#6b7280', fontSize: '11px' }}>
+                            <span>Subtotal</span>
+                            <span>{invoicePreview.payment.currency} {invoicePreview.subtotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '12px 14px',
+                          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+                          borderRadius: '8px', marginTop: '4px',
+                        }}>
+                          <span style={{ fontSize: '12px', fontWeight: '700', color: '#ffffff', letterSpacing: '0.5px' }}>TOTAL DUE</span>
+                          <span style={{ fontSize: '15px', fontWeight: '800', color: '#a78bfa' }}>
+                            {invoicePreview.payment.currency} {invoicePreview.payment.amount.toFixed(2)}
                           </span>
                         </div>
-                      )}
-                      <div className="flex justify-between text-base font-bold border-t-2 border-gray-300 dark:border-gray-600 pt-2">
-                        <span className="text-gray-900 dark:text-white">Total:</span>
-                        <span className="text-gray-900 dark:text-white">
-                          {invoicePreview.payment.currency} {invoicePreview.payment.amount.toFixed(2)}
-                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Notes */}
-                  {invoicePreview.payment.payment_notes && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                      <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Notes:</h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                        {invoicePreview.payment.payment_notes}
-                      </p>
-                    </div>
-                  )}
+                    {/* Notes */}
+                    {invoicePreview.payment.payment_notes && (
+                      <div style={{
+                        background: '#f8f7ff', borderLeft: '3px solid #7c3aed',
+                        borderRadius: '0 6px 6px 0', padding: '12px 16px', marginBottom: '24px',
+                      }}>
+                        <div style={{ fontSize: '9px', fontWeight: '700', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Notes</div>
+                        <p style={{ fontSize: '10px', color: '#4b5563', lineHeight: '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>
+                          {invoicePreview.payment.payment_notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Footer */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-2 text-center">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <div style={{
+                    borderTop: '1px solid #ede9fe',
+                    padding: '14px 32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: '#faf9ff',
+                  }}>
+                    <span style={{ fontSize: '9px', color: '#9ca3af', letterSpacing: '0.3px' }}>
                       This is an automatically generated invoice.
-                    </p>
-                  </div>
+                    </span>
+                    <span style={{ fontSize: '9px', color: '#c4b5fd', fontWeight: '600', letterSpacing: '0.5px' }}>
+                      Thank you for your business
+                    </span>
                   </div>
                 </div>
               ) : (

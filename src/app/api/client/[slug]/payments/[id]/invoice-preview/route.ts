@@ -78,7 +78,7 @@ export async function GET(
     // Fetch website settings for contact information
     const { data: websiteSettings } = await supabase
       .from('website_settings')
-      .select('contact_email, contact_phone, contact_location, logo_url')
+      .select('contact_email, contact_phone, contact_location, logo_url, primary_color, secondary_color, accent_color')
       .eq('company_id', company.id)
       .single();
 
@@ -87,6 +87,7 @@ export async function GET(
     const companyEmail = websiteSettings?.contact_email || null;
     const companyPhone = websiteSettings?.contact_phone || null;
     const companyAddress = websiteSettings?.contact_location || company.country || null;
+    const primaryColor = websiteSettings?.primary_color || null;
 
     // Parse cart items from metadata
     let cartItems: CartItem[] = [];
@@ -123,6 +124,7 @@ export async function GET(
         email: companyEmail,
         phone: companyPhone,
         address: companyAddress,
+        primary_color: primaryColor,
       },
       payment: {
         id: payment.id,

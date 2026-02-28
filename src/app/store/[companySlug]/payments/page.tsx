@@ -123,9 +123,19 @@ export default function PaymentsPage() {
       email?: string;
       phone?: string;
       address?: string;
+      tax_number?: string;
+      tax_label?: string;
       [key: string]: unknown;
     };
+    invoice?: {
+      tax_rate?: number;
+      tax_label?: string;
+      tax_amount?: number;
+      payment_terms?: string;
+      footer_text?: string;
+    };
     items: InvoiceItem[];
+    subtotal?: number;
   }
 
   const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
@@ -1241,6 +1251,15 @@ export default function PaymentsPage() {
                   const paymentNotes = typeof invoicePreview.payment.payment_notes === 'string' ? invoicePreview.payment.payment_notes : '';
                   const isApproved = paymentStatus === 'Approved' || paymentStatus === 'approved' || paymentStatus === 'completed';
                   const isPending = paymentStatus === 'pending' || paymentStatus === 'Pending';
+                  const inv = invoicePreview.invoice;
+                  const taxRate = inv?.tax_rate ?? 0;
+                  const taxAmount = inv?.tax_amount ?? 0;
+                  const taxLabel = inv?.tax_label || 'Tax';
+                  const paymentTerms = inv?.payment_terms || '';
+                  const footerText = inv?.footer_text || '';
+                  const taxNumber = invoicePreview.company.tax_number || '';
+                  const companyTaxLabel = invoicePreview.company.tax_label || 'Tax';
+                  const subtotal = invoicePreview.subtotal ?? invoiceSubtotal;
                   return (
                     <div
                       ref={invoicePreviewRef}
@@ -1272,6 +1291,9 @@ export default function PaymentsPage() {
                             {invoicePreview.company.address && typeof invoicePreview.company.address === 'string' && (
                               <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px', maxWidth: '220px', lineHeight: '1.5' }}>{invoicePreview.company.address}</div>
                             )}
+                            {taxNumber && (
+                              <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '3px' }}>{companyTaxLabel} No: {taxNumber}</div>
+                            )}
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
@@ -1283,6 +1305,9 @@ export default function PaymentsPage() {
                             )}
                             {typeof invoicePreview.payment.payment_method === 'string' && (
                               <div style={{ fontSize: '10px', color: '#6b7280' }}>Method: <span style={{ color: '#374151' }}>{invoicePreview.payment.payment_method}</span></div>
+                            )}
+                            {paymentTerms && (
+                              <div style={{ fontSize: '10px', color: '#6b7280' }}>Terms: <span style={{ color: '#374151' }}>{paymentTerms}</span></div>
                             )}
                           </div>
                         </div>
@@ -1324,7 +1349,13 @@ export default function PaymentsPage() {
                           {invoiceItems.length > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', color: '#6b7280', fontSize: '11px', borderBottom: '1px solid #f3f4f6' }}>
                               <span>Subtotal</span>
-                              <span>{invoicePreview.payment.currency} {invoiceSubtotal.toFixed(2)}</span>
+                              <span>{invoicePreview.payment.currency} {subtotal.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {taxRate > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', color: '#6b7280', fontSize: '11px', borderBottom: '1px solid #f3f4f6' }}>
+                              <span>{taxLabel} ({taxRate}%)</span>
+                              <span>{invoicePreview.payment.currency} {taxAmount.toFixed(2)}</span>
                             </div>
                           )}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', marginTop: '4px', borderTop: `2px solid ${brandColor}` }}>
@@ -1346,7 +1377,9 @@ export default function PaymentsPage() {
 
                       {/* Footer */}
                       <div style={{ borderTop: '1px solid #e5e7eb', padding: '14px 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '9px', color: '#9ca3af' }}>This is an automatically generated invoice.</span>
+                        <span style={{ fontSize: '9px', color: '#9ca3af' }}>
+                          {footerText || 'This is an automatically generated invoice.'}
+                        </span>
                         <span style={{ fontSize: '9px', color: '#6b7280', fontWeight: '500' }}>Thank you for your business</span>
                       </div>
                     </div>

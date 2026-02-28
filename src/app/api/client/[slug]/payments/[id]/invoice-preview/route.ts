@@ -75,10 +75,10 @@ export async function GET(
       );
     }
 
-    // Fetch website settings for contact information
+    // Fetch website settings for contact information and invoice customisation
     const { data: websiteSettings } = await supabase
       .from('website_settings')
-      .select('contact_email, contact_phone, contact_location, logo_url, primary_color, secondary_color, accent_color')
+      .select('contact_email, contact_phone, contact_location, logo_url, primary_color, secondary_color, accent_color, invoice_tax_label, invoice_tax_number, invoice_tax_rate, invoice_payment_terms, invoice_footer_text')
       .eq('company_id', company.id)
       .single();
 
@@ -88,6 +88,11 @@ export async function GET(
     const companyPhone = websiteSettings?.contact_phone || null;
     const companyAddress = websiteSettings?.contact_location || company.country || null;
     const primaryColor = websiteSettings?.primary_color || null;
+    const taxLabel = (websiteSettings as Record<string, unknown> | null)?.invoice_tax_label as string | null || 'Tax';
+    const taxNumber = (websiteSettings as Record<string, unknown> | null)?.invoice_tax_number as string | null || null;
+    const taxRate = parseFloat(String((websiteSettings as Record<string, unknown> | null)?.invoice_tax_rate ?? '0')) || 0;
+    const paymentTerms = (websiteSettings as Record<string, unknown> | null)?.invoice_payment_terms as string | null || null;
+    const footerText = (websiteSettings as Record<string, unknown> | null)?.invoice_footer_text as string | null || null;
 
     // Parse cart items from metadata
     let cartItems: CartItem[] = [];
@@ -117,6 +122,9 @@ export async function GET(
     const subtotal = cartItems.reduce((sum, item) => sum + item.total_price, 0);
 
     // Return invoice data for preview
+    const totalAmount = parseFloat(payment.amount.toString());
+    const taxAmount = taxRate > 0 ? parseFloat((subtotal * (taxRate / 100)).toFixed(2)) : 0;
+
     return NextResponse.json({
       company: {
         name: company.name,
@@ -125,12 +133,21 @@ export async function GET(
         phone: companyPhone,
         address: companyAddress,
         primary_color: primaryColor,
+        tax_number: taxNumber,
+        tax_label: taxLabel,
+      },
+      invoice: {
+        tax_rate: taxRate,
+        tax_label: taxLabel,
+        tax_amount: taxAmount,
+        payment_terms: paymentTerms,
+        footer_text: footerText,
       },
       payment: {
         id: payment.id,
         reference_number: payment.reference_number || payment.id.slice(0, 8).toUpperCase(),
         date: new Date(payment.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        amount: parseFloat(payment.amount.toString()),
+        amount: totalAmount,
         currency: payment.currency || 'USD',
         payment_method: payment.payment_method || 'N/A',
         status: payment.status,
@@ -140,7 +157,7 @@ export async function GET(
       },
       items: cartItems,
       subtotal,
-      total: parseFloat(payment.amount.toString()),
+      total: totalAmount,
     });
   } catch (error) {
     console.error('Error generating invoice preview:', error);

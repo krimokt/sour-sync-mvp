@@ -84,6 +84,10 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
 
+  // Invoice settings state
+  const [invoiceColor, setInvoiceColor] = useState('#7c3aed');
+  const [isSavingInvoiceColor, setIsSavingInvoiceColor] = useState(false);
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !company?.id) return;
@@ -285,6 +289,43 @@ export default function SettingsPage() {
       setLogoPreview(company.logo_url);
     }
   }, [company?.logo_url]);
+
+  // Fetch invoice color from website_settings
+  useEffect(() => {
+    if (!company?.id) return;
+    const fetchInvoiceColor = async () => {
+      const { data } = await supabase
+        .from('website_settings')
+        .select('primary_color')
+        .eq('company_id', company.id)
+        .single();
+      if (data?.primary_color) {
+        setInvoiceColor(data.primary_color);
+      }
+    };
+    fetchInvoiceColor();
+  }, [company?.id]);
+
+  const handleSaveInvoiceColor = async () => {
+    if (!company?.id || !isOwner) return;
+    setIsSavingInvoiceColor(true);
+    setMessage(null);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('website_settings') as any)
+        .upsert(
+          { company_id: company.id, primary_color: invoiceColor, updated_at: new Date().toISOString() },
+          { onConflict: 'company_id' }
+        );
+      if (error) throw error;
+      setMessage({ type: 'success', text: 'Invoice color saved successfully!' });
+    } catch (error) {
+      console.error('Error saving invoice color:', error);
+      setMessage({ type: 'error', text: 'Failed to save invoice color' });
+    } finally {
+      setIsSavingInvoiceColor(false);
+    }
+  };
 
   if (!company || !profile) {
     return <div>Loading...</div>;
@@ -583,6 +624,109 @@ export default function SettingsPage() {
               (company.quotation_input_fields as string[]) || ['product_name', 'product_url', 'quantity', 'product_images', 'variant_specs', 'notes']
             }
           />
+        </div>
+      )}
+
+      {/* Invoice Settings */}
+      {isOwner && (
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+            Invoice Settings
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Choose an accent color for your invoices.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Accent Color</Label>
+              <div className="flex items-center gap-3 mt-2">
+                <input
+                  type="color"
+                  value={invoiceColor}
+                  onChange={(e) => setInvoiceColor(e.target.value)}
+                  className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
+                  style={{ padding: '2px' }}
+                />
+                <input
+                  type="text"
+                  value={invoiceColor}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^#[0-9a-fA-F]{0,6}$/.test(val)) {
+                      setInvoiceColor(val);
+                    }
+                  }}
+                  className="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder="#7c3aed"
+                />
+                <div
+                  className="h-10 flex-1 rounded-lg border border-gray-200 dark:border-gray-700"
+                  style={{ backgroundColor: invoiceColor, maxWidth: '120px' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Quick picks</span>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {[
+                  { color: '#7c3aed', name: 'Purple' },
+                  { color: '#2563eb', name: 'Blue' },
+                  { color: '#059669', name: 'Green' },
+                  { color: '#dc2626', name: 'Red' },
+                  { color: '#d97706', name: 'Amber' },
+                  { color: '#0f172a', name: 'Slate' },
+                ].map((preset) => (
+                  <button
+                    key={preset.color}
+                    onClick={() => setInvoiceColor(preset.color)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors text-xs ${
+                      invoiceColor === preset.color
+                        ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                    }`}
+                    title={preset.name}
+                  >
+                    <div
+                      className="w-3.5 h-3.5 rounded-full"
+                      style={{ backgroundColor: preset.color }}
+                    />
+                    <span className="text-gray-600 dark:text-gray-400">{preset.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live mini-preview */}
+            <div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Preview</span>
+              <div className="mt-2 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" style={{ maxWidth: '320px' }}>
+                <div style={{ height: '3px', backgroundColor: invoiceColor }} />
+                <div className="p-3 flex justify-between items-start">
+                  <div>
+                    <div className="text-xs font-semibold text-gray-800 dark:text-white">Your Company</div>
+                    <div className="text-[10px] text-gray-400">info@company.com</div>
+                  </div>
+                  <div style={{ color: invoiceColor }} className="text-sm font-bold">INVOICE</div>
+                </div>
+                <div className="px-3 pb-3">
+                  <div className="flex justify-between text-[10px] border-t pt-2" style={{ borderColor: '#e5e7eb' }}>
+                    <span className="text-gray-500">Total Due</span>
+                    <span style={{ color: invoiceColor }} className="font-bold">$125.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSaveInvoiceColor}
+              disabled={isSavingInvoiceColor}
+              className="mt-2"
+            >
+              {isSavingInvoiceColor ? 'Saving...' : 'Save Invoice Color'}
+            </Button>
+          </div>
         </div>
       )}
 

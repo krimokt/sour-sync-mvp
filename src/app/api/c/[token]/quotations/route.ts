@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { hashToken } from '@/lib/magic-link';
+import crypto from 'crypto';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,8 +92,7 @@ export async function GET(
     return NextResponse.json({ quotations: quotations || [] });
   } catch (error) {
     console.error('List quotations error:', error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -144,7 +144,7 @@ export async function POST(
     }
 
     // Generate quotation_id
-    const quotation_id = `QT-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+    const quotation_id = `QT-${new Date().getFullYear()}-${(parseInt(crypto.randomBytes(2).toString('hex'), 16) % 10000).toString().padStart(4, '0')}`;
 
     // Get client to find user_id
     const { data: client } = await supabaseAdmin
@@ -180,7 +180,7 @@ export async function POST(
     if (quotationError) {
       console.error('Error creating quotation:', quotationError);
       return NextResponse.json(
-        { error: `Failed to create quotation: ${quotationError.message}` },
+        { error: 'Failed to create quotation' },
         { status: 500 }
       );
     }
@@ -191,8 +191,7 @@ export async function POST(
     });
   } catch (error) {
     console.error('Create quotation error:', error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 

@@ -16,22 +16,40 @@ function getJwtSecret(): string {
 }
 
 export async function GET(
-  request: NextRequest
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
+
     const authHeader = request.headers.get('authorization');
-    
+
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const token = authHeader.substring(7);
-    
-    let decoded;
+
+    let decoded: { userId: string; companyId: string };
     try {
       decoded = jwt.verify(token, getJwtSecret()) as { userId: string; companyId: string };
-    } catch (e) {
+    } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Resolve the company from the URL slug and verify it matches the token
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    if (companyError || !company) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    if (decoded.companyId !== company.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Get user
@@ -39,6 +57,7 @@ export async function GET(
       .from('store_users')
       .select('*')
       .eq('id', decoded.userId)
+      .eq('company_id', company.id)
       .single();
 
     if (error || !user) {

@@ -84,6 +84,15 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
 
+  // Invoice settings state
+  const [invoiceColor, setInvoiceColor] = useState('#7c3aed');
+  const [invoiceTaxLabel, setInvoiceTaxLabel] = useState('Tax');
+  const [invoiceTaxNumber, setInvoiceTaxNumber] = useState('');
+  const [invoiceTaxRate, setInvoiceTaxRate] = useState('0');
+  const [invoicePaymentTerms, setInvoicePaymentTerms] = useState('');
+  const [invoiceFooterText, setInvoiceFooterText] = useState('');
+  const [isSavingInvoiceSettings, setIsSavingInvoiceSettings] = useState(false);
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !company?.id) return;
@@ -285,6 +294,57 @@ export default function SettingsPage() {
       setLogoPreview(company.logo_url);
     }
   }, [company?.logo_url]);
+
+  // Fetch invoice settings from website_settings
+  useEffect(() => {
+    if (!company?.id) return;
+    const fetchInvoiceSettings = async () => {
+      const { data } = await supabase
+        .from('website_settings')
+        .select('primary_color, invoice_tax_label, invoice_tax_number, invoice_tax_rate, invoice_payment_terms, invoice_footer_text')
+        .eq('company_id', company.id)
+        .single();
+      if (data) {
+        if (data.primary_color) setInvoiceColor(data.primary_color);
+        if (data.invoice_tax_label) setInvoiceTaxLabel(data.invoice_tax_label);
+        if (data.invoice_tax_number) setInvoiceTaxNumber(data.invoice_tax_number);
+        if (data.invoice_tax_rate != null) setInvoiceTaxRate(String(data.invoice_tax_rate));
+        if (data.invoice_payment_terms) setInvoicePaymentTerms(data.invoice_payment_terms);
+        if (data.invoice_footer_text) setInvoiceFooterText(data.invoice_footer_text);
+      }
+    };
+    fetchInvoiceSettings();
+  }, [company?.id]);
+
+  const handleSaveInvoiceSettings = async () => {
+    if (!company?.id || !isOwner) return;
+    setIsSavingInvoiceSettings(true);
+    setMessage(null);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('website_settings') as any)
+        .upsert(
+          {
+            company_id: company.id,
+            primary_color: invoiceColor,
+            invoice_tax_label: invoiceTaxLabel || 'Tax',
+            invoice_tax_number: invoiceTaxNumber || null,
+            invoice_tax_rate: parseFloat(invoiceTaxRate) || 0,
+            invoice_payment_terms: invoicePaymentTerms || null,
+            invoice_footer_text: invoiceFooterText || null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'company_id' }
+        );
+      if (error) throw error;
+      setMessage({ type: 'success', text: 'Invoice settings saved!' });
+    } catch (error) {
+      console.error('Error saving invoice settings:', error);
+      setMessage({ type: 'error', text: 'Failed to save invoice settings' });
+    } finally {
+      setIsSavingInvoiceSettings(false);
+    }
+  };
 
   if (!company || !profile) {
     return <div>Loading...</div>;
@@ -583,6 +643,190 @@ export default function SettingsPage() {
               (company.quotation_input_fields as string[]) || ['product_name', 'product_url', 'quantity', 'product_images', 'variant_specs', 'notes']
             }
           />
+        </div>
+      )}
+
+      {/* Invoice Settings */}
+      {isOwner && (
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+            Invoice Settings
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Customize how your invoices look and what information they include.
+          </p>
+
+          <div className="space-y-6">
+            {/* Accent color */}
+            <div>
+              <Label>Accent Color</Label>
+              <div className="flex items-center gap-3 mt-2">
+                <input
+                  type="color"
+                  value={invoiceColor}
+                  onChange={(e) => setInvoiceColor(e.target.value)}
+                  className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
+                  style={{ padding: '2px' }}
+                />
+                <input
+                  type="text"
+                  value={invoiceColor}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^#[0-9a-fA-F]{0,6}$/.test(val)) {
+                      setInvoiceColor(val);
+                    }
+                  }}
+                  className="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder="#7c3aed"
+                />
+                <div
+                  className="h-10 flex-1 rounded-lg border border-gray-200 dark:border-gray-700"
+                  style={{ backgroundColor: invoiceColor, maxWidth: '120px' }}
+                />
+              </div>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {[
+                  { color: '#7c3aed', name: 'Purple' },
+                  { color: '#2563eb', name: 'Blue' },
+                  { color: '#059669', name: 'Green' },
+                  { color: '#dc2626', name: 'Red' },
+                  { color: '#d97706', name: 'Amber' },
+                  { color: '#0f172a', name: 'Slate' },
+                ].map((preset) => (
+                  <button
+                    key={preset.color}
+                    onClick={() => setInvoiceColor(preset.color)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors text-xs ${
+                      invoiceColor === preset.color
+                        ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                    }`}
+                    title={preset.name}
+                  >
+                    <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: preset.color }} />
+                    <span className="text-gray-600 dark:text-gray-400">{preset.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tax / VAT */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label>Tax Label</Label>
+                <input
+                  type="text"
+                  value={invoiceTaxLabel}
+                  onChange={(e) => setInvoiceTaxLabel(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder="Tax / VAT / GST"
+                />
+              </div>
+              <div>
+                <Label>Tax Rate (%)</Label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={invoiceTaxRate}
+                  onChange={(e) => setInvoiceTaxRate(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label>Tax / Registration Number</Label>
+                <input
+                  type="text"
+                  value={invoiceTaxNumber}
+                  onChange={(e) => setInvoiceTaxNumber(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder="e.g. GB123456789"
+                />
+              </div>
+            </div>
+
+            {/* Payment terms */}
+            <div>
+              <Label>Payment Terms</Label>
+              <div className="flex gap-2 mt-1 flex-wrap">
+                {['Due on receipt', 'Net 7', 'Net 15', 'Net 30', 'Net 60'].map((term) => (
+                  <button
+                    key={term}
+                    onClick={() => setInvoicePaymentTerms(invoicePaymentTerms === term ? '' : term)}
+                    className={`px-3 py-1.5 rounded-lg border text-xs transition-colors ${
+                      invoicePaymentTerms === term
+                        ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white'
+                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400'
+                    }`}
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={invoicePaymentTerms}
+                onChange={(e) => setInvoicePaymentTerms(e.target.value)}
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                placeholder="Custom payment terms…"
+              />
+            </div>
+
+            {/* Footer text */}
+            <div>
+              <Label>Invoice Footer Text</Label>
+              <textarea
+                value={invoiceFooterText}
+                onChange={(e) => setInvoiceFooterText(e.target.value)}
+                rows={2}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white resize-none"
+                placeholder="e.g. Thank you for your business! Bank details: …"
+              />
+            </div>
+
+            {/* Live mini-preview */}
+            <div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Preview</span>
+              <div className="mt-2 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" style={{ maxWidth: '320px' }}>
+                <div style={{ height: '3px', backgroundColor: invoiceColor }} />
+                <div className="p-3 flex justify-between items-start">
+                  <div>
+                    <div className="text-xs font-semibold text-gray-800 dark:text-white">Your Company</div>
+                    {invoiceTaxNumber && (
+                      <div className="text-[10px] text-gray-400">{invoiceTaxLabel}: {invoiceTaxNumber}</div>
+                    )}
+                  </div>
+                  <div style={{ color: invoiceColor }} className="text-sm font-bold">INVOICE</div>
+                </div>
+                <div className="px-3 pb-3 space-y-1">
+                  {parseFloat(invoiceTaxRate) > 0 && (
+                    <div className="flex justify-between text-[10px] text-gray-500">
+                      <span>{invoiceTaxLabel} ({invoiceTaxRate}%)</span>
+                      <span>$12.50</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-[10px] border-t pt-1" style={{ borderColor: `${invoiceColor}40` }}>
+                    <span className="text-gray-500">Total Due</span>
+                    <span style={{ color: invoiceColor }} className="font-bold">$125.00</span>
+                  </div>
+                  {invoicePaymentTerms && (
+                    <div className="text-[10px] text-gray-400">{invoicePaymentTerms}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSaveInvoiceSettings}
+              disabled={isSavingInvoiceSettings}
+              className="mt-2"
+            >
+              {isSavingInvoiceSettings ? 'Saving…' : 'Save Invoice Settings'}
+            </Button>
+          </div>
         </div>
       )}
 

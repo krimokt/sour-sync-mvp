@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     if (authError) {
       console.error('Auth error:', authError);
       return NextResponse.json(
-        { error: authError.message },
+        { error: 'Failed to create user account' },
         { status: 400 }
       );
     }
@@ -107,11 +107,7 @@ export async function POST(request: Request) {
       // Try to clean up the auth user if company creation fails
       // Note: We can't easily delete the auth user, but we can log it
       return NextResponse.json(
-        { 
-          error: `Failed to create company: ${companyError.message}`,
-          code: companyError.code,
-          details: companyError.details,
-        },
+        { error: 'Failed to create company' },
         { status: 400 }
       );
     }
@@ -130,11 +126,7 @@ export async function POST(request: Request) {
     if (profileError) {
       console.error('Profile update error:', profileError);
       return NextResponse.json(
-        { 
-          error: `Failed to update profile: ${profileError.message}`,
-          code: profileError.code,
-          details: profileError.details,
-        },
+        { error: 'Failed to update profile' },
         { status: 400 }
       );
     }

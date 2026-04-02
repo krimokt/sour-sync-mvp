@@ -1,48 +1,55 @@
+import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function GET() {
   try {
-    // Direct SQL query to Supabase for better performance
-    const supabase = createRouteHandlerClient({ cookies });
-    
-    // Verify admin status (you should implement proper admin check)
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    // Execute raw SQL query to get ALL payments directly
-    const { data, error } = await supabase.rpc('admin_get_all_payments');
-    
-    // If RPC function doesn't exist, try direct SQL
-    if (error && error.message.includes('function "admin_get_all_payments" does not exist')) {
-      // Use a simple query instead
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('payments')
-        .select('*')
-        .limit(1000);
-        
-      if (fallbackError) {
-        return NextResponse.json({ error: fallbackError.message }, { status: 500 });
-      }
-      
-      return NextResponse.json(fallbackData);
+
+    // Fetch profile to get company and verify role
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile || !profile.company_id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    
+
+    if (!['owner', 'admin'].includes(profile.role || '')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Fetch payments scoped to the user's company
+    const { data, error } = await supabaseAdmin
+      .from('payments')
+      .select('*')
+      .eq('company_id', profile.company_id)
+      .limit(1000);
+
     if (error) {
-      console.error('Error executing SQL query:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Error fetching payments:', error);
+      return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
     }
-    
-    // Success!
+
     return NextResponse.json(data);
   } catch (err) {
     console.error('Unexpected error in payments SQL API:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-} 
- 
+}

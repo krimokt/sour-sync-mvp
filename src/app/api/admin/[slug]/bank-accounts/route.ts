@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireCompanyMember } from '@/lib/route-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,25 +10,18 @@ const supabase = createClient(
 // Get all bank accounts for admin
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
+  const auth = await requireCompanyMember(request, slug, ['owner', 'admin']);
+  if (!auth.ok) return auth.response;
+
   try {
-    // Get company
-    const { data: company } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('slug', params.slug)
-      .single();
-
-    if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
-    }
-
     // Get all bank accounts
     const { data: accounts, error } = await supabase
       .from('bank_accounts')
       .select('*')
-      .eq('company_id', company.id)
+      .eq('company_id', auth.company.id)
       .order('sort_order');
 
     if (error) {
@@ -45,27 +39,20 @@ export async function GET(
 // Create bank account
 export async function POST(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
+  const auth = await requireCompanyMember(request, slug, ['owner', 'admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
-
-    // Get company
-    const { data: company } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('slug', params.slug)
-      .single();
-
-    if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
-    }
 
     // Check limit of 4 bank accounts
     const { count } = await supabase
       .from('bank_accounts')
       .select('*', { count: 'exact', head: true })
-      .eq('company_id', company.id);
+      .eq('company_id', auth.company.id);
 
     if (count && count >= 4) {
       return NextResponse.json(
@@ -78,7 +65,7 @@ export async function POST(
     const { data: account, error } = await supabase
       .from('bank_accounts')
       .insert({
-        company_id: company.id,
+        company_id: auth.company.id,
         bank_name: body.bank_name,
         account_name: body.account_name || body.bank_name,
         account_number: body.account_number || null,
@@ -106,4 +93,3 @@ export async function POST(
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
-

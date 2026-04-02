@@ -16,7 +16,18 @@ import { supabase } from '@/lib/supabase';
 import { useClient } from '@/context/ClientContext';
 import StatCard from '@/components/common/StatCard';
 import { Send, CheckCircle, Clock, X, Package, Plus, ChevronUp, ChevronDown, Eye, Download, ZoomIn, ZoomOut, RotateCw, Layers, Truck } from 'lucide-react';
-import QuotationFormModal from '@/components/quotation/QuotationFormModal';
+import dynamic from 'next/dynamic';
+const QuotationFormModal = dynamic(
+  () => import('@/components/quotation/QuotationFormModal'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    ),
+  }
+);
 import Button from '@/components/ui/button/Button';
 import { VariantGroup } from '@/types/database';
 import {

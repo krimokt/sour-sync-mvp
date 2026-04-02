@@ -100,7 +100,7 @@ export async function POST(
         email: user.email,
       },
       getJwtSecret(),
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }
     );
 
     // Return user data (without password)

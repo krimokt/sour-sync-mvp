@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Eye, EyeOff, ArrowRight, CheckCircle2, Package, FileText, Truck } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, CheckCircle2, Package, FileText, Truck, Mail, RefreshCw } from 'lucide-react';
 
 interface Company {
   id: string;
@@ -35,6 +35,11 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
   const [success, setSuccess] = useState('');
   const [company, setCompany] = useState<Company | null>(null);
   const [themeColor, setThemeColor] = useState('#06b6d4');
+
+  // OTP verification state
+  const [otpStep, setOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     setMode(searchParams.get('mode') === 'signup' ? 'signup' : 'signin');
@@ -127,6 +132,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
     }
   };
 
+  /* ── Step 1: send OTP to email ── */
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -139,63 +145,100 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
     }
 
     try {
-      const response = await fetch(`/api/client/${params.companySlug}/auth/signup`, {
+      const res = await fetch(`/api/client/${params.companySlug}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, fullName, companyName }),
+        body: JSON.stringify({ email }),
       });
 
-      const contentType = response.headers.get('content-type');
-      let data;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
-      if (contentType?.includes('application/json')) {
-        data = await response.json();
-      } else {
-        throw new Error('Server error. Please try again.');
-      }
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Signup failed');
-      }
-
-      // Auto-login after signup
-      try {
-        const loginResponse = await fetch(`/api/client/${params.companySlug}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (loginResponse.ok) {
-          if (typeof window !== 'undefined') {
-            const hostname = window.location.hostname;
-            const isCustomDomain =
-              !hostname.includes('localhost') &&
-              !hostname.includes('soursync.com') &&
-              !hostname.includes('netlify.app');
-            const isLocalhostSubdomain =
-              hostname.includes('localhost') &&
-              hostname.split('.').length > 1 &&
-              hostname !== 'localhost';
-
-            window.location.href =
-              isCustomDomain || isLocalhostSubdomain
-                ? '/dashboard-client'
-                : `/client/${params.companySlug}`;
-          }
-          return;
-        }
-      } catch {
-        // fall through
-      }
-
-      setSuccess('Account created! Please sign in.');
-      setMode('signin');
-      setPassword('');
-      setIsLoading(false);
+      setOtpStep(true);
+      setOtpCode('');
+      setResendCooldown(60);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  /* ── Countdown timer for resend ── */
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(v => v - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  /* ── Step 2: verify OTP + complete account creation ── */
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpCode.length !== 6) {
+      setError('Please enter the 6-digit code');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`/api/client/${params.companySlug}/auth/verify-signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token: otpCode, fullName, companyName, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Verification failed');
+
+      // OTP verified and account created — auto-login
+      const loginRes = await fetch(`/api/client/${params.companySlug}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (loginRes.ok) {
+        const hostname = window.location.hostname;
+        const isCustom =
+          !hostname.includes('localhost') &&
+          !hostname.includes('soursync.com') &&
+          !hostname.includes('netlify.app');
+        const isSubdomain =
+          hostname.includes('localhost') &&
+          hostname.split('.').length > 1 &&
+          hostname !== 'localhost';
+
+        window.location.href =
+          isCustom || isSubdomain ? '/dashboard-client' : `/client/${params.companySlug}`;
+        return;
+      }
+
+      setSuccess('Account verified! Please sign in.');
+      setOtpStep(false);
+      setMode('signin');
+      setPassword('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /* ── Resend OTP ── */
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    setError('');
+    setResendCooldown(60);
+    try {
+      await fetch(`/api/client/${params.companySlug}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      setSuccess('New code sent to your email.');
+    } catch {
+      setError('Failed to resend. Try again.');
     }
   };
 
@@ -380,35 +423,43 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
             {/* Heading */}
             <div className="mb-7">
               <h1 className="text-[1.4rem] font-bold text-gray-900 mb-1 tracking-tight">
-                {mode === 'signin' ? 'Welcome back' : 'Create account'}
+                {otpStep
+                  ? 'Check your email'
+                  : mode === 'signin'
+                  ? 'Welcome back'
+                  : 'Create account'}
               </h1>
               <p className="text-gray-400 text-sm">
-                {mode === 'signin'
+                {otpStep
+                  ? `We sent a 6-digit code to ${email}`
+                  : mode === 'signin'
                   ? 'Sign in to your client portal'
                   : 'Register to start managing orders'}
               </p>
             </div>
 
-            {/* Mode toggle */}
-            <div
-              className="flex items-center gap-1 p-1 rounded-xl mb-6"
-              style={{ background: 'oklch(0.95 0.005 240)' }}
-            >
-              {(['signin', 'signup'] as const).map(m => (
-                <button
-                  key={m}
-                  onClick={() => { setMode(m); setError(''); setSuccess(''); }}
-                  className="flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                  style={
-                    mode === m
-                      ? { background: themeColor, color: '#fff', boxShadow: `0 2px 8px ${accentGlow}` }
-                      : { color: 'oklch(0.55 0.01 240)' }
-                  }
-                >
-                  {m === 'signin' ? 'Sign In' : 'Register'}
-                </button>
-              ))}
-            </div>
+            {/* Mode toggle — hide during OTP step */}
+            {!otpStep && (
+              <div
+                className="flex items-center gap-1 p-1 rounded-xl mb-6"
+                style={{ background: 'oklch(0.95 0.005 240)' }}
+              >
+                {(['signin', 'signup'] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => { setMode(m); setError(''); setSuccess(''); setOtpStep(false); }}
+                    className="flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                    style={
+                      mode === m
+                        ? { background: themeColor, color: '#fff', boxShadow: `0 2px 8px ${accentGlow}` }
+                        : { color: 'oklch(0.55 0.01 240)' }
+                    }
+                  >
+                    {m === 'signin' ? 'Sign In' : 'Register'}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Feedback */}
             {error && (
@@ -489,8 +540,87 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
               </form>
             )}
 
+            {/* ── OTP verification form ── */}
+            {mode === 'signup' && otpStep && (
+              <form onSubmit={handleVerifyOtp} className="space-y-5">
+                {/* Email icon + hint */}
+                <div
+                  className="flex flex-col items-center gap-3 py-5 rounded-xl"
+                  style={{ background: accentFaint }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ background: accentMid }}
+                  >
+                    <Mail className="w-5 h-5" style={{ color: themeColor }} />
+                  </div>
+                  <p className="text-xs text-gray-500 text-center max-w-[220px]">
+                    Enter the 6-digit code sent to <span className="font-semibold text-gray-700">{email}</span>
+                  </p>
+                </div>
+
+                {/* OTP input */}
+                <div className="space-y-1.5">
+                  <label htmlFor="otpCode" className="block text-[13px] font-medium text-gray-600">
+                    Verification code
+                  </label>
+                  <input
+                    id="otpCode"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={e => {
+                      const v = e.target.value.replace(/\D/g, '');
+                      setOtpCode(v);
+                      setError('');
+                    }}
+                    placeholder="000000"
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-2xl font-bold tracking-[0.5em] text-center placeholder:text-gray-300 placeholder:tracking-[0.3em] outline-none transition-all duration-150 focus:border-transparent focus:ring-2"
+                    style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || otpCode.length !== 6}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                  style={{ background: themeColor, boxShadow: `0 4px 16px ${accentGlow}` }}
+                >
+                  {isLoading ? (
+                    <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Verifying...</>
+                  ) : (
+                    <>Verify & Create Account <ArrowRight size={15} /></>
+                  )}
+                </button>
+
+                {/* Resend + back */}
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resendCooldown > 0}
+                    className="flex items-center gap-1.5 text-xs transition-colors disabled:opacity-40"
+                    style={{ color: resendCooldown > 0 ? undefined : themeColor }}
+                  >
+                    <RefreshCw size={12} />
+                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setOtpStep(false); setOtpCode(''); setError(''); }}
+                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    ← Change email
+                  </button>
+                </div>
+              </form>
+            )}
+
             {/* ── Sign Up form ── */}
-            {mode === 'signup' && (
+            {mode === 'signup' && !otpStep && (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-1.5">
                   <label htmlFor="fullName" className="block text-[13px] font-medium text-gray-600">Full name</label>

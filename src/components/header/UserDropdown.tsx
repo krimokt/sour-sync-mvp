@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import React, { useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useAuth } from "@/context/AuthContext";
@@ -137,6 +138,11 @@ export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const userData = useProfileData();
+  const pathname = usePathname();
+
+  // Extract companySlug if we're in a client route: /client/[companySlug]/...
+  const clientSlugMatch = pathname?.match(/^\/client\/([^/]+)/);
+  const clientSlug = clientSlugMatch ? clientSlugMatch[1] : null;
   
   // Get initials for the profile circle
   const getInitials = () => {
@@ -166,6 +172,18 @@ export default function UserDropdown() {
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
     closeDropdown();
+
+    if (clientSlug) {
+      // Client portal: call the client logout API then redirect to client sign-in
+      try {
+        await fetch(`/api/client/${clientSlug}/auth/logout`, { method: 'POST' });
+      } catch {
+        // ignore — we redirect regardless
+      }
+      window.location.href = `/site/${clientSlug}/signin`;
+      return;
+    }
+
     await signOut();
   };
 

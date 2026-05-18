@@ -27,44 +27,63 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
-    // Fetch company + email settings
-    const { data: company } = await supabaseAdmin
+    // Step 1 — verify company exists (only safe columns that always exist)
+    const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
-      .select('id, status, resend_api_key, email_from_domain')
+      .select('id, status')
       .eq('slug', slug)
       .single();
 
-    if (!company || company.status !== 'active') {
+    if (companyError || !company || company.status !== 'active') {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    // Step 2 — try to get email settings (columns may not exist yet)
+    let resendApiKey: string | null = null;
+    let emailFromDomain: string | null = null;
+    try {
+      const { data: emailSettings } = await supabaseAdmin
+        .from('companies')
+        .select('resend_api_key, email_from_domain')
+        .eq('id', company.id)
+        .single();
+      resendApiKey = (emailSettings as Record<string, string> | null)?.resend_api_key ?? null;
+      emailFromDomain = (emailSettings as Record<string, string> | null)?.email_from_domain ?? null;
+    } catch {
+      // Columns don't exist yet — fall back to Supabase OTP
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     const code = generateOtp();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    // Store OTP in DB (invalidate previous codes for this email+company)
-    await supabaseAdmin
-      .from('client_otp_verifications')
-      .update({ used: true })
-      .eq('company_id', company.id)
-      .eq('email', normalizedEmail)
-      .eq('used', false);
+    // Step 3 — store OTP in DB if table exists, otherwise skip
+    try {
+      await supabaseAdmin
+        .from('client_otp_verifications')
+        .update({ used: true })
+        .eq('company_id', company.id)
+        .eq('email', normalizedEmail)
+        .eq('used', false);
 
-    await supabaseAdmin.from('client_otp_verifications').insert({
-      company_id: company.id,
-      email: normalizedEmail,
-      code,
-      expires_at: expiresAt,
-    });
+      await supabaseAdmin.from('client_otp_verifications').insert({
+        company_id: company.id,
+        email: normalizedEmail,
+        code,
+        expires_at: expiresAt,
+      });
+    } catch {
+      // Table doesn't exist yet — only Supabase fallback will work
+    }
 
     // Send via Resend if configured, otherwise fallback to Supabase built-in
-    if (company.resend_api_key && company.email_from_domain) {
-      const fromAddress = `noreply@${company.email_from_domain}`;
+    if (resendApiKey && emailFromDomain) {
+      const fromAddress = `noreply@${emailFromDomain}`;
 
       const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${company.resend_api_key}`,
+          Authorization: `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -108,7 +127,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ success: true, usedResend: !!(company.resend_api_key && company.email_from_domain) });
+    return NextResponse.json({ success: true, usedResend: !!(resendApiKey && emailFromDomain) });
   } catch (err) {
     console.error('Send OTP error:', err);
     return NextResponse.json({ error: 'Failed to send verification code' }, { status: 500 });

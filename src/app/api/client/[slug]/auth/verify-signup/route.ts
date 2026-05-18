@@ -26,7 +26,7 @@ export async function POST(
     // Get company
     const { data: company } = await supabaseAdmin
       .from('companies')
-      .select('id, slug, status, resend_api_key')
+      .select('id, slug, status')
       .eq('slug', slug)
       .single();
 
@@ -34,7 +34,18 @@ export async function POST(
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
-    if (company.resend_api_key) {
+    // Try to get resend_api_key (column may not exist yet)
+    let resendApiKey: string | null = null;
+    try {
+      const { data: emailSettings } = await supabaseAdmin
+        .from('companies')
+        .select('resend_api_key')
+        .eq('id', company.id)
+        .single();
+      resendApiKey = (emailSettings as Record<string, string> | null)?.resend_api_key ?? null;
+    } catch { /* column doesn't exist yet */ }
+
+    if (resendApiKey) {
       // Verify against our custom OTP table
       const { data: otpRecord } = await supabaseAdmin
         .from('client_otp_verifications')

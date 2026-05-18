@@ -686,39 +686,39 @@ export default function ShippingPage() {
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <div className="inline-block min-w-full align-middle">
               <Table className="min-w-full">
-                <TableHeader className="bg-gray-50/50 dark:bg-gray-900/50">
+                <TableHeader className="dash-thead">
                   <TableRow className="hover:bg-transparent border-b border-gray-200 dark:border-gray-800">
-                    <TableCell isHeader className="w-[200px] min-w-[180px] px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <TableCell isHeader className="w-[200px] min-w-[180px] dash-th">
                       <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5" /> Tracking Number
                       </div>
                     </TableCell>
-                    <TableCell isHeader className="min-w-[140px] px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <TableCell isHeader className="min-w-[140px] dash-th">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-3.5 w-3.5" /> Receiver
                       </div>
                     </TableCell>
-                    <TableCell isHeader className="min-w-[120px] px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <TableCell isHeader className="min-w-[120px] dash-th">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5" /> Location
                       </div>
                     </TableCell>
-                    <TableCell isHeader className="min-w-[100px] px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <TableCell isHeader className="min-w-[100px] dash-th">
                       <div className="flex items-center gap-2">
                         <Info className="h-3.5 w-3.5" /> Status
                       </div>
                     </TableCell>
-                    <TableCell isHeader className="min-w-[120px] px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <TableCell isHeader className="min-w-[120px] dash-th">
                       <div className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5" /> Est. Delivery
                       </div>
                     </TableCell>
-                    <TableCell isHeader className="min-w-[120px] px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <TableCell isHeader className="min-w-[120px] dash-th">
                       <div className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5" /> Created
                       </div>
                     </TableCell>
-                    <TableCell isHeader className="min-w-[100px] px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <TableCell isHeader className="min-w-[100px] dash-th">
                       <div className="flex items-center gap-2">
                         <Eye className="h-3.5 w-3.5" /> Actions
                       </div>

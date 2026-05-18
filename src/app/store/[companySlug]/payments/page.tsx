@@ -14,7 +14,8 @@ import { supabase } from '@/lib/supabase';
 import { useStore } from '@/context/StoreContext';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import StatCard from '@/components/common/StatCard';
-import { List, DollarSign, CheckCircle, Clock, X, ChevronDown, ChevronUp, Package, Eye, Loader2, FileText, Building2, CreditCard, Info, Upload, Download } from 'lucide-react';
+import { List, DollarSign, CheckCircle, Clock, X, ChevronDown, ChevronUp, Package, Eye, Loader2, FileText, Building2, CreditCard, Info, Upload, Download, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -52,6 +53,7 @@ interface PaymentData {
   metadata?: {
     company_id?: string;
     quotation_id?: string;
+    quotation_ref?: string;
     cart_items?: CartItem[];
     address_id?: string;
     payment_method_type?: string;
@@ -651,9 +653,22 @@ export default function PaymentsPage() {
                             <span className="font-semibold text-gray-900 dark:text-white block text-sm sm:text-base truncate">
                               {payment.reference_number || payment.id.slice(0, 8).toUpperCase()}
                             </span>
-                            {payment.id && !payment.reference_number && (
-                              <span className="text-xs text-gray-500 font-mono truncate block">ID: {payment.id.slice(0, 8)}</span>
-                            )}
+                            {(() => {
+                              const meta = parseMetadata(payment.metadata);
+                              const ref = meta?.quotation_ref as string | undefined;
+                              const id = meta?.quotation_id as string | undefined;
+                              if (!ref && !id) return null;
+                              return (
+                                <Link
+                                  href={`/store/${company?.slug}/quotations`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium bg-[#06b6d4]/10 text-[#06b6d4] hover:bg-[#06b6d4]/20 transition-colors"
+                                >
+                                  <FileText className="w-3 h-3 flex-shrink-0" />
+                                  {ref || (id ? id.slice(0, 8).toUpperCase() : '')}
+                                </Link>
+                              );
+                            })()}
                           </div>
                         </div>
                       </TableCell>
@@ -985,23 +1000,40 @@ export default function PaymentsPage() {
                     </div>
                   )}
 
-                  {((typeof metadata.quotation_id === 'string') || (typeof metadata.company_id === 'string')) ? (
-                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wide">Order Information</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {typeof metadata.quotation_id === 'string' ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Quotation ID</p>
-                            <p className="font-mono text-sm font-medium text-gray-900 dark:text-white">{metadata.quotation_id}</p>
+                  {typeof metadata.quotation_id === 'string' ? (
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Linked Quotation</h3>
+                      <Link
+                        href={`/store/${company?.slug}/quotations`}
+                        className="flex items-center justify-between p-3 rounded-lg border border-[#06b6d4]/20 bg-[#06b6d4]/5 hover:bg-[#06b6d4]/10 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-[#06b6d4]/15 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-4 h-4 text-[#06b6d4]" />
                           </div>
-                        ) : null}
-                        {typeof metadata.company_id === 'string' ? (
                           <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Company ID</p>
-                            <p className="font-mono text-xs font-medium text-gray-700 dark:text-gray-300 break-all">{metadata.company_id}</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {typeof metadata.quotation_ref === 'string'
+                                ? metadata.quotation_ref
+                                : metadata.quotation_id.slice(0, 8).toUpperCase()}
+                            </p>
+                            {typeof metadata.quotation_ref === 'string' && (
+                              <p className="text-xs text-gray-400 font-mono mt-0.5">
+                                {metadata.quotation_id.slice(0, 12)}…
+                              </p>
+                            )}
+                            {(metadata as Record<string, unknown>).product && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[220px]">
+                                {String((metadata as Record<string, unknown>).product)}
+                              </p>
+                            )}
                           </div>
-                        ) : null}
-                      </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-[#06b6d4] text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          View
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </div>
+                      </Link>
                     </div>
                   ) : null}
 

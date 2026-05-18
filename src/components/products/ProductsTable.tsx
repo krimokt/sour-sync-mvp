@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Eye, EyeOff, Pencil, Trash2, Loader2, Plus } from 'lucide-react';
 import { Product } from '@/types/database';
 import { deleteProductOptimistic, togglePublishOptimistic } from '@/hooks/useProducts';
 
@@ -85,11 +86,9 @@ export default function ProductsTable({
         {!isReadOnly && (
           <Link
             href={`/store/${companySlug}/products/new`}
-            className="inline-flex items-center px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#06b6d4] text-white rounded-lg hover:bg-[#0891b2] transition-colors text-sm font-medium"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="w-4 h-4" />
             Add Product
           </Link>
         )}
@@ -98,40 +97,26 @@ export default function ProductsTable({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div className="dash-table-wrap">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900">
+        <table className="min-w-full">
+          <thead className="dash-thead">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Product
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Stock
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Status
-              </th>
+              <th className="dash-th">Product</th>
+              <th className="dash-th">Price</th>
+              <th className="dash-th">Stock</th>
+              <th className="dash-th">Category</th>
+              <th className="dash-th">Status</th>
               {!isReadOnly && (
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="dash-th text-right">Actions</th>
               )}
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-[oklch(0.93_0.008_234)]">
             {products.map((product) => (
-              <tr 
-                key={product.id} 
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                  deletingId === product.id ? 'opacity-50' : ''
-                }`}
+              <tr
+                key={product.id}
+                className={`dash-tr ${deletingId === product.id ? 'opacity-50' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -197,41 +182,52 @@ export default function ProductsTable({
                   </span>
                 </td>
                 {!isReadOnly && (
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="dash-td whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1">
+                      {/* Publish toggle */}
                       <button
                         onClick={() => handleTogglePublish(product)}
                         disabled={togglingId === product.id}
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors disabled:opacity-50 ${
+                        title={product.is_published ? 'Unpublish' : 'Publish'}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
                           product.is_published
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                         }`}
                       >
                         {togglingId === product.id ? (
-                          <span className="flex items-center gap-1">
-                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            Updating...
-                          </span>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : product.is_published ? (
+                          <Eye className="w-3.5 h-3.5" />
                         ) : (
-                          product.is_published ? 'Published' : 'Draft'
+                          <EyeOff className="w-3.5 h-3.5" />
                         )}
+                        {product.is_published ? 'Published' : 'Draft'}
                       </button>
+
+                      {/* Edit */}
                       <Link
                         href={`/store/${companySlug}/products/${product.id}`}
-                        className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
+                        title="Edit product"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#06b6d4]/10 text-[#06b6d4] hover:bg-[#06b6d4]/20 transition-colors"
                       >
+                        <Pencil className="w-3.5 h-3.5" />
                         Edit
                       </Link>
+
+                      {/* Delete */}
                       <button
                         onClick={() => handleDelete(product.id)}
                         disabled={deletingId === product.id}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
+                        title="Delete product"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
                       >
-                        {deletingId === product.id ? 'Deleting...' : 'Delete'}
+                        {deletingId === product.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                        Delete
                       </button>
                     </div>
                   </td>

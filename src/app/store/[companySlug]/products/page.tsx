@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Plus, Search, Loader2, Package, Eye, FileEdit } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useProducts } from '@/hooks/useProducts';
 import { useDebounce } from '@/hooks/useDebounce';
 import ProductsTable from '@/components/products/ProductsTable';
 import StatCard from '@/components/common/StatCard';
+import { Button } from '@/components/ui/button';
 
 export default function ProductsPage() {
   const { company } = useStore();
@@ -38,107 +40,70 @@ export default function ProductsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="dash-page-header">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Products</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage your product catalog
-          </p>
+          <h1 className="dash-page-title">Products</h1>
+          <p className="dash-page-subtitle">Manage your product catalog</p>
         </div>
-        <Link
-          href={`/store/${company.slug}/products/new`}
-          className="inline-flex items-center px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors shadow-sm focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Product
-        </Link>
+        <Button asChild variant="primary" size="lg">
+          <Link href={`/store/${company.slug}/products/new`}>
+            <Plus className="w-4 h-4" />
+            Add Product
+          </Link>
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           title="Total Products"
           value={products.length}
-          trend={totalTrend}
           variant="dark"
+          icon={<Package className="w-5 h-5" />}
         />
         <StatCard
-          title="Published Products"
+          title="Published"
           value={publishedCount}
-          trend={publishedTrend}
-          variant="light"
+          icon={<Eye className="w-5 h-5 text-green-500" />}
         />
         <StatCard
-          title="Draft Products"
+          title="Drafts"
           value={draftCount}
-          trend={draftTrend}
-          variant="light"
+          icon={<FileEdit className="w-5 h-5 text-amber-500" />}
         />
       </div>
 
       {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="w-full sm:w-96 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
+      <div className="dash-card flex flex-col sm:flex-row gap-3 items-center justify-between p-3">
+        <div className="w-full sm:w-80 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Search products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-gray-50 dark:bg-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm dark:border-gray-600 dark:text-white transition-colors"
+            className="dash-search"
           />
-          {/* Show loading indicator when validating in background */}
           {isValidating && !isLoading && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500"></div>
-            </div>
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin pointer-events-none" />
           )}
         </div>
-        
-        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+        <div className="dash-filter-bar">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              filterStatus === 'all'
-                ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-            }`}
+            className={`dash-filter-tab ${filterStatus === 'all' ? 'dash-filter-tab-active' : ''}`}
           >
             All Products
           </button>
           <button
             onClick={() => setFilterStatus('published')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              filterStatus === 'published'
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-            }`}
+            className={`dash-filter-tab ${filterStatus === 'published' ? 'dash-filter-tab-active' : ''}`}
           >
             Published
           </button>
           <button
             onClick={() => setFilterStatus('draft')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              filterStatus === 'draft'
-                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-            }`}
+            className={`dash-filter-tab ${filterStatus === 'draft' ? 'dash-filter-tab-active' : ''}`}
           >
             Drafts
           </button>

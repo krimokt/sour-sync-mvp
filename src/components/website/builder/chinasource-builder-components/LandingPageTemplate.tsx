@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormData, GeneratedContent, ThemeColor, TemplateId } from '../chinasource-types';
-import { 
-  Mail, MapPin, 
-  ArrowUpRight, LogIn, ExternalLink,
-  ShieldCheck, Zap, Instagram, Linkedin, MessageCircle
+import {
+  Mail, MapPin, ArrowUpRight, LogIn, ExternalLink,
+  ShieldCheck, Instagram, Linkedin, MessageCircle,
+  CheckCircle2, Globe, Clock, Package,
 } from 'lucide-react';
 import { EditableText, EditableIcon, EditableImage } from './EditorComponents';
 import Sidebar from './Sidebar';
@@ -13,102 +13,109 @@ import Sidebar from './Sidebar';
 interface LandingPageTemplateProps {
   data: FormData;
   content: GeneratedContent;
-  onEdit: () => void;
+  onEdit?: () => void;
   hideSidebar?: boolean;
   hasTopBar?: boolean;
   readOnly?: boolean;
 }
 
-const themeStyles: Record<ThemeColor, {
-  primary: string;
-  primaryHover: string;
-  light: string;
-  text: string;
-  border: string;
-  shadow: string;
-}> = {
-  amber: { primary: 'bg-amber-500', primaryHover: 'hover:bg-amber-600', light: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200', shadow: 'shadow-amber-500/20' },
-  blue: { primary: 'bg-blue-600', primaryHover: 'hover:bg-blue-700', light: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200', shadow: 'shadow-blue-500/20' },
-  red: { primary: 'bg-red-600', primaryHover: 'hover:bg-red-700', light: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', shadow: 'shadow-red-500/20' },
-  emerald: { primary: 'bg-emerald-600', primaryHover: 'hover:bg-emerald-700', light: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200', shadow: 'shadow-emerald-500/20' },
-  indigo: { primary: 'bg-indigo-600', primaryHover: 'hover:bg-indigo-700', light: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200', shadow: 'shadow-indigo-500/20' },
-  zinc: { primary: 'bg-zinc-900', primaryHover: 'hover:bg-zinc-800', light: 'bg-zinc-100', text: 'text-zinc-900', border: 'border-zinc-300', shadow: 'shadow-zinc-900/20' },
+const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string }> = {
+  amber:   { hex: '#f59e0b', light: 'bg-amber-50',   text: 'text-amber-600' },
+  blue:    { hex: '#2563eb', light: 'bg-blue-50',     text: 'text-blue-600' },
+  red:     { hex: '#dc2626', light: 'bg-red-50',      text: 'text-red-600' },
+  emerald: { hex: '#059669', light: 'bg-emerald-50',  text: 'text-emerald-600' },
+  indigo:  { hex: '#4f46e5', light: 'bg-indigo-50',   text: 'text-indigo-600' },
+  zinc:    { hex: '#18181b', light: 'bg-zinc-100',     text: 'text-zinc-900' },
 };
 
-export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({ data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false }) => {
-  // Ensure socialMedia array exists
-  const normalizedContent = {
+export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
+  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false,
+}) => {
+  const normalized = {
     ...initialContent,
-    contact: {
-      ...initialContent.contact,
-      socialMedia: initialContent.contact.socialMedia || [],
-    },
+    contact: { ...initialContent.contact, socialMedia: initialContent.contact.socialMedia || [] },
   };
-  const [content, setContent] = useState<GeneratedContent>(normalizedContent);
+  const [content, setContent] = useState<GeneratedContent>(normalized);
   const [activeSection, setActiveSection] = useState<string | null>('hero');
   const [themeColor, setThemeColor] = useState<ThemeColor>(data.themeColor);
   const [templateId, setTemplateId] = useState<TemplateId>(data.templateId);
   const [scrolled, setScrolled] = useState(false);
 
-  const theme = themeStyles[themeColor];
+  const accent = themeAccent[themeColor];
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const updateContent = (path: string, value: unknown) => {
     setContent(prev => {
-      const newState = JSON.parse(JSON.stringify(prev));
+      const next = JSON.parse(JSON.stringify(prev));
       const parts = path.split('.');
-      let current = newState;
-      for (let i = 0; i < parts.length - 1; i++) {
-        current = current[parts[i]];
-      }
-      current[parts[parts.length - 1]] = value;
-      return newState;
+      let cur = next;
+      for (let i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
+      cur[parts[parts.length - 1]] = value;
+      return next;
     });
   };
 
+  /* ── Navbar ── */
   const Navbar = () => (
-    <nav className={`fixed ${hasTopBar ? 'top-16' : 'top-0'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-40 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100 h-16' : 'bg-transparent h-24'}`}>
-      <div className="max-w-7xl mx-auto px-10 h-full flex items-center justify-between">
+    <nav
+      className={`fixed ${hasTopBar ? 'top-16' : 'top-0'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-40 transition-all duration-300
+        ${scrolled ? 'bg-white border-b border-gray-100 shadow-sm py-3' : 'bg-transparent py-6'}`}
+    >
+      <div className="max-w-6xl mx-auto px-8 flex items-center justify-between">
+        {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className={`${theme.primary} w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-lg rotate-3`}>
-            <Zap size={20} fill="currentColor" />
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+            style={{ background: accent.hex }}
+          >
+            {data.companyName.charAt(0).toUpperCase()}
           </div>
-          <span className="font-black text-xl tracking-tighter text-gray-900 uppercase italic">
+          <span className={`font-bold text-lg tracking-tight ${scrolled ? 'text-gray-900' : 'text-white'}`}>
             {data.companyName}
           </span>
         </div>
-        
-        <div className="hidden lg:flex items-center gap-10">
-          <div className="flex gap-8 text-[11px] font-black text-gray-400 uppercase tracking-widest">
-            <a href="#solutions" className="hover:text-gray-900 transition">Solutions</a>
-            <a href="#process" className="hover:text-gray-900 transition">Process</a>
-            <a href="#about" className="hover:text-gray-900 transition">Expertise</a>
-            <a href="#contact" className="hover:text-gray-900 transition">Connect</a>
-          </div>
-          <div className="flex items-center gap-3 border-l border-gray-100 pl-8">
-            <button className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-gray-700 hover:text-gray-900 transition">
-              <LogIn size={14} /> Sign In
-            </button>
-            <button className={`${theme.primary} ${theme.primaryHover} text-white px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-2`}>
-              Get Started <ArrowUpRight size={14} />
-            </button>
-          </div>
+
+        {/* Links */}
+        <div className="hidden lg:flex items-center gap-8">
+          {['Solutions', 'Process', 'About', 'Contact'].map(label => (
+            <a
+              key={label}
+              href={`#${label.toLowerCase()}`}
+              className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div className="flex items-center gap-3">
+          <button className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${scrolled ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>
+            <LogIn size={15} /> Sign In
+          </button>
+          <a
+            href="#contact"
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-white text-sm font-semibold transition-all hover:opacity-90"
+            style={{ background: accent.hex }}
+          >
+            Get a Quote <ArrowUpRight size={14} />
+          </a>
         </div>
       </div>
     </nav>
   );
 
   return (
-    <div className="min-h-screen flex bg-white font-sans selection:bg-gray-900 selection:text-white">
+    <div className="min-h-screen flex bg-white" style={{ fontFamily: 'var(--font-jakarta, system-ui, sans-serif)' }}>
       {!hideSidebar && (
-        <Sidebar 
-          content={content} 
-          onUpdate={updateContent} 
+        <Sidebar
+          content={content}
+          onUpdate={updateContent}
           activeSection={activeSection}
           onSectionClick={setActiveSection}
           themeColor={themeColor}
@@ -118,143 +125,230 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({ data, 
         />
       )}
 
-      <main className={`flex-1 relative ${!hideSidebar ? 'ml-80' : ''}`} style={{ minHeight: '100vh', overflow: 'visible', paddingTop: hasTopBar ? '0' : '0' }}>
+      <main className={`flex-1 relative ${!hideSidebar ? 'ml-80' : ''}`}>
         <Navbar />
 
-        {/* 1. HERO: The Gateway */}
-        <section id="hero" className="relative h-screen flex items-center px-12 pt-24 overflow-hidden" onClick={() => setActiveSection('hero')}>
-          <div className="absolute inset-0 z-0">
-            <img src={content.hero.backgroundImage} className="w-full h-full object-cover scale-105" alt="Hero" />
-            <div className={`absolute inset-0 bg-gradient-to-tr from-white via-white/95 to-white/40`} />
+        {/* ── HERO ── */}
+        <section
+          id="hero"
+          className="relative min-h-screen flex items-center overflow-hidden"
+          style={{ background: 'oklch(0.12 0.018 240)' }}
+          onClick={() => setActiveSection('hero')}
+        >
+          {/* Background image with dark overlay */}
+          <div className="absolute inset-0">
+            <img src={content.hero.backgroundImage} className="w-full h-full object-cover opacity-20" alt="" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, oklch(0.12 0.018 240) 50%, oklch(0.16 0.02 230) 100%)' }} />
           </div>
-          
-          <div className="relative z-10 max-w-5xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 rounded-full text-white text-[10px] font-black uppercase tracking-[0.2em] mb-8 animate-slideUp">
-              <ShieldCheck size={14} className="text-emerald-400" />
-              <EditableText value={content.hero.tagline} onChange={(v) => updateContent('hero.tagline', v)} />
+
+          {/* Subtle grid */}
+          <div className="absolute inset-0 opacity-[0.04]"
+            style={{ backgroundImage: 'linear-gradient(oklch(0.9 0 0) 1px, transparent 1px), linear-gradient(90deg, oklch(0.9 0 0) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
+          />
+
+          <div className="relative z-10 max-w-6xl mx-auto px-8 pt-32 pb-24 w-full">
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border mb-8"
+              style={{ borderColor: `${accent.hex}40`, background: `${accent.hex}15` }}>
+              <ShieldCheck size={13} style={{ color: accent.hex }} />
+              <span className="text-xs font-semibold tracking-wider" style={{ color: accent.hex }}>
+                <EditableText value={content.hero.tagline} onChange={v => updateContent('hero.tagline', v)} readOnly={readOnly} />
+              </span>
             </div>
-            
-            <EditableText 
-              value={content.hero.headline} 
-              onChange={(v) => updateContent('hero.headline', v)} 
+
+            {/* Headline */}
+            <EditableText
+              value={content.hero.headline}
+              onChange={v => updateContent('hero.headline', v)}
               tag="h1"
-              className="text-7xl lg:text-[100px] font-black text-gray-900 leading-[0.9] tracking-tighter mb-10 drop-shadow-sm"
+              className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-6 max-w-4xl"
               readOnly={readOnly}
             />
-            
-            <p className="text-xl text-gray-600 max-w-2xl mb-12 font-medium leading-relaxed border-l-4 border-gray-900 pl-8">
-              <EditableText value={content.hero.subheadline} onChange={(v) => updateContent('hero.subheadline', v)} readOnly={readOnly} />
+
+            {/* Subheadline */}
+            <p className="text-lg text-white/60 max-w-2xl mb-10 leading-relaxed font-normal">
+              <EditableText value={content.hero.subheadline} onChange={v => updateContent('hero.subheadline', v)} readOnly={readOnly} />
             </p>
-            
-            <div className="flex flex-wrap gap-5">
-              <a href="#contact" className={`${theme.primary} ${theme.primaryHover} text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs shadow-2xl ${theme.shadow} transition-all hover:-translate-y-1`}>
-                {content.hero.ctaPrimary.text}
+
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-4">
+              <a
+                href="#contact"
+                className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 shadow-lg"
+                style={{ background: accent.hex, boxShadow: `0 8px 30px ${accent.hex}40` }}
+              >
+                {content.hero.ctaPrimary.text} <ArrowUpRight size={15} />
               </a>
-              <a href="#solutions" className="bg-white border-2 border-gray-900 text-gray-900 px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-gray-900 hover:text-white transition-all">
-                Explore Solutions
+              <a
+                href="#solutions"
+                className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold border transition-all hover:bg-white/10"
+                style={{ borderColor: 'oklch(0.35 0.01 240)' }}
+              >
+                See Our Services
               </a>
             </div>
-          </div>
 
-          <div className="absolute bottom-10 right-12 animate-bounce hidden lg:block">
-             <div className="w-px h-24 bg-gradient-to-b from-gray-900 to-transparent" />
+            {/* Trust bar */}
+            <div className="flex flex-wrap items-center gap-6 mt-16 pt-10" style={{ borderTop: '1px solid oklch(0.22 0.01 240)' }}>
+              {[
+                { icon: <CheckCircle2 size={14} />, label: 'Factory Verified Suppliers' },
+                { icon: <Globe size={14} />, label: 'Global Logistics Network' },
+                { icon: <Clock size={14} />, label: 'End-to-End Operations' },
+                { icon: <Package size={14} />, label: 'Quality Control Included' },
+              ].map((t, i) => (
+                <div key={i} className="flex items-center gap-2 text-white/50 text-xs font-medium">
+                  <span style={{ color: accent.hex }}>{t.icon}</span>
+                  {t.label}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* 2. SOLUTIONS: The Capability */}
-        <section id="solutions" className="py-40 px-20 bg-gray-50" onClick={() => setActiveSection('solutions')}>
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-24 gap-8">
-              <div className="max-w-3xl">
-                <h2 className="text-5xl font-black text-gray-900 mb-8 tracking-tighter leading-none">
-                  <EditableText value={content.solutions.title} onChange={(v) => updateContent('solutions.title', v)} readOnly={readOnly} />
-                </h2>
-                <p className="text-xl text-gray-500 font-medium leading-relaxed">
-                  <EditableText value={content.solutions.description} onChange={(v) => updateContent('solutions.description', v)} readOnly={readOnly} />
-                </p>
+        {/* ── SOLUTIONS ── */}
+        <section
+          id="solutions"
+          className="py-28 px-8"
+          style={{ background: 'oklch(0.975 0.006 238)' }}
+          onClick={() => setActiveSection('solutions')}
+        >
+          <div className="max-w-6xl mx-auto">
+            <div className="max-w-2xl mb-16">
+              <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
+                What We Do
+              </span>
+              <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4">
+                <EditableText value={content.solutions.title} onChange={v => updateContent('solutions.title', v)} readOnly={readOnly} />
+              </h2>
+              <p className="text-lg text-gray-500 leading-relaxed">
+                <EditableText value={content.solutions.description} onChange={v => updateContent('solutions.description', v)} readOnly={readOnly} />
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {content.solutions.items.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white border border-gray-100 p-8 rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
+                    style={{ background: `${accent.hex}12` }}
+                  >
+                    <EditableIcon
+                      iconName={item.icon}
+                      themeColor={themeColor}
+                      onChange={v => updateContent(`solutions.items.${idx}.icon`, v)}
+                      className="w-6 h-6"
+                      readOnly={readOnly}
+                    />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3 tracking-tight">
+                    <EditableText value={item.title} onChange={v => updateContent(`solutions.items.${idx}.title`, v)} readOnly={readOnly} />
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">
+                    <EditableText value={item.description} onChange={v => updateContent(`solutions.items.${idx}.description`, v)} readOnly={readOnly} />
+                  </p>
+                  <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold transition-colors" style={{ color: accent.hex }}>
+                    Learn more <ArrowUpRight size={13} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── PROCESS ── */}
+        <section id="process" className="py-28 px-8 bg-white" onClick={() => setActiveSection('howItWorks')}>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-20">
+              <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
+                How It Works
+              </span>
+              <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+                <EditableText value={content.howItWorks.title} onChange={v => updateContent('howItWorks.title', v)} readOnly={readOnly} />
+              </h2>
+            </div>
+
+            <div className="relative">
+              {/* Connecting line */}
+              <div
+                className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-px"
+                style={{ background: `linear-gradient(90deg, transparent, ${accent.hex}30, transparent)` }}
+              />
+
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 lg:gap-6">
+                {content.howItWorks.steps.map((step, idx) => (
+                  <div key={idx} className="flex flex-col items-center text-center group">
+                    <div
+                      className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-extrabold text-white mb-6 shadow-md transition-transform group-hover:-translate-y-1 relative z-10"
+                      style={{ background: `oklch(0.12 0.018 240)`, border: `2px solid ${accent.hex}30` }}
+                    >
+                      <span style={{ color: accent.hex }}>0{idx + 1}</span>
+                    </div>
+                    <h3 className="text-base font-bold text-gray-900 mb-2 tracking-tight">
+                      <EditableText value={step.title} onChange={v => updateContent(`howItWorks.steps.${idx}.title`, v)} readOnly={readOnly} />
+                    </h3>
+                    <p className="text-gray-500 text-sm leading-relaxed max-w-[200px]">
+                      <EditableText value={step.description} onChange={v => updateContent(`howItWorks.steps.${idx}.description`, v)} readOnly={readOnly} />
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {content.solutions.items.map((item, idx) => (
-                <div key={idx} className="group bg-white border border-gray-100 p-12 rounded-[40px] shadow-sm hover:shadow-3xl hover:-translate-y-4 transition-all duration-500 relative overflow-hidden">
-                  <div className={`absolute top-0 right-0 w-32 h-32 ${theme.light} opacity-0 group-hover:opacity-40 rounded-bl-full transition-opacity`} />
-                  <div className={`w-16 h-16 rounded-2xl ${theme.light} ${theme.text} flex items-center justify-center mb-10 group-hover:rotate-12 transition-transform`}>
-                    <EditableIcon iconName={item.icon} themeColor={themeColor} onChange={(v) => updateContent(`solutions.items.${idx}.icon`, v)} className="w-8 h-8" readOnly={readOnly} />
-                  </div>
-                  <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">
-                    <EditableText value={item.title} onChange={(v) => updateContent(`solutions.items.${idx}.title`, v)} readOnly={readOnly} />
-                  </h3>
-                  <p className="text-gray-500 font-medium leading-relaxed">
-                    <EditableText value={item.description} onChange={(v) => updateContent(`solutions.items.${idx}.description`, v)} readOnly={readOnly} />
-                  </p>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 
-        {/* 3. PROCESS: The Lifecycle */}
-        <section id="process" className="py-40 px-20 bg-white" onClick={() => setActiveSection('howItWorks')}>
-          <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-5xl font-black text-gray-900 tracking-tighter mb-24">
-              <EditableText value={content.howItWorks.title} onChange={(v) => updateContent('howItWorks.title', v)} readOnly={readOnly} />
-            </h2>
-            
-            <div className="flex flex-col lg:flex-row items-start justify-between gap-16 relative">
-              <div className="hidden lg:block absolute top-12 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-100 to-transparent -z-0" />
-              
-              {content.howItWorks.steps.map((step, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center group z-10">
-                  <div className={`w-24 h-24 rounded-full ${theme.primary} text-white flex items-center justify-center text-3xl font-black shadow-2xl mb-10 transition-transform group-hover:scale-110 ring-8 ring-white`}>
-                    0{idx + 1}
-                  </div>
-                  <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">
-                    <EditableText value={step.title} onChange={(v) => updateContent(`howItWorks.steps.${idx}.title`, v)} readOnly={readOnly} />
-                  </h3>
-                  <p className="text-gray-500 font-medium leading-relaxed max-w-xs">
-                    <EditableText value={step.description} onChange={(v) => updateContent(`howItWorks.steps.${idx}.description`, v)} readOnly={readOnly} />
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 4. EXPERTISE: The Trust */}
-        <section id="about" className="py-40 px-20 bg-gray-900 overflow-hidden relative" onClick={() => setActiveSection('about')}>
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-white/5 skew-x-12 translate-x-1/2" />
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-32 relative z-10">
-            <div className="lg:w-1/2 relative">
-              <div className="absolute -top-10 -left-10 w-40 h-40 border-8 border-gray-800 rounded-full" />
-              <EditableImage 
-                src={content.about.image} 
-                alt="Factory" 
-                onChange={(v) => updateContent('about.image', v)} 
-                className="w-full aspect-[4/5] object-cover rounded-[60px] shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-700"
+        {/* ── ABOUT / TRUST ── */}
+        <section
+          id="about"
+          className="py-28 px-8 overflow-hidden"
+          style={{ background: 'oklch(0.12 0.018 240)' }}
+          onClick={() => setActiveSection('about')}
+        >
+          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+            {/* Image */}
+            <div className="lg:w-5/12 relative flex-shrink-0">
+              <div
+                className="absolute -inset-4 rounded-3xl opacity-20"
+                style={{ background: `radial-gradient(circle, ${accent.hex} 0%, transparent 70%)` }}
+              />
+              <EditableImage
+                src={content.about.image}
+                alt="Sourcing operations"
+                onChange={v => updateContent('about.image', v)}
+                className="w-full aspect-[4/5] object-cover rounded-2xl relative z-10"
                 readOnly={readOnly}
               />
-              <div className="absolute -bottom-10 -right-10 bg-white p-10 rounded-[40px] shadow-2xl">
-                 <div className="text-gray-900 font-black text-5xl mb-2">99%</div>
-                 <div className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Client Retention</div>
+              {/* Floating stat */}
+              <div
+                className="absolute -bottom-6 -right-4 bg-white p-5 rounded-2xl shadow-xl z-20 text-center"
+              >
+                <div className="text-3xl font-extrabold text-gray-900">99%</div>
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-0.5">Retention</div>
               </div>
             </div>
-            
-            <div className="lg:w-1/2 text-white">
-              <h2 className="text-6xl font-black mb-10 tracking-tighter leading-none">
-                <EditableText value={content.about.title} onChange={(v) => updateContent('about.title', v)} readOnly={readOnly} />
+
+            {/* Text */}
+            <div className="lg:w-7/12 text-white">
+              <span className="text-xs font-bold uppercase tracking-[0.12em] mb-4 block" style={{ color: accent.hex }}>
+                About Us
+              </span>
+              <h2 className="text-4xl lg:text-5xl font-extrabold mb-6 tracking-tight leading-tight">
+                <EditableText value={content.about.title} onChange={v => updateContent('about.title', v)} readOnly={readOnly} />
               </h2>
-              <p className="text-xl text-gray-400 font-medium leading-relaxed mb-16 border-l-2 border-white/20 pl-8">
-                <EditableText value={content.about.description} onChange={(v) => updateContent('about.description', v)} readOnly={readOnly} />
+              <p className="text-lg leading-relaxed mb-12" style={{ color: 'oklch(0.65 0.008 230)' }}>
+                <EditableText value={content.about.description} onChange={v => updateContent('about.description', v)} readOnly={readOnly} />
               </p>
-              
-              <div className="grid grid-cols-2 gap-12">
+
+              <div className="grid grid-cols-2 gap-8">
                 {content.about.trustMetrics.map((m, i) => (
                   <div key={i} className="group">
-                    <div className="text-4xl font-black mb-2 flex items-baseline gap-1 group-hover:translate-x-2 transition-transform">
-                      {m.value}{m.suffix}
+                    <div className="text-3xl font-extrabold text-white mb-1 flex items-baseline gap-0.5">
+                      {m.value}
+                      <span style={{ color: accent.hex }}>{m.suffix}</span>
                     </div>
-                    <div className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.2em]">
+                    <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.5 0.008 230)' }}>
                       {m.label}
                     </div>
                   </div>
@@ -264,168 +358,149 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({ data, 
           </div>
         </section>
 
-        {/* 5. CONTACT: The Close */}
-        <section id="contact" className="py-40 px-20 bg-white" onClick={() => setActiveSection('contact')}>
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-32">
-              <div>
-                <h2 className="text-6xl font-black text-gray-900 mb-10 tracking-tighter">
-                  <EditableText value={content.contact.title} onChange={(v) => updateContent('contact.title', v)} readOnly={readOnly} />
-                </h2>
-                
-                <div className="space-y-12 mb-20">
-                  <div className="flex gap-8 group">
-                    <div className={`w-14 h-14 rounded-2xl ${theme.light} ${theme.text} flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition`}>
-                      <Mail size={24} />
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Inquiries</div>
-                      <div className="text-2xl font-black text-gray-900 border-b-4 border-gray-100">
-                        <EditableText value={content.contact.email} onChange={(v) => updateContent('contact.email', v)} readOnly={readOnly} />
-                      </div>
-                    </div>
+        {/* ── CONTACT ── */}
+        <section id="contact" className="py-28 px-8 bg-white" onClick={() => setActiveSection('contact')}>
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
+            {/* Left */}
+            <div>
+              <span className="text-xs font-bold uppercase tracking-[0.12em] mb-4 block" style={{ color: accent.hex }}>
+                Get In Touch
+              </span>
+              <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4 leading-tight">
+                <EditableText value={content.contact.title} onChange={v => updateContent('contact.title', v)} readOnly={readOnly} />
+              </h2>
+              <p className="text-gray-500 mb-10 leading-relaxed">
+                Tell us what you need. We'll get back within 24 hours with a sourcing plan.
+              </p>
+
+              {/* Contact info */}
+              <div className="space-y-6 mb-10">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${accent.hex}12` }}>
+                    <Mail size={18} style={{ color: accent.hex }} />
                   </div>
-                  
-                  <div className="flex gap-8 group">
-                    <div className={`w-14 h-14 rounded-2xl ${theme.light} ${theme.text} flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition`}>
-                      <MapPin size={24} />
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Asia Operations Hub</div>
-                      <div className="text-xl font-bold text-gray-600 max-w-sm">
-                        <EditableText value={content.contact.address} onChange={(v) => updateContent('contact.address', v)} readOnly={readOnly} />
-                      </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email</div>
+                    <div className="text-base font-semibold text-gray-900">
+                      <EditableText value={content.contact.email} onChange={v => updateContent('contact.email', v)} readOnly={readOnly} />
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Social Media</div>
-                  <div className="flex flex-wrap gap-4">
-                    {content.contact.socialMedia && content.contact.socialMedia.length > 0 ? (
-                      content.contact.socialMedia.map((social, idx) => {
-                        const getIcon = () => {
-                          switch (social.platform) {
-                            case 'instagram':
-                              return <Instagram size={20} />;
-                            case 'linkedin':
-                              return <Linkedin size={20} />;
-                            case 'wechat':
-                              return <MessageCircle size={20} />;
-                            default:
-                              return <ExternalLink size={20} />;
-                          }
-                        };
-                        return (
-                          <a 
-                            key={idx} 
-                            href={social.url || '#'} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="w-14 h-14 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-gray-900 transition-all group relative"
-                            title={social.platform.charAt(0).toUpperCase() + social.platform.slice(1)}
-                          >
-                            {getIcon()}
-                            {!readOnly && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  const newSocials = [...(content.contact.socialMedia || [])];
-                                  newSocials.splice(idx, 1);
-                                  updateContent('contact.socialMedia', newSocials);
-                                }}
-                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black"
-                                title="Delete"
-                              >
-                                ×
-                              </button>
-                            )}
-                          </a>
-                        );
-                      })
-                    ) : (
-                      <div className="text-sm text-gray-400 italic">No social media links added</div>
-                    )}
-                    {!readOnly && (
-                      <button
-                        onClick={() => {
-                          const newSocials = [...(content.contact.socialMedia || [])];
-                          newSocials.push({ platform: 'instagram', url: '' });
-                          updateContent('contact.socialMedia', newSocials);
-                        }}
-                        className="w-14 h-14 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-gray-900 transition-all"
-                        title="Add Social Media"
-                      >
-                        +
-                      </button>
-                    )}
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${accent.hex}12` }}>
+                    <MapPin size={18} style={{ color: accent.hex }} />
                   </div>
-                  {!readOnly && content.contact.socialMedia && content.contact.socialMedia.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      {content.contact.socialMedia.map((social, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <select
-                            value={social.platform}
-                            onChange={(e) => {
-                              const newSocials = [...(content.contact.socialMedia || [])];
-                              newSocials[idx].platform = e.target.value as 'instagram' | 'linkedin' | 'wechat';
-                              updateContent('contact.socialMedia', newSocials);
-                            }}
-                            className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-gray-900 outline-none"
-                          >
-                            <option value="instagram">Instagram</option>
-                            <option value="linkedin">LinkedIn</option>
-                            <option value="wechat">WeChat</option>
-                          </select>
-                          <input
-                            type="url"
-                            value={social.url}
-                            onChange={(e) => {
-                              const newSocials = [...(content.contact.socialMedia || [])];
-                              newSocials[idx].url = e.target.value;
-                              updateContent('contact.socialMedia', newSocials);
-                            }}
-                            placeholder="https://..."
-                            className="flex-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-gray-900 outline-none"
-                          />
-                        </div>
-                      ))}
+                  <div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Location</div>
+                    <div className="text-base font-medium text-gray-700 max-w-xs">
+                      <EditableText value={content.contact.address} onChange={v => updateContent('contact.address', v)} readOnly={readOnly} />
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 border border-gray-100 p-16 rounded-[60px] shadow-3xl">
-                <h3 className="text-3xl font-black text-gray-900 mb-10 uppercase tracking-tighter">Secure Your Supply Chain</h3>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <input type="text" placeholder="First Name" className="bg-white px-8 py-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-gray-900/5 outline-none transition w-full" />
-                    <input type="text" placeholder="Last Name" className="bg-white px-8 py-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-gray-900/5 outline-none transition w-full" />
-                  </div>
-                  <input type="email" placeholder="Business Email Address" className="bg-white px-8 py-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-gray-900/5 outline-none transition w-full" />
-                  <textarea rows={5} placeholder="Describe your product sourcing requirements..." className="bg-white px-8 py-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-gray-900/5 outline-none transition w-full resize-none" />
-                  <button className={`${theme.primary} ${theme.primaryHover} text-white w-full py-6 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl ${theme.shadow} transition-all active:scale-95`}>
-                    Initialize Sourcing Project
-                  </button>
+              {/* Social media */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Follow Us</div>
+                <div className="flex flex-wrap gap-3">
+                  {content.contact.socialMedia && content.contact.socialMedia.length > 0 ? (
+                    content.contact.socialMedia.map((social, idx) => {
+                      const icon = social.platform === 'instagram' ? <Instagram size={18} />
+                        : social.platform === 'linkedin' ? <Linkedin size={18} />
+                        : social.platform === 'wechat' ? <MessageCircle size={18} />
+                        : <ExternalLink size={18} />;
+                      return (
+                        <a key={idx} href={social.url || '#'} target="_blank" rel="noopener noreferrer"
+                          className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-gray-400 transition-all group relative"
+                        >
+                          {icon}
+                          {!readOnly && (
+                            <button
+                              onClick={e => { e.preventDefault(); e.stopPropagation(); const s = [...(content.contact.socialMedia || [])]; s.splice(idx, 1); updateContent('contact.socialMedia', s); }}
+                              className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-[9px]"
+                            >×</button>
+                          )}
+                        </a>
+                      );
+                    })
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">No social links yet</span>
+                  )}
+                  {!readOnly && (
+                    <button
+                      onClick={() => { const s = [...(content.contact.socialMedia || [])]; s.push({ platform: 'instagram', url: '' }); updateContent('contact.socialMedia', s); }}
+                      className="w-10 h-10 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-gray-400 transition-all text-lg"
+                    >+</button>
+                  )}
                 </div>
+
+                {!readOnly && content.contact.socialMedia && content.contact.socialMedia.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    {content.contact.socialMedia.map((social, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <select value={social.platform} onChange={e => { const s = [...(content.contact.socialMedia || [])]; s[idx].platform = e.target.value as 'instagram' | 'linkedin' | 'wechat'; updateContent('contact.socialMedia', s); }}
+                          className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 outline-none"
+                        >
+                          <option value="instagram">Instagram</option>
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="wechat">WeChat</option>
+                        </select>
+                        <input type="url" value={social.url} onChange={e => { const s = [...(content.contact.socialMedia || [])]; s[idx].url = e.target.value; updateContent('contact.socialMedia', s); }}
+                          placeholder="https://..." className="flex-[2] bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right — Form */}
+            <div className="rounded-2xl p-8 border border-gray-100" style={{ background: 'oklch(0.975 0.006 238)' }}>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Start a Sourcing Request</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <input type="text" placeholder="First name"
+                    className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
+                    style={{ '--tw-ring-color': `${accent.hex}30` } as React.CSSProperties}
+                  />
+                  <input type="text" placeholder="Last name"
+                    className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
+                  />
+                </div>
+                <input type="email" placeholder="Business email"
+                  className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
+                />
+                <input type="text" placeholder="Company name"
+                  className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
+                />
+                <textarea rows={4} placeholder="What products do you need? Include quantity, destination, and any specifications."
+                  className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full resize-none transition-shadow"
+                />
+                <button
+                  className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 shadow-md flex items-center justify-center gap-2"
+                  style={{ background: accent.hex, boxShadow: `0 4px 16px ${accent.hex}35` }}
+                >
+                  Send Sourcing Request <ArrowUpRight size={15} />
+                </button>
+                <p className="text-center text-xs text-gray-400">We respond within 24 hours. No commitment required.</p>
               </div>
             </div>
           </div>
         </section>
 
-        <footer className="py-20 px-20 bg-white border-t border-gray-100">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-            <div className="flex items-center gap-3">
-              <div className={`${theme.primary} w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-black`}>
-                {data.companyName.charAt(0)}
+        {/* ── FOOTER ── */}
+        <footer className="py-10 px-8 bg-white border-t border-gray-100">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: accent.hex }}>
+                {data.companyName.charAt(0).toUpperCase()}
               </div>
-              <span className="font-black text-sm tracking-tighter text-gray-900 uppercase">
-                {data.companyName}
-              </span>
+              <span className="font-bold text-sm text-gray-900">{data.companyName}</span>
             </div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
-              Powered by SourSync.com • Legal • Privacy • Terms
+            <p className="text-xs text-gray-400">
+              Powered by <a href="https://soursync.com" className="font-semibold hover:text-gray-700 transition-colors">SourSync</a> &middot; Privacy &middot; Terms
             </p>
           </div>
         </footer>

@@ -21,7 +21,8 @@
 
 @theme {
   --font-*: initial;
-  --font-outfit: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-jakarta: var(--font-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-outfit: var(--font-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -206,7 +207,17 @@
     cursor: pointer;
   }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    @apply relative font-normal z-1 bg-gray-50;
+    font-family: var(--font-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tabular numbers for data/tables */
+  table, .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   /* Modern Animated Sign-in CSS Variables */
@@ -231,41 +242,273 @@
   }
 }
 
+/* ── Dashboard surface color (V1: warm brand-blue tinted near-white) ── */
+@utility dash-surface {
+  background: oklch(0.972 0.007 238);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Shared Dashboard UI System
+   Applied across: Quotations, Shipment Tracking, Products,
+   Payments, Clients, and all future store pages.
+───────────────────────────────────────────────────────── */
+
+/* Page header — title row + primary action */
+@utility dash-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  @media (min-width: 640px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+@utility dash-page-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: oklch(0.18 0.01 240);
+  letter-spacing: -0.015em;
+}
+@utility dash-page-subtitle {
+  font-size: 0.875rem;
+  color: oklch(0.52 0.008 230);
+  margin-top: 0.125rem;
+}
+
+/* Card panel — replaces raw bg-white rounded-lg shadow */
+@utility dash-card {
+  background: oklch(0.994 0.003 238);
+  border: 1px solid oklch(0.91 0.01 234);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px oklch(0.7 0.008 230 / 0.08);
+}
+
+/* Table wrapper */
+@utility dash-table-wrap {
+  background: oklch(0.994 0.003 238);
+  border: 1px solid oklch(0.91 0.01 234);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px oklch(0.7 0.008 230 / 0.08);
+  overflow: hidden;
+}
+
+/* Table head */
+@utility dash-thead {
+  background: oklch(0.962 0.011 234);
+  border-bottom: 1px solid oklch(0.9 0.012 234);
+}
+
+/* Table header cell */
+@utility dash-th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: oklch(0.5 0.008 230);
+  white-space: nowrap;
+}
+
+/* Table body row */
+@utility dash-tr {
+  border-bottom: 1px solid oklch(0.93 0.008 234);
+  transition: background 0.1s;
+  &:last-child { border-bottom: none; }
+  &:hover { background: oklch(0.984 0.005 236); }
+}
+
+/* Table data cell */
+@utility dash-td {
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: oklch(0.28 0.01 238);
+  vertical-align: middle;
+}
+@utility dash-td-muted {
+  font-size: 12px;
+  color: oklch(0.52 0.008 230);
+}
+
+/* Filter tab bar */
+@utility dash-filter-bar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Individual filter tab */
+@utility dash-filter-tab {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+  color: oklch(0.42 0.01 235);
+  background: transparent;
+  &:hover { background: oklch(0.962 0.011 234); color: oklch(0.28 0.01 238); }
+}
+@utility dash-filter-tab-active {
+  background: oklch(0.958 0.026 193);
+  color: #06b6d4;
+  font-weight: 600;
+}
+
+/* Search input */
+@utility dash-search {
+  display: block;
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid oklch(0.9 0.01 234);
+  border-radius: 8px;
+  font-size: 13.5px;
+  background: oklch(0.994 0.003 238);
+  color: oklch(0.18 0.01 240);
+  transition: border-color 0.12s, box-shadow 0.12s;
+  &::placeholder { color: oklch(0.62 0.008 230); }
+  &:focus {
+    outline: none;
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 3px oklch(0.62 0.14 195 / 0.15);
+  }
+}
+
+/* Pagination */
+@utility dash-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid oklch(0.93 0.008 234);
+  font-size: 13px;
+  color: oklch(0.52 0.008 230);
+}
+
+/* ── StoreSidebar nav items: grouped sections + left accent indicator ── */
+
+@utility ss-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  width: 100%;
+  cursor: pointer;
+}
+
+@utility ss-item-active {
+  background: oklch(0.958 0.026 193);
+  color: #06b6d4;
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 6px; bottom: 6px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: #06b6d4;
+  }
+}
+
+@utility ss-item-inactive {
+  color: #475569;
+  &:hover { background: oklch(0.965 0.01 235); color: oklch(0.28 0.01 238); }
+}
+
+@utility ss-icon-active { color: #06b6d4; flex-shrink: 0; }
+@utility ss-icon-inactive { color: #94a3b8; flex-shrink: 0; }
+
+@utility ss-label {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+/* ── AppSidebar nav items (V1: grouped sections + left accent indicator) ── */
+
+@utility sidebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 11px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  width: 100%;
+}
+
+@utility sidebar-item-active {
+  background: oklch(0.958 0.026 193);
+  color: #06b6d4;
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 7px; bottom: 7px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: #06b6d4;
+  }
+}
+
+@utility sidebar-item-inactive {
+  color: #344054;
+  &:hover { background: oklch(0.963 0.012 235); color: #0f7aff; }
+}
+
+@utility sidebar-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+@utility sidebar-icon-active {
+  color: #06b6d4;
+}
+
+@utility sidebar-icon-inactive {
+  color: #667085;
+}
+
+@utility sidebar-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Keep legacy menu-item utilities for any other pages that use them */
 @utility menu-item {
   @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
 }
-
 @utility menu-item-active {
   @apply bg-[#06b6d4]/10 text-[#06b6d4] dark:bg-[#06b6d4]/12 dark:text-[#06b6d4];
 }
-
 @utility menu-item-inactive {
-  @apply text-gray-700 hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] group-hover:text-[#0f7aff] dark:text-gray-300 dark:hover:bg-[#0f7aff]/5 dark:hover:text-[#0f7aff];
+  @apply text-gray-700 hover:bg-[#0f7aff]/10 hover:text-[#0f7aff] dark:text-gray-300 dark:hover:bg-[#0f7aff]/5 dark:hover:text-[#0f7aff];
 }
-
-@utility menu-item-icon {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400;
-}
-
-@utility menu-item-icon-active {
-  @apply text-[#06b6d4] dark:text-[#06b6d4];
-}
-
-@utility menu-item-icon-inactive {
-  @apply text-[#667085] group-hover:text-[#0f7aff] dark:text-gray-400 dark:group-hover:text-[#0f7aff];
-}
-
-@utility menu-item-arrow {
-  @apply relative;
-}
-
-@utility menu-item-arrow-active {
-  @apply rotate-180 text-[#06b6d4] dark:text-[#06b6d4];
-}
-
-@utility menu-item-arrow-inactive {
-  @apply text-gray-500 group-hover:text-[#0f7aff] dark:text-gray-400 dark:group-hover:text-[#0f7aff];
-}
+@utility menu-item-icon { @apply text-gray-500; }
+@utility menu-item-icon-active { @apply text-[#06b6d4]; }
+@utility menu-item-icon-inactive { @apply text-[#667085] group-hover:text-[#0f7aff]; }
+@utility menu-item-arrow { @apply relative; }
+@utility menu-item-arrow-active { @apply rotate-180 text-[#06b6d4]; }
+@utility menu-item-arrow-inactive { @apply text-gray-500 group-hover:text-[#0f7aff]; }
 
 @utility menu-dropdown-item {
   @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-theme-sm font-medium;

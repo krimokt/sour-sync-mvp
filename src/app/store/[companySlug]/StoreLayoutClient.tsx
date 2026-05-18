@@ -61,7 +61,7 @@ export default function StoreLayoutClient({ children, companySlug }: StoreLayout
         {/* Header */}
         <AppHeader />
         {/* Page Content */}
-        <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-[calc(100vh-64px)] dash-surface dark:bg-gray-900">
           <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 lg:p-8">
             {isSubscriptionExpired && (
               <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-200">

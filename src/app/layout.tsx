@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -8,9 +9,12 @@ import { Toaster as UIToaster } from "@/components/ui/toaster";
 import { Toaster } from "sonner";
 import { SupabaseProvider } from '@/context/SupabaseProvider'
 
-// Using system fonts to avoid network dependency during build
-// Outfit font can be self-hosted later if needed
-const outfitVariable = "--font-outfit-sans";
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -72,8 +76,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${outfitVariable} dark:bg-gray-900`}>
+    <html lang="en" className={plusJakartaSans.variable}>
+      <body className="font-jakarta dark:bg-gray-900">
         <ThemeProvider>
           <AuthProvider>
             <SupabaseProvider>

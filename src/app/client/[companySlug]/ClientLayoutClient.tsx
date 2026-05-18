@@ -33,7 +33,7 @@ export default function ClientLayoutClient({ children, companySlug }: ClientLayo
         {/* Header */}
         <AppHeader companySlug={companySlug} />
         {/* Page Content */}
-        <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-[calc(100vh-64px)] dash-surface dark:bg-gray-900">
           <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 lg:p-8">
             {children}
           </div>

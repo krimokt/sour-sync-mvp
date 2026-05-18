@@ -7,25 +7,22 @@ import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
 import { useStore } from '@/context/StoreContext';
 import {
-  LayoutDashboard,
-  Package,
-  Send,
-  Truck,
-  CreditCard,
-  BadgeDollarSign,
-  Globe,
-  Link2,
-  Settings,
-  ChevronDown,
-  MoreHorizontal,
-  Users,
+  LayoutDashboard, Package, Send, Truck, CreditCard,
+  BadgeDollarSign, Globe, Link2, Settings, ChevronDown,
+  MoreHorizontal, Users, Wallet, FileCheck, Landmark,
 } from 'lucide-react';
 
+type SubItem = { name: string; path: string };
 type NavItem = {
   name: string;
   icon: React.ReactNode;
-  path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  path: string;
+  subItems?: SubItem[];
+};
+type NavGroup = {
+  label: string;
+  color: string; // dot color
+  items: NavItem[];
 };
 
 interface StoreSidebarProps {
@@ -36,8 +33,7 @@ const StoreSidebar: React.FC<StoreSidebarProps> = ({ companySlug }) => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered, isManuallyToggled } = useSidebar();
   const { company } = useStore();
   const pathname = usePathname();
-
-  const basePath = `/store/${companySlug}`;
+  const bp = `/store/${companySlug}`;
 
   const isSubscriptionExpired = (() => {
     const expiresAt = company?.subscription_expires_at;
@@ -47,312 +43,217 @@ const StoreSidebar: React.FC<StoreSidebarProps> = ({ companySlug }) => {
     return dt.getTime() <= Date.now();
   })();
 
-  // Navigation items with dynamic paths based on company slug
-  const allNavItems: NavItem[] = [
+  const allGroups: NavGroup[] = [
     {
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      name: 'Dashboard',
-      path: basePath,
+      label: 'Operations',
+      color: '#06b6d4',
+      items: [
+        { icon: <LayoutDashboard className="w-[17px] h-[17px]" />, name: 'Dashboard',         path: bp },
+        { icon: <Send            className="w-[17px] h-[17px]" />, name: 'Quotations',        path: `${bp}/quotations` },
+        { icon: <Package         className="w-[17px] h-[17px]" />, name: 'Products',          path: `${bp}/products` },
+        { icon: <Truck           className="w-[17px] h-[17px]" />, name: 'Shipment Tracking', path: `${bp}/shipping` },
+        { icon: <Users           className="w-[17px] h-[17px]" />, name: 'Clients',           path: `${bp}/clients` },
+        { icon: <Wallet className="w-[17px] h-[17px]" />, name: 'Payments', path: `${bp}/payments` },
+      ],
     },
     {
-      icon: <BadgeDollarSign className="w-5 h-5" />,
-      name: 'Subscription',
-      path: `${basePath}/subscription`,
+      label: 'Storefront',
+      color: '#0f7aff',
+      items: [
+        { icon: <Globe  className="w-[17px] h-[17px]" />, name: 'Website Builder', path: `${bp}/website` },
+        { icon: <Link2  className="w-[17px] h-[17px]" />, name: 'Domain',          path: `${bp}/domain` },
+      ],
     },
     {
-      icon: <Package className="w-5 h-5" />,
-      name: 'Products',
-      path: `${basePath}/products`,
-    },
-    {
-      icon: <Send className="w-5 h-5" />,
-      name: 'Quotations',
-      path: `${basePath}/quotations`,
-    },
-    {
-      icon: <Truck className="w-5 h-5" />,
-      name: 'Shipment Tracking',
-      path: `${basePath}/shipping`,
-    },
-    {
-      icon: <CreditCard className="w-5 h-5" />,
-      name: 'Payments',
-      path: `${basePath}/payments`,
-    },
-    {
-      icon: <Users className="w-5 h-5" />,
-      name: 'Clients',
-      path: `${basePath}/clients`,
-    },
-    {
-      icon: <Globe className="w-5 h-5" />,
-      name: 'Website Builder',
-      path: `${basePath}/website`,
-    },
-    {
-      icon: <Link2 className="w-5 h-5" />,
-      name: 'Domain',
-      path: `${basePath}/domain`,
-    },
-    {
-      icon: <Settings className="w-5 h-5" />,
-      name: 'Settings',
-      path: `${basePath}/settings`,
+      label: 'Account',
+      color: '#94a3b8',
+      items: [
+        { icon: <BadgeDollarSign className="w-[17px] h-[17px]" />, name: 'Subscription', path: `${bp}/subscription` },
+        { icon: <Settings        className="w-[17px] h-[17px]" />, name: 'Settings',     path: `${bp}/settings` },
+      ],
     },
   ];
 
-  const navItems: NavItem[] = isSubscriptionExpired
-    ? allNavItems.filter((i) => i.name === 'Dashboard' || i.name === 'Subscription')
-    : allNavItems;
+  const expiredGroups: NavGroup[] = [
+    {
+      label: 'Operations',
+      color: '#06b6d4',
+      items: [
+        { icon: <LayoutDashboard className="w-[17px] h-[17px]" />, name: 'Dashboard',    path: bp },
+        { icon: <BadgeDollarSign className="w-[17px] h-[17px]" />, name: 'Subscription', path: `${bp}/subscription` },
+      ],
+    },
+  ];
 
-  const [openSubmenu, setOpenSubmenu] = useState<{
-    type: 'main' | 'others';
-    index: number;
-  } | null>(null);
+  const groups = isSubscriptionExpired ? expiredGroups : allGroups;
+
+  const [openSubmenu, setOpenSubmenu] = useState<{ groupIdx: number; itemIdx: number } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const isActive = useCallback(
-    (path: string) => {
-      // Exact match for dashboard, starts with for other pages
-      if (path === basePath) {
-        return pathname === basePath;
-      }
-      return pathname.startsWith(path);
-    },
-    [pathname, basePath]
-  );
+  const isActive = useCallback((path: string) => {
+    if (path === bp) return pathname === bp;
+    return pathname.startsWith(path);
+  }, [pathname, bp]);
 
+  // Auto-open submenu for active sub-item
   useEffect(() => {
-    let submenuMatched = false;
-    navItems.forEach((nav, index) => {
-      if (nav.subItems) {
-        nav.subItems.forEach((subItem) => {
-          if (isActive(subItem.path)) {
-            setOpenSubmenu({ type: 'main', index });
-            submenuMatched = true;
-          }
+    groups.forEach((group, groupIdx) => {
+      group.items.forEach((item, itemIdx) => {
+        item.subItems?.forEach(sub => {
+          if (isActive(sub.path)) setOpenSubmenu({ groupIdx, itemIdx });
         });
-      }
+      });
     });
-
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
   }, [pathname, isActive]);
 
   useEffect(() => {
     if (openSubmenu !== null) {
-      const key = `${openSubmenu.type}-${openSubmenu.index}`;
-      if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prevHeights) => ({
-          ...prevHeights,
-          [key]: subMenuRefs.current[key]?.scrollHeight || 0,
-        }));
-      }
+      const key = `${openSubmenu.groupIdx}-${openSubmenu.itemIdx}`;
+      const el = subMenuRefs.current[key];
+      if (el) setSubMenuHeight(prev => ({ ...prev, [key]: el.scrollHeight }));
     }
   }, [openSubmenu]);
 
-  const handleSubmenuToggle = (index: number, menuType: 'main' | 'others') => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type === menuType &&
-        prevOpenSubmenu.index === index
-      ) {
-        return null;
-      }
-      return { type: menuType, index };
-    });
-  };
-
-  const renderMenuItems = (items: NavItem[], menuType: 'main' | 'others') => (
-    <ul className="flex flex-col gap-4">
-      {items.map((nav, index) => (
-        <li key={nav.name}>
-          {nav.subItems ? (
-            <button
-              onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${
-                openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? 'menu-item-active'
-                  : 'menu-item-inactive'
-              } cursor-pointer ${
-                !isExpanded && !isHovered ? 'lg:justify-center' : 'lg:justify-start'
-              }`}
-            >
-              <span
-                className={`${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? 'menu-item-icon-active'
-                    : 'menu-item-icon-inactive'
-                }`}
-              >
-                {nav.icon}
-              </span>
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <span className="menu-item-text text-sm font-medium uppercase tracking-wider">{nav.name}</span>
-              )}
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <ChevronDown
-                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                    openSubmenu?.type === menuType && openSubmenu?.index === index
-                      ? 'rotate-180 text-[#06b6d4]'
-                      : ''
-                  }`}
-                />
-              )}
-            </button>
-          ) : (
-            nav.path && (
-              <Link
-                href={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path) ? 'menu-item-active' : 'menu-item-inactive'
-                }`}
-              >
-                <span
-                  className={`${
-                    isActive(nav.path)
-                      ? 'menu-item-icon-active'
-                      : 'menu-item-icon-inactive'
-                  }`}
-                >
-                  {nav.icon}
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text text-sm font-medium uppercase tracking-wider">{nav.name}</span>
-                )}
-              </Link>
-            )
-          )}
-          {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
-            <div
-              ref={(el) => {
-                subMenuRefs.current[`${menuType}-${index}`] = el;
-              }}
-              className="overflow-hidden transition-all duration-300"
-              style={{
-                height:
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? `${subMenuHeight[`${menuType}-${index}`]}px`
-                    : '0px',
-              }}
-            >
-              <ul className="mt-2 space-y-1 ml-9">
-                {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
-                    <Link
-                      href={subItem.path}
-                      className={`menu-dropdown-item text-sm font-medium uppercase tracking-wider ${
-                        isActive(subItem.path)
-                          ? 'menu-dropdown-item-active'
-                          : 'menu-dropdown-item-inactive'
-                      }`}
-                    >
-                      {subItem.name}
-                      <span className="flex items-center gap-1 ml-auto">
-                        {subItem.new && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? 'menu-dropdown-badge-active'
-                                : 'menu-dropdown-badge-inactive'
-                            } menu-dropdown-badge`}
-                          >
-                            new
-                          </span>
-                        )}
-                        {subItem.pro && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? 'menu-dropdown-badge-active'
-                                : 'menu-dropdown-badge-inactive'
-                            } menu-dropdown-badge`}
-                          >
-                            pro
-                          </span>
-                        )}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
+  const showLabels = isExpanded || isHovered || isMobileOpen;
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${
-          isExpanded || isMobileOpen
-            ? 'w-[290px]'
-            : isHovered
-            ? 'w-[290px]'
-            : 'w-[90px]'
-        }
+      className={`fixed mt-16 lg:mt-0 top-0 left-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-50 flex flex-col transition-[width] duration-300 ease-out
+        ${isExpanded || isMobileOpen || isHovered ? 'w-[272px]' : 'w-[72px]'}
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && !isManuallyToggled && setIsHovered(true)}
       onMouseLeave={() => !isManuallyToggled && setIsHovered(false)}
     >
-      <div
-        className={`py-8 flex ${
-          !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start'
-        }`}
-      >
-        <Link href={basePath}>
-          {isExpanded || isHovered || isMobileOpen ? (
-            <div className="flex flex-col">
-              <Image
-                className="dark:hidden"
-                src="/images/logo/soursync-logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/soursync-logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </div>
+      {/* Logo */}
+      <div className={`flex items-center h-16 px-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 ${!showLabels ? 'justify-center' : ''}`}>
+        <Link href={bp} className="flex items-center gap-2.5">
+          {showLabels ? (
+            <Image src="/images/logo/soursync-logo.svg" alt="SourSync" width={130} height={32} className="h-8 w-auto" />
           ) : (
-            <Image
-              src="/images/logo/soursync-logo.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+            <Image src="/images/logo/soursync-logo.svg" alt="SourSync" width={28} height={28} className="h-7 w-7" />
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-        <nav className="mb-6">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2
-                className={`mb-4 text-sm font-medium uppercase tracking-wider text-gray-400 flex leading-[20px] ${
-                  !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start'
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? 'Menu' : <MoreHorizontal className="w-5 h-5" />}
-              </h2>
-              {renderMenuItems(navItems, 'main')}
+
+      {/* Nav */}
+      <nav className="flex flex-col flex-1 overflow-y-auto no-scrollbar py-3">
+        {groups.map((group, groupIdx) => (
+          <div key={group.label} className={groupIdx > 0 ? 'mt-1' : ''}>
+
+            {/* Group separator + label */}
+            {groupIdx > 0 && (
+              <div className="mx-3 mb-1 h-px bg-gray-100 dark:bg-gray-800" />
+            )}
+
+            {showLabels ? (
+              <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
+                {/* Colored group indicator */}
+                <span
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: group.color }}
+                />
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em] select-none"
+                  style={{ color: group.color }}>
+                  {group.label}
+                </span>
+              </div>
+            ) : groupIdx === 0 ? (
+              <div className="flex justify-center pt-3 pb-1.5 text-gray-400">
+                <MoreHorizontal className="w-4 h-4" />
+              </div>
+            ) : null}
+
+            {/* Items */}
+            <ul className="px-2 flex flex-col gap-0.5">
+              {group.items.map((item, itemIdx) => {
+                const active = isActive(item.path);
+                const hasSubItems = !!item.subItems?.length;
+                const subKey = `${groupIdx}-${itemIdx}`;
+                const subOpen = openSubmenu?.groupIdx === groupIdx && openSubmenu?.itemIdx === itemIdx;
+                const anySubActive = item.subItems?.some(s => isActive(s.path));
+
+                return (
+                  <li key={item.name}>
+                    {hasSubItems ? (
+                      <button
+                        onClick={() => setOpenSubmenu(subOpen ? null : { groupIdx, itemIdx })}
+                        className={`ss-item group w-full ${(active || anySubActive) ? 'ss-item-active' : 'ss-item-inactive'} ${!showLabels ? 'justify-center' : ''}`}
+                      >
+                        <span className={(active || anySubActive) ? 'ss-icon-active' : 'ss-icon-inactive'}>
+                          {item.icon}
+                        </span>
+                        {showLabels && <span className="ss-label">{item.name}</span>}
+                        {showLabels && (
+                          <ChevronDown className={`ml-auto w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${subOpen ? 'rotate-180 text-[#06b6d4]' : 'text-gray-300 dark:text-gray-600'}`} />
+                        )}
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.path}
+                        className={`ss-item group ${active ? 'ss-item-active' : 'ss-item-inactive'} ${!showLabels ? 'justify-center' : ''}`}
+                      >
+                        <span className={active ? 'ss-icon-active' : 'ss-icon-inactive'}>{item.icon}</span>
+                        {showLabels && <span className="ss-label">{item.name}</span>}
+                      </Link>
+                    )}
+
+                    {/* Sub-items */}
+                    {hasSubItems && showLabels && (
+                      <div
+                        ref={el => { subMenuRefs.current[subKey] = el; }}
+                        className="overflow-hidden transition-[height] duration-200 ease-out"
+                        style={{ height: subOpen ? `${subMenuHeight[subKey] ?? 0}px` : '0px' }}
+                      >
+                        <ul className="mt-0.5 ml-[30px] mr-1 flex flex-col gap-0.5 pb-1">
+                          {item.subItems!.map(sub => {
+                            const subActive = isActive(sub.path);
+                            return (
+                              <li key={sub.name}>
+                                <Link
+                                  href={sub.path}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-medium transition-colors
+                                    ${subActive
+                                      ? 'bg-[#06b6d4]/10 text-[#06b6d4]'
+                                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'
+                                    }`}
+                                >
+                                  <span className={`w-1 h-1 rounded-full flex-shrink-0 ${subActive ? 'bg-[#06b6d4]' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                                  {sub.name}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+
+      {/* Bottom — company name pill */}
+      {showLabels && company && (
+        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+            <div className="w-6 h-6 rounded-md bg-[#06b6d4]/15 flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-bold text-[#06b6d4] uppercase">
+                {company.name?.charAt(0) || 'S'}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">{company.name}</p>
+              <p className="text-[10px] text-gray-400 truncate">Sourcing Agent</p>
             </div>
           </div>
-        </nav>
-      </div>
+        </div>
+      )}
     </aside>
   );
 };
 
 export default StoreSidebar;
-

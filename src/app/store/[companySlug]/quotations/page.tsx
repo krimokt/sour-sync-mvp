@@ -170,27 +170,27 @@ export default function QuotationsPage() {
           <div className="p-6 text-center text-gray-500">No quotations found</div>
         ) : (
           <Table className="table-fixed">
-            <TableHeader>
+            <TableHeader className="dash-thead">
               <TableRow>
-                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[25%]">
+                <TableCell isHeader className="dash-th w-[25%]">
                   Product
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[15%]">
+                <TableCell isHeader className="dash-th w-[15%]">
                   Quotation ID
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[10%]">
+                <TableCell isHeader className="dash-th w-[10%]">
                   Quantity
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[18%]">
+                <TableCell isHeader className="dash-th w-[18%]">
                   Destination
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[12%]">
+                <TableCell isHeader className="dash-th w-[12%]">
                   Status
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[12%]">
+                <TableCell isHeader className="dash-th w-[12%]">
                   Date
                 </TableCell>
-                <TableCell isHeader className="px-4 py-3 text-left text-sm font-medium text-gray-500 w-[8%]">
+                <TableCell isHeader className="dash-th w-[8%]">
                   Actions
                 </TableCell>
               </TableRow>

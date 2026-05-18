@@ -110,22 +110,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         throw new Error(data.error || 'Sign in failed');
       }
 
-      if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        const isCustomDomain =
-          !hostname.includes('localhost') &&
-          !hostname.includes('soursync.com') &&
-          !hostname.includes('netlify.app');
-        const isLocalhostSubdomain =
-          hostname.includes('localhost') &&
-          hostname.split('.').length > 1 &&
-          hostname !== 'localhost';
-
-        window.location.href =
-          isCustomDomain || isLocalhostSubdomain
-            ? '/dashboard-client'
-            : `/client/${params.companySlug}`;
-      }
+      window.location.href = `/client/${params.companySlug}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setIsLoading(false);
@@ -199,18 +184,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
       });
 
       if (loginRes.ok) {
-        const hostname = window.location.hostname;
-        const isCustom =
-          !hostname.includes('localhost') &&
-          !hostname.includes('soursync.com') &&
-          !hostname.includes('netlify.app');
-        const isSubdomain =
-          hostname.includes('localhost') &&
-          hostname.split('.').length > 1 &&
-          hostname !== 'localhost';
-
-        window.location.href =
-          isCustom || isSubdomain ? '/dashboard-client' : `/client/${params.companySlug}`;
+        window.location.href = `/client/${params.companySlug}`;
         return;
       }
 

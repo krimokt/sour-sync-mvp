@@ -7,9 +7,10 @@ import { FormData, GeneratedContent } from '@/components/website/builder/chinaso
 interface PublishedBuilderSiteProps {
   formData: FormData;
   generatedContent: GeneratedContent;
+  companySlug?: string;
 }
 
-export default function PublishedBuilderSite({ formData, generatedContent }: PublishedBuilderSiteProps) {
+export default function PublishedBuilderSite({ formData, generatedContent, companySlug }: PublishedBuilderSiteProps) {
   // Disable edit functionality for published site
   const handleEdit = () => {
     // No-op for published site
@@ -17,12 +18,13 @@ export default function PublishedBuilderSite({ formData, generatedContent }: Pub
 
   return (
     <div className="w-full">
-      <LandingPageTemplate 
-        data={formData} 
-        content={generatedContent} 
+      <LandingPageTemplate
+        data={formData}
+        content={generatedContent}
         onEdit={handleEdit}
         hideSidebar={true}
         readOnly={true}
+        companySlug={companySlug}
       />
     </div>
   );

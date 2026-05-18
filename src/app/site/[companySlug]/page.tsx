@@ -67,6 +67,7 @@ export default async function SiteHomePage({
         <PublishedBuilderSite
           formData={typedBuilderData.formData}
           generatedContent={typedBuilderData.generatedContent}
+          companySlug={params.companySlug}
         />
       );
     }

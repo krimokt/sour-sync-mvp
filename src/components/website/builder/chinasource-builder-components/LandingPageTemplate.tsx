@@ -5,7 +5,7 @@ import { FormData, GeneratedContent, ThemeColor, TemplateId } from '../chinasour
 import {
   Mail, MapPin, ArrowUpRight, LogIn, ExternalLink,
   ShieldCheck, Instagram, Linkedin, MessageCircle,
-  CheckCircle2, Globe, Clock, Package,
+  CheckCircle2, Globe, Clock, Package, Menu, X,
 } from 'lucide-react';
 import { EditableText, EditableIcon, EditableImage } from './EditorComponents';
 import Sidebar from './Sidebar';
@@ -17,6 +17,7 @@ interface LandingPageTemplateProps {
   hideSidebar?: boolean;
   hasTopBar?: boolean;
   readOnly?: boolean;
+  companySlug?: string;
 }
 
 const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string }> = {
@@ -29,7 +30,7 @@ const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string
 };
 
 export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
-  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false,
+  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false, companySlug,
 }) => {
   const normalized = {
     ...initialContent,
@@ -40,6 +41,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   const [themeColor, setThemeColor] = useState<ThemeColor>(data.themeColor);
   const [templateId, setTemplateId] = useState<TemplateId>(data.templateId);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const accent = themeAccent[themeColor];
 
@@ -61,53 +63,134 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   };
 
   /* ── Navbar ── */
+  const navLinks = ['Solutions', 'Process', 'About', 'Contact'];
+  const slug = companySlug || data.companyName.toLowerCase().replace(/\s+/g, '-');
+  const signInHref = `/site/${slug}/signin`;
+
   const Navbar = () => (
-    <nav
-      className={`fixed ${hasTopBar ? 'top-16' : 'top-0'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-40 transition-all duration-300
-        ${scrolled ? 'bg-white border-b border-gray-100 shadow-sm py-3' : 'bg-transparent py-6'}`}
-    >
-      <div className="max-w-6xl mx-auto px-8 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-            style={{ background: accent.hex }}
-          >
-            {data.companyName.charAt(0).toUpperCase()}
-          </div>
-          <span className={`font-bold text-lg tracking-tight ${scrolled ? 'text-gray-900' : 'text-white'}`}>
-            {data.companyName}
-          </span>
-        </div>
+    <>
+      <nav
+        className={`fixed ${hasTopBar ? 'top-16' : 'top-0'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-40 transition-all duration-300
+          ${scrolled
+            ? 'bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-[0_1px_12px_rgba(0,0,0,0.06)]'
+            : 'bg-transparent'
+          }`}
+      >
+        <div className="max-w-6xl mx-auto px-6 lg:px-10">
+          <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-20'}`}>
 
-        {/* Links */}
-        <div className="hidden lg:flex items-center gap-8">
-          {['Solutions', 'Process', 'About', 'Contact'].map(label => (
-            <a
-              key={label}
-              href={`#${label.toLowerCase()}`}
-              className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}
-            >
-              {label}
+            {/* Logo */}
+            <a href="#" className="flex items-center gap-2.5 flex-shrink-0">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
+                style={{ background: accent.hex }}
+              >
+                {data.companyName.charAt(0).toUpperCase()}
+              </div>
+              <span className={`font-bold text-base tracking-tight transition-colors ${scrolled ? 'text-gray-900' : 'text-white'}`}>
+                {data.companyName}
+              </span>
             </a>
-          ))}
-        </div>
 
-        {/* CTA */}
-        <div className="flex items-center gap-3">
-          <button className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${scrolled ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>
-            <LogIn size={15} /> Sign In
-          </button>
-          <a
-            href="#contact"
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-white text-sm font-semibold transition-all hover:opacity-90"
-            style={{ background: accent.hex }}
-          >
-            Get a Quote <ArrowUpRight size={14} />
-          </a>
+            {/* Desktop links — centered */}
+            <div className="hidden lg:flex items-center gap-1">
+              {navLinks.map(label => (
+                <a
+                  key={label}
+                  href={`#${label.toLowerCase()}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    scrolled
+                      ? 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
+
+            {/* Desktop CTA */}
+            <div className="hidden lg:flex items-center gap-2">
+              <a
+                href={signInHref}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  scrolled
+                    ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <LogIn size={14} />
+                Client Portal
+              </a>
+              <a
+                href="#contact"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-white text-sm font-semibold shadow-sm transition-all hover:opacity-90 hover:shadow-md"
+                style={{ background: accent.hex }}
+              >
+                Get a Quote
+                <ArrowUpRight size={14} />
+              </a>
+            </div>
+
+            {/* Mobile: sign in + hamburger */}
+            <div className="flex lg:hidden items-center gap-2">
+              <a
+                href={signInHref}
+                className={`p-2 rounded-lg text-sm font-medium transition-colors ${
+                  scrolled ? 'text-gray-600 hover:bg-gray-50' : 'text-white/80 hover:bg-white/10'
+                }`}
+              >
+                <LogIn size={18} />
+              </a>
+              <button
+                onClick={() => setMobileOpen(v => !v)}
+                className={`p-2 rounded-lg transition-colors ${
+                  scrolled ? 'text-gray-600 hover:bg-gray-50' : 'text-white/80 hover:bg-white/10'
+                }`}
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div
+          className={`fixed ${hasTopBar ? 'top-[calc(4rem+3.5rem)]' : 'top-14'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-39 bg-white border-b border-gray-100 shadow-lg`}
+        >
+          <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
+            {navLinks.map(label => (
+              <a
+                key={label}
+                href={`#${label.toLowerCase()}`}
+                onClick={() => setMobileOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+              >
+                {label}
+              </a>
+            ))}
+            <div className="h-px bg-gray-100 my-1" />
+            <a
+              href={signInHref}
+              className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <LogIn size={15} /> Client Portal
+            </a>
+            <a
+              href="#contact"
+              onClick={() => setMobileOpen(false)}
+              className="mt-1 flex items-center justify-center gap-1.5 px-5 py-3 rounded-lg text-white text-sm font-semibold"
+              style={{ background: accent.hex }}
+            >
+              Get a Quote <ArrowUpRight size={14} />
+            </a>
+          </div>
+        </div>
+      )}
+    </>
   );
 
   return (

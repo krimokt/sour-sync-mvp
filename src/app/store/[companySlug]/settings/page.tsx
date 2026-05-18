@@ -12,6 +12,7 @@ import PaymentSettings from '@/components/settings/PaymentSettings';
 import QuotationSettings from '@/components/settings/QuotationSettings';
 import { countries as countryCodes } from 'country-flag-icons';
 import { CloseIcon } from '@/icons';
+import { Eye, EyeOff, Send, Mail } from 'lucide-react';
 
 // Helper function to get emoji flag from country code
 const getCountryEmoji = (countryCode: string): string => {
@@ -83,6 +84,12 @@ export default function SettingsPage() {
   // Profile form state
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
+
+  // Email settings state
+  const [resendApiKey, setResendApiKey] = useState((company as any)?.resend_api_key || '');
+  const [emailFromDomain, setEmailFromDomain] = useState((company as any)?.email_from_domain || '');
+  const [showResendKey, setShowResendKey] = useState(false);
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -227,6 +234,43 @@ export default function SettingsPage() {
       setMessage({ type: 'error', text: 'Failed to save profile' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveEmailSettings = async () => {
+    if (!company?.id || !isOwner) return;
+    setIsSaving(true);
+    setMessage(null);
+    try {
+      const { error } = await (supabase.from('companies') as any)
+        .update({ resend_api_key: resendApiKey || null, email_from_domain: emailFromDomain || null })
+        .eq('id', company.id);
+      if (error) throw error;
+      setMessage({ type: 'success', text: 'Email settings saved!' });
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save email settings' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    if (!resendApiKey || !emailFromDomain || !company?.id) return;
+    setIsTestingEmail(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/store/${company.slug}/email/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resendApiKey, emailFromDomain }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMessage({ type: 'success', text: `Test email sent to your account email!` });
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Test failed' });
+    } finally {
+      setIsTestingEmail(false);
     }
   };
 
@@ -583,6 +627,92 @@ export default function SettingsPage() {
               (company.quotation_input_fields as string[]) || ['product_name', 'product_url', 'quantity', 'product_images', 'variant_specs', 'notes']
             }
           />
+        </div>
+      )}
+
+      {/* Email Settings */}
+      {isOwner && (
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <div className="flex items-center gap-3 mb-1">
+            <Mail className="w-5 h-5 text-[#06b6d4]" />
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Email Settings</h2>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Connect Resend to send OTP verification emails from your own domain (e.g. noreply@yourdomain.com).
+          </p>
+
+          <div className="space-y-4 max-w-lg">
+            {/* Resend API Key */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Resend API Key
+              </label>
+              <div className="relative">
+                <input
+                  type={showResendKey ? 'text' : 'password'}
+                  value={resendApiKey}
+                  onChange={e => setResendApiKey(e.target.value)}
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full px-4 py-2.5 pr-11 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/40 focus:border-[#06b6d4]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowResendKey(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showResendKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-400">Get your key at resend.com → API Keys</p>
+            </div>
+
+            {/* From domain */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Sending Domain
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400 shrink-0">noreply@</span>
+                <input
+                  type="text"
+                  value={emailFromDomain}
+                  onChange={e => setEmailFromDomain(e.target.value.replace(/^noreply@/, ''))}
+                  placeholder="yourdomain.com"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/40 focus:border-[#06b6d4]"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">Must be verified in your Resend account</p>
+            </div>
+
+            {/* Info box */}
+            <div className="rounded-xl bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900 p-4 text-xs text-cyan-700 dark:text-cyan-300 space-y-1">
+              <p className="font-semibold">Setup checklist</p>
+              <p>1. Create a free account at resend.com</p>
+              <p>2. Add & verify your domain (adds DNS records)</p>
+              <p>3. Create an API key and paste it above</p>
+              <p>4. Enter your verified domain and save</p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <Button
+                onClick={handleSaveEmailSettings}
+                disabled={isSaving}
+                variant="primary"
+              >
+                {isSaving ? 'Saving...' : 'Save Email Settings'}
+              </Button>
+              {resendApiKey && emailFromDomain && (
+                <Button
+                  onClick={handleTestEmail}
+                  disabled={isTestingEmail}
+                  variant="outline"
+                >
+                  <Send className="w-4 h-4 mr-1.5" />
+                  {isTestingEmail ? 'Sending...' : 'Send Test Email'}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

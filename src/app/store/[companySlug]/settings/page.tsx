@@ -86,8 +86,8 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState(profile?.phone || '');
 
   // Email settings state
-  const [resendApiKey, setResendApiKey] = useState((company as any)?.resend_api_key || '');
-  const [emailFromDomain, setEmailFromDomain] = useState((company as any)?.email_from_domain || '');
+  const [resendApiKey, setResendApiKey] = useState((company as Record<string, string> | null)?.resend_api_key || '');
+  const [emailFromDomain, setEmailFromDomain] = useState((company as Record<string, string> | null)?.email_from_domain || '');
   const [showResendKey, setShowResendKey] = useState(false);
   const [isTestingEmail, setIsTestingEmail] = useState(false);
 
@@ -242,6 +242,7 @@ export default function SettingsPage() {
     setIsSaving(true);
     setMessage(null);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('companies') as any)
         .update({ resend_api_key: resendApiKey || null, email_from_domain: emailFromDomain || null })
         .eq('id', company.id);

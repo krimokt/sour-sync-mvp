@@ -9,12 +9,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function POST(request: NextRequest) {
   try {
-    const { slug } = await params;
     const { resendApiKey, emailFromDomain } = await request.json();
 
     if (!resendApiKey || !emailFromDomain) {
@@ -73,7 +69,7 @@ export async function POST(
 
     if (!resendRes.ok) {
       const err = await resendRes.json().catch(() => ({}));
-      const msg = (err as any)?.message || 'Failed to send test email';
+      const msg = (err as { message?: string })?.message || 'Failed to send test email';
       return NextResponse.json({ error: msg }, { status: 400 });
     }
 

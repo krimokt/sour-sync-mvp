@@ -453,7 +453,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 <EditableText value={content.contact.title} onChange={v => updateContent('contact.title', v)} readOnly={readOnly} />
               </h2>
               <p className="text-gray-500 mb-10 leading-relaxed">
-                Tell us what you need. We'll get back within 24 hours with a sourcing plan.
+                Tell us what you need. We&apos;ll get back within 24 hours with a sourcing plan.
               </p>
 
               {/* Contact info */}

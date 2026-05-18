@@ -7,9 +7,9 @@ import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
 import { useStore } from '@/context/StoreContext';
 import {
-  LayoutDashboard, Package, Send, Truck, CreditCard,
+  LayoutDashboard, Package, Send, Truck,
   BadgeDollarSign, Globe, Link2, Settings, ChevronDown,
-  MoreHorizontal, Users, Wallet, FileCheck, Landmark,
+  MoreHorizontal, Users, Wallet,
 } from 'lucide-react';
 
 type SubItem = { name: string; path: string };

@@ -32,10 +32,6 @@ export default function ProductsPage() {
   const publishedCount = products.filter(p => p.is_published).length;
   const draftCount = products.filter(p => !p.is_published).length;
 
-  // Calculate mock trend data (in a real app, this would come from historical data)
-  const totalTrend = { value: 12, direction: 'up' as const };
-  const publishedTrend = { value: 8, direction: 'up' as const };
-  const draftTrend = { value: 2, direction: 'down' as const };
 
   return (
     <div className="space-y-8">

@@ -1022,7 +1022,7 @@ export default function PaymentsPage() {
                                 {metadata.quotation_id.slice(0, 12)}…
                               </p>
                             )}
-                            {(metadata as Record<string, unknown>).product && (
+                            {typeof (metadata as Record<string, unknown>).product === 'string' && (
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[220px]">
                                 {String((metadata as Record<string, unknown>).product)}
                               </p>

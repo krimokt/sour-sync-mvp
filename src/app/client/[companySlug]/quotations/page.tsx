@@ -15,7 +15,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useClient } from '@/context/ClientContext';
 import StatCard from '@/components/common/StatCard';
-import { Send, CheckCircle, Clock, X, Package, Plus, ChevronUp, ChevronDown, Eye, Download, ZoomIn, ZoomOut, RotateCw, Layers, Truck } from 'lucide-react';
+import { Send, CheckCircle, Clock, X, Package, Plus, ChevronUp, ChevronDown, Eye, Download, ZoomIn, ZoomOut, RotateCw, Layers } from 'lucide-react';
 import QuotationFormModal from '@/components/quotation/QuotationFormModal';
 import Button from '@/components/ui/button/Button';
 import { VariantGroup } from '@/types/database';
@@ -595,320 +595,344 @@ export default function ClientQuotationsPage() {
         }}
       />
 
-      {/* View Quotation Modal */}
-      {selectedQuotation && (
-        <Modal
-          isOpen={isViewModalOpen}
-          onClose={() => {
-            setIsViewModalOpen(false);
-            setSelectedQuotation(null);
-            setFullQuotationData(null);
-          }}
-          className="max-w-4xl mx-auto p-4 sm:p-6"
-        >
-          <div className="max-h-[calc(100vh-240px)] overflow-y-auto px-1 py-2">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Quotation Details
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {selectedQuotation.quotation_id}
-              </p>
+      {/* ══ Quotation Review Modal ══ */}
+      {selectedQuotation && (() => {
+        const closeModal = () => {
+          setIsViewModalOpen(false);
+          setSelectedQuotation(null);
+          setFullQuotationData(null);
+        };
+
+        const fmt = (p?: string) => {
+          if (!p) return null;
+          const n = parseFloat(p);
+          return isNaN(n) ? p : `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        };
+
+        const isApproved = (fullQuotationData?.status ?? selectedQuotation.status)?.toLowerCase() === 'approved';
+        const isRejected = (fullQuotationData?.status ?? selectedQuotation.status)?.toLowerCase() === 'rejected';
+        const hasOptions = fullQuotationData && (fullQuotationData.title_option1 || fullQuotationData.title_option2 || fullQuotationData.title_option3);
+        const productImg = selectedQuotation.image_url || selectedQuotation.product_images?.[0];
+
+        return (
+          <Modal
+            isOpen={isViewModalOpen}
+            onClose={closeModal}
+            showCloseButton={false}
+            className="max-w-2xl w-full mx-auto p-0 overflow-hidden"
+          >
+            {/* ── Sticky header ── */}
+            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+              {/* Product thumbnail */}
+              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-800">
+                {productImg ? (
+                  <div className="relative w-full h-full">
+                    <Image src={productImg} alt={selectedQuotation.product_name} fill className="object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package size={16} className="text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
+                  {selectedQuotation.product_name}
+                </p>
+                <p className="text-[11px] text-gray-400 font-mono">{selectedQuotation.quotation_id}</p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {getStatusBadge(selectedQuotation.status)}
+                <button
+                  onClick={closeModal}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
-            {isLoadingFullData ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-gray-500">Loading quotation details...</div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Product Information */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Product Information
-                  </h3>
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/3">
-                      <div className="relative w-full h-56 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                        {selectedQuotation.image_url || (selectedQuotation.product_images && selectedQuotation.product_images[0]) ? (
-                          <Image
-                            src={selectedQuotation.image_url || selectedQuotation.product_images![0]}
-                            alt={selectedQuotation.product_name}
-                            fill
-                            className="object-cover"
-                          />
+            {/* ── Body ── */}
+            <div
+              className="overflow-y-auto"
+              style={{ maxHeight: 'calc(100vh - 160px)', background: 'oklch(0.975 0.004 238)' }}
+            >
+              {isLoadingFullData ? (
+                <div className="p-5 space-y-3 animate-pulse">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 flex gap-4">
+                    <div className="w-20 h-20 rounded-xl bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+                    <div className="flex-1 space-y-2 pt-1">
+                      <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+                      <div className="h-3 w-28 rounded bg-gray-100 dark:bg-gray-800" />
+                      <div className="h-3 w-32 rounded bg-gray-100 dark:bg-gray-800" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl p-4 space-y-3">
+                        <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-6 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-3 w-12 rounded bg-gray-100 dark:bg-gray-800" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-5 space-y-3" style={{ fontFamily: 'var(--font-jakarta, system-ui, sans-serif)' }}>
+
+                  {/* ── Product details strip ── */}
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div className="flex gap-4 p-4">
+                      {/* Big image */}
+                      <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-800">
+                        {productImg ? (
+                          <div className="relative w-full h-full">
+                            <Image src={productImg} alt={selectedQuotation.product_name} fill className="object-cover" />
+                          </div>
                         ) : (
-                          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <Package className="w-16 h-16 text-gray-400" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package size={28} className="text-gray-300 dark:text-gray-600" />
                           </div>
                         )}
                       </div>
-                    </div>
-                    <div className="w-full md:w-2/3 space-y-4">
-                      <div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">Product Name</span>
-                        <h4 className="text-lg font-medium text-gray-800 dark:text-white mt-1">
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-3 leading-snug">
                           {selectedQuotation.product_name}
-                        </h4>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">Quantity</span>
-                        <p className="text-gray-800 dark:text-gray-200 mt-1">
-                          {selectedQuotation.quantity}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">Service Type</span>
-                        <p className="text-gray-800 dark:text-gray-200 mt-1">
-                          {selectedQuotation.service_type || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">Status</span>
-                        <div className="mt-1">
-                          {getStatusBadge(selectedQuotation.status)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Variant Groups */}
-                {fullQuotationData?.variant_groups && fullQuotationData.variant_groups.length > 0 && (
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <Layers className="w-5 h-5 text-[#06b6d4]" />
-                      Variant Groups
-                    </h3>
-                    <div className="space-y-4">
-                      {fullQuotationData.variant_groups.map((group, groupIndex) => (
-                        <div key={groupIndex} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                          <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-base">
-                            {group.name || `Group ${groupIndex + 1}`}
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {group.values && group.values.length > 0 ? (
-                              group.values.map((value, valueIndex) => (
-                                <div key={valueIndex} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                                  {value.images && value.images.length > 0 && (
-                                    <div className="relative w-12 h-12 flex-shrink-0 rounded-md overflow-hidden border border-gray-200 dark:border-gray-600">
-                                      <Image 
-                                        src={value.images[0]} 
-                                        alt={value.name} 
-                                        fill 
-                                        className="object-cover" 
-                                      />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
-                                      {value.name || `Value ${valueIndex + 1}`}
-                                    </p>
-                                    {value.moq && (
-                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                        MOQ: {value.moq}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic p-3">
-                                No values in this group
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Shipping Information */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-[#06b6d4]" />
-                    Shipping Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Destination</span>
-                      <p className="text-gray-800 dark:text-gray-200 mt-1">
-                        {selectedQuotation.destination_city}, {selectedQuotation.destination_country}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Shipping Method</span>
-                      <p className="text-gray-800 dark:text-gray-200 mt-1">
-                        {selectedQuotation.shipping_method || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Delivery Information */}
-                {fullQuotationData && fullQuotationData.selected_option && (
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-[#06b6d4]" />
-                      Delivery Information
-                    </h3>
-                    <div className="space-y-3">
-                      {fullQuotationData[`delivery_time_option${fullQuotationData.selected_option}` as keyof QuotationData] && (
-                        <div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Estimated Delivery Time</span>
-                          <p className="text-gray-800 dark:text-gray-200 mt-1 font-medium">
-                            {fullQuotationData[`delivery_time_option${fullQuotationData.selected_option}` as keyof QuotationData] as string}
-                          </p>
-                        </div>
-                      )}
-                      {fullQuotationData[`description_option${fullQuotationData.selected_option}` as keyof QuotationData] && (
-                        <div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Delivery Details</span>
-                          <p className="text-gray-800 dark:text-gray-200 mt-1 whitespace-pre-wrap">
-                            {fullQuotationData[`description_option${fullQuotationData.selected_option}` as keyof QuotationData] as string}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {fullQuotationData?.notes && (
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Notes
-                    </h3>
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                      {fullQuotationData.notes}
-                    </p>
-                  </div>
-                )}
-
-                {/* Price Options - Only show when Approved */}
-                {fullQuotationData && fullQuotationData.status === 'Approved' && (fullQuotationData.title_option1 || fullQuotationData.title_option2 || fullQuotationData.title_option3) && (
-                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Available Price Options
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[1, 2, 3].map((optionNum) => {
-                        const title = fullQuotationData[`title_option${optionNum}` as keyof QuotationData] as string | undefined;
-                        const totalPrice = fullQuotationData[`total_price_option${optionNum}` as keyof QuotationData] as string | undefined;
-                        const pricePerUnit = fullQuotationData[`price_per_unit_option${optionNum}` as keyof QuotationData] as string | undefined;
-                        const description = fullQuotationData[`description_option${optionNum}` as keyof QuotationData] as string | undefined;
-                        const deliveryTime = fullQuotationData[`delivery_time_option${optionNum}` as keyof QuotationData] as string | undefined;
-                        const imageField = fullQuotationData[`image_option${optionNum}` as keyof QuotationData] as string | undefined;
-                        const priceDescription = fullQuotationData[`price_description_option${optionNum}` as keyof QuotationData] as string | undefined;
-                        const isSelected = fullQuotationData.selected_option === optionNum;
-
-                        if (!title && !totalPrice) return null;
-
-                        // Parse images (can be JSON string or single URL)
-                        let images: string[] = [];
-                        if (imageField) {
-                          try {
-                            const parsed = JSON.parse(imageField);
-                            images = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
-                          } catch {
-                            if (imageField) images = [imageField];
-                          }
-                        }
-
-                        const formatPrice = (price: string | undefined) => {
-                          if (!price) return 'N/A';
-                          const numPrice = parseFloat(price);
-                          if (isNaN(numPrice)) return price;
-                          return `$${numPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                        };
-
-                        return (
-                          <div
-                            key={optionNum}
-                            onClick={() => {
-                              setSelectedOptionDetail({
-                                optionNumber: optionNum,
-                                title: title || `Option ${optionNum}`,
-                                totalPrice: totalPrice || '',
-                                pricePerUnit: pricePerUnit || '',
-                                description: description || '',
-                                deliveryTime: deliveryTime || '',
-                                images: images,
-                                priceDescription: priceDescription || '',
-                              });
-                              setIsOptionDetailModalOpen(true);
-                            }}
-                            className={`relative p-4 border rounded-lg transition-all duration-200 cursor-pointer ${
-                              isSelected
-                                ? 'border-[#06b6d4] bg-[#06b6d4]/10 dark:bg-[#06b6d4]/20 shadow-md'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md'
-                            }`}
-                          >
-                            {isSelected && (
-                              <div className="absolute top-2 right-2 bg-[#06b6d4] text-white rounded-full p-1">
-                                <CheckCircle className="w-4 h-4" />
-                              </div>
-                            )}
-                            <div className="mb-3">
-                              <h4 className="font-semibold text-gray-800 dark:text-white mb-1">
-                                {title || `Option ${optionNum}`}
-                              </h4>
-                              {totalPrice && (
-                                <p className="text-lg font-bold text-[#06b6d4]">
-                                  {formatPrice(totalPrice)}
-                                </p>
-                              )}
-                              {pricePerUnit && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {formatPrice(pricePerUnit)} per unit
-                                </p>
-                              )}
+                        </h3>
+                        <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                          {[
+                            { label: 'Qty', value: String(selectedQuotation.quantity) },
+                            { label: 'Service', value: selectedQuotation.service_type || '—' },
+                            { label: 'Ship via', value: selectedQuotation.shipping_method || '—' },
+                            { label: 'To', value: [selectedQuotation.destination_city, selectedQuotation.destination_country].filter(Boolean).join(', ') || '—' },
+                          ].map(({ label, value }) => (
+                            <div key={label} className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</span>
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{value}</span>
                             </div>
-                            {images.length > 0 && (
-                              <div className="relative w-full h-32 mb-3 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
-                                <Image
-                                  src={images[0]}
-                                  alt={title || `Option ${optionNum}`}
-                                  fill
-                                  className="object-cover"
-                                />
-                              </div>
-                            )}
-                            {description && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-                                {description}
-                              </p>
-                            )}
-                            {deliveryTime && (
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
-                                <Clock className="w-3 h-3 inline mr-1" />
-                                Delivery: {deliveryTime}
-                              </p>
-                            )}
-                            {priceDescription && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                {priceDescription}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    {fullQuotationData.quotation_fees && (
-                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Additional Fees:</span> {fullQuotationData.quotation_fees}
-                        </p>
+
+                    {/* Notes */}
+                    {fullQuotationData?.notes && (
+                      <div className="px-4 pb-4 pt-0">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 border border-gray-100 dark:border-gray-700">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Agent notes</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{fullQuotationData.notes}</p>
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </Modal>
-      )}
+
+                  {/* ── Variants (pills) ── */}
+                  {fullQuotationData?.variant_groups && fullQuotationData.variant_groups.length > 0 && (
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Layers size={14} className="text-[#0f7aff]" />
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Variants requested</p>
+                      </div>
+                      <div className="space-y-2.5">
+                        {fullQuotationData.variant_groups.map((group, gi) => (
+                          <div key={gi} className="flex items-start gap-3">
+                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 pt-1.5 min-w-[60px] flex-shrink-0">
+                              {group.name || `Group ${gi + 1}`}
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.values?.map((v, vi) => (
+                                <div key={vi} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                  {v.images?.[0] && (
+                                    <div className="relative w-4 h-4 rounded overflow-hidden flex-shrink-0">
+                                      <Image src={v.images[0]} alt={v.name} fill className="object-cover" />
+                                    </div>
+                                  )}
+                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{v.name}</span>
+                                  {v.moq && <span className="text-[10px] text-gray-400">MOQ {v.moq}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Price Options — side-by-side cards ── */}
+                  {isApproved && hasOptions && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5 px-1">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Pricing options
+                        </p>
+                        {fullQuotationData!.quotation_fees && (
+                          <span className="text-[11px] text-gray-500 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-lg">
+                            + Fees: {fullQuotationData!.quotation_fees}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Cards — horizontal scroll on mobile */}
+                      <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory">
+                        {[1, 2, 3].map((num) => {
+                          const title       = fullQuotationData![`title_option${num}` as keyof QuotationData] as string | undefined;
+                          const totalPrice  = fullQuotationData![`total_price_option${num}` as keyof QuotationData] as string | undefined;
+                          const perUnit     = fullQuotationData![`price_per_unit_option${num}` as keyof QuotationData] as string | undefined;
+                          const description = fullQuotationData![`description_option${num}` as keyof QuotationData] as string | undefined;
+                          const delivery    = fullQuotationData![`delivery_time_option${num}` as keyof QuotationData] as string | undefined;
+                          const imageField  = fullQuotationData![`image_option${num}` as keyof QuotationData] as string | undefined;
+                          const pricingNote = fullQuotationData![`price_description_option${num}` as keyof QuotationData] as string | undefined;
+                          const isSelected  = fullQuotationData!.selected_option === num;
+
+                          if (!title && !totalPrice) return null;
+
+                          let images: string[] = [];
+                          if (imageField) {
+                            try {
+                              const parsed = JSON.parse(imageField);
+                              images = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+                            } catch { if (imageField) images = [imageField]; }
+                          }
+
+                          return (
+                            <div
+                              key={num}
+                              className="flex-shrink-0 snap-start flex flex-col rounded-2xl border overflow-hidden transition-all duration-200"
+                              style={{
+                                width: 'calc(50% - 6px)',
+                                minWidth: '200px',
+                                borderColor: isSelected ? '#0f7aff' : 'oklch(0.91 0.005 238)',
+                                background: isSelected ? 'oklch(0.98 0.008 240)' : 'white',
+                                boxShadow: isSelected ? '0 0 0 1px #0f7aff' : 'none',
+                              }}
+                            >
+                              {/* Card top: number + selected badge */}
+                              <div
+                                className="flex items-center justify-between px-4 pt-4 pb-3"
+                                style={{ borderBottom: `1px solid ${isSelected ? 'rgba(15,122,255,0.15)' : 'oklch(0.94 0.004 238)'}` }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold"
+                                    style={isSelected
+                                      ? { background: '#0f7aff', color: '#fff' }
+                                      : { background: 'oklch(0.93 0.007 238)', color: 'oklch(0.5 0.01 238)' }
+                                    }
+                                  >
+                                    {num}
+                                  </div>
+                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight truncate max-w-[100px]">
+                                    {title || `Option ${num}`}
+                                  </span>
+                                </div>
+                                {isSelected && (
+                                  <div className="flex items-center gap-1 text-[10px] font-bold text-[#0f7aff] bg-[#0f7aff]/10 px-2 py-0.5 rounded-full flex-shrink-0">
+                                    <CheckCircle size={9} /> Selected
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Image */}
+                              {images.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setSelectedImage({ url: images[0], index: 0, total: images.length }); setIsImageViewerOpen(true); }}
+                                  className="relative w-full h-32 overflow-hidden flex-shrink-0 hover:opacity-95 transition-opacity"
+                                >
+                                  <Image src={images[0]} alt={title || `Option ${num}`} fill className="object-cover" />
+                                  {images.length > 1 && (
+                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                                      +{images.length - 1} more
+                                    </div>
+                                  )}
+                                </button>
+                              )}
+
+                              {/* Pricing */}
+                              <div className="px-4 pt-3 pb-2">
+                                {fmt(totalPrice) && (
+                                  <p className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                                    {fmt(totalPrice)}
+                                  </p>
+                                )}
+                                {fmt(perUnit) && (
+                                  <p className="text-xs text-gray-400 mt-0.5">{fmt(perUnit)} per unit</p>
+                                )}
+                              </div>
+
+                              {/* Delivery */}
+                              {delivery && (
+                                <div className="px-4 pb-3 flex items-center gap-1.5">
+                                  <Clock size={12} className="text-gray-400 flex-shrink-0" />
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">{delivery}</span>
+                                </div>
+                              )}
+
+                              {/* Description */}
+                              {description && (
+                                <div className="px-4 pb-3">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">{description}</p>
+                                </div>
+                              )}
+
+                              {/* Pricing note */}
+                              {pricingNote && (
+                                <div className="mx-4 mb-4 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                                  <p className="text-[11px] text-gray-400 leading-relaxed">{pricingNote}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Pending / Rejected status card ── */}
+                  {!isApproved && fullQuotationData && (
+                    <div
+                      className="rounded-2xl border p-5 flex items-start gap-4"
+                      style={isRejected
+                        ? { background: 'oklch(0.98 0.008 25)', borderColor: 'oklch(0.88 0.025 25)' }
+                        : { background: 'oklch(0.98 0.012 80)', borderColor: 'oklch(0.88 0.03 80)' }
+                      }
+                    >
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={isRejected
+                          ? { background: 'oklch(0.93 0.04 25)' }
+                          : { background: 'oklch(0.93 0.05 80)' }
+                        }
+                      >
+                        {isRejected
+                          ? <X size={16} style={{ color: 'oklch(0.5 0.18 25)' }} />
+                          : <Clock size={16} style={{ color: 'oklch(0.55 0.12 80)' }} />
+                        }
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold mb-1"
+                          style={{ color: isRejected ? 'oklch(0.45 0.18 25)' : 'oklch(0.5 0.12 80)' }}>
+                          {isRejected ? 'Quotation not accepted' : 'Under review'}
+                        </p>
+                        <p className="text-xs leading-relaxed"
+                          style={{ color: isRejected ? 'oklch(0.55 0.12 25)' : 'oklch(0.6 0.08 80)' }}>
+                          {isRejected
+                            ? 'Your sourcing agent reviewed this request and could not proceed. You can submit a new quotation with different specifications.'
+                            : 'Your request is being reviewed. Once your agent sets pricing options, they will appear here for your comparison.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </div>
+          </Modal>
+        );
+      })()}
 
       {/* Price Option Detail Modal */}
       {selectedOptionDetail && (

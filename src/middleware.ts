@@ -116,8 +116,14 @@ export async function middleware(req: NextRequest) {
   }
   
   // ----- CUSTOM DOMAIN ROUTING -----
-  // Check if this is a custom domain (client's own domain like mycompany.com)
-  // IMPORTANT: Exclude API routes and magic link routes from custom domain rewriting - they should go directly
+  // If someone visits a custom domain (e.g. sthe.shop) with an admin path (/store/...),
+  // redirect them to the platform app domain so admin always runs on one trusted domain.
+  if (isCustomDomain(hostname) && path.startsWith('/store/')) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soursync.netlify.app';
+    const redirectUrl = new URL(path, appUrl);
+    return NextResponse.redirect(redirectUrl, 301);
+  }
+
   if (isCustomDomain(hostname) && !path.startsWith('/store/') && !path.startsWith('/site/') && !path.startsWith('/client/') && !path.startsWith('/api/') && !path.startsWith('/c/')) {
     try {
       // Create Supabase client to look up custom domain

@@ -76,55 +76,46 @@ export async function POST(
       // Table doesn't exist yet — only Supabase fallback will work
     }
 
-    // Send via Resend if configured, otherwise fallback to Supabase built-in
-    if (resendApiKey && emailFromDomain) {
-      const fromAddress = `noreply@${emailFromDomain}`;
-
-      const resendRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: fromAddress,
-          to: normalizedEmail,
-          subject: 'Your verification code',
-          html: `
-            <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-              <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 8px">Verify your email</h2>
-              <p style="font-size:14px;color:#64748b;margin:0 0 24px">Use the code below to complete your sign-up. It expires in 10 minutes.</p>
-              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px">
-                <span style="font-size:36px;font-weight:800;letter-spacing:0.25em;color:#0f172a">${code}</span>
-              </div>
-              <p style="font-size:12px;color:#94a3b8;margin:0">If you didn't request this, you can safely ignore this email.</p>
-            </div>
-          `,
-        }),
-      });
-
-      if (!resendRes.ok) {
-        const err = await resendRes.json().catch(() => ({}));
-        console.error('Resend error:', err);
-        return NextResponse.json(
-          { error: 'Failed to send verification email. Check your Resend API key and domain.' },
-          { status: 500 }
-        );
-      }
-    } else {
-      // Fallback: use Supabase built-in OTP (requires Supabase SMTP configured)
-      const { createClient: createAnonClient } = await import('@supabase/supabase-js');
-      const supabaseAnon = createAnonClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    // Require Resend to be configured — Supabase built-in email has a 2/hour rate limit
+    if (!resendApiKey || !emailFromDomain) {
+      return NextResponse.json(
+        { error: 'Email sending is not configured. Go to Settings → Email Settings and add your Resend API key and domain.' },
+        { status: 503 }
       );
-      const { error } = await supabaseAnon.auth.signInWithOtp({
-        email: normalizedEmail,
-        options: { shouldCreateUser: true },
-      });
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
-      }
+    }
+
+    const fromAddress = `noreply@${emailFromDomain}`;
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: normalizedEmail,
+        subject: 'Your verification code',
+        html: `
+          <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+            <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 8px">Verify your email</h2>
+            <p style="font-size:14px;color:#64748b;margin:0 0 24px">Use the code below to complete your sign-up. It expires in 10 minutes.</p>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px">
+              <span style="font-size:36px;font-weight:800;letter-spacing:0.25em;color:#0f172a">${code}</span>
+            </div>
+            <p style="font-size:12px;color:#94a3b8;margin:0">If you didn&apos;t request this, you can safely ignore this email.</p>
+          </div>
+        `,
+      }),
+    });
+
+    if (!resendRes.ok) {
+      const err = await resendRes.json().catch(() => ({}));
+      console.error('Resend error:', err);
+      return NextResponse.json(
+        { error: 'Failed to send verification email. Check your Resend API key and domain in Settings.' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true, usedResend: !!(resendApiKey && emailFromDomain) });

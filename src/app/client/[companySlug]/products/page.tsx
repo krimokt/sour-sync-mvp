@@ -21,6 +21,7 @@ export default function ClientProductsPage() {
   const { company, client } = useClient();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
   const [orderingProductId, setOrderingProductId] = useState<string | null>(null);
@@ -35,12 +36,13 @@ export default function ClientProductsPage() {
     if (!company) return;
     
     setIsLoading(true);
+    setFetchError('');
     try {
       let query = supabase
         .from('products')
         .select('*')
         .eq('company_id', company.id)
-        .eq('is_published', true) // Clients can only see published products
+        .eq('is_published', true)
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
@@ -53,6 +55,7 @@ export default function ClientProductsPage() {
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setFetchError('Failed to load products. Please refresh the page.');
     } finally {
       setIsLoading(false);
     }
@@ -223,16 +226,35 @@ export default function ClientProductsPage() {
         </div>
       </div>
 
+      {/* Error state */}
+      {fetchError && (
+        <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-4 py-3 text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+          <span>⚠</span> {fetchError}
+          <button onClick={fetchProducts} className="ml-auto underline text-red-500 hover:text-red-700">Retry</button>
+        </div>
+      )}
+
       {/* Products */}
       {viewMode === 'table' ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           {isLoading ? (
-            <div className="p-8 text-center text-gray-500">Loading products...</div>
+            <div className="animate-pulse space-y-0">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-50 dark:border-gray-800">
+                  <div className="h-9 w-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3.5 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-3 w-24 rounded bg-gray-100 dark:bg-gray-800" />
+                  </div>
+                  <div className="h-5 w-16 rounded-full bg-gray-100 dark:bg-gray-800" />
+                </div>
+              ))}
+            </div>
           ) : (
             <ProductsTable
               products={filteredProducts}
               companySlug={company.slug}
-              isReadOnly={true} // Clients can only view, not edit
+              isReadOnly={true}
               onRefresh={fetchProducts}
             />
           )}
@@ -240,9 +262,28 @@ export default function ClientProductsPage() {
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
           {isLoading ? (
-            <div className="p-8 text-center text-gray-500">Loading products...</div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 animate-pulse">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                  <div className="h-44 bg-gray-100 dark:bg-gray-700" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-3 w-1/2 rounded bg-gray-100 dark:bg-gray-800" />
+                    <div className="h-8 w-full rounded-lg bg-gray-100 dark:bg-gray-800 mt-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No products found</div>
+            <div className="py-16 text-center">
+              <div className="mx-auto mb-3 w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-2xl">📦</div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {searchTerm ? 'No products match your search' : 'No products available yet'}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {searchTerm ? 'Try a different keyword' : 'Check back soon for new arrivals'}
+              </p>
+            </div>
           ) : (
             <motion.div
               className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"

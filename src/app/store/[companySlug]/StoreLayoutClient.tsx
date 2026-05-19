@@ -43,11 +43,12 @@ export default function StoreLayoutClient({ children, companySlug }: StoreLayout
   }, [isSubscriptionExpired, pathname, router, basePath]);
 
   // Dynamic class for main content margin based on sidebar state
+  // Must match StoreSidebar widths: 272px expanded, 72px collapsed
   const mainContentMargin = isMobileOpen
     ? 'ml-0'
     : isExpanded || isHovered
-    ? 'lg:ml-[290px]'
-    : 'lg:ml-[90px]';
+    ? 'lg:ml-[272px]'
+    : 'lg:ml-[72px]';
 
   return (
     <div className="min-h-screen xl:flex">

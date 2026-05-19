@@ -12,62 +12,55 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
   const { companySlug } = params;
   const supabase = createServerSupabaseClient();
 
-  // 1. Check if user is authenticated
+  // Auth check (fast — reads from cookie)
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) {
-    // Redirect to site with login prompt
     redirect(`/site/${companySlug}?login=true`);
   }
 
-  // 2. Get company by slug
-  const { data: company, error: companyError } = await supabase
-    .from('companies')
-    .select('*')
-    .eq('slug', companySlug)
-    .single();
+  // Run company + client(+profile joined) queries in parallel
+  const [
+    { data: company, error: companyError },
+    { data: clientWithProfile, error: clientError },
+  ] = await Promise.all([
+    supabase.from('companies').select('*').eq('slug', companySlug).single(),
+    supabase
+      .from('clients')
+      .select('*, profile:profiles(*)')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .limit(1)
+      .single(),
+  ]);
 
   if (companyError || !company) {
-    console.error('Company not found:', companySlug);
     notFound();
   }
 
-  // Type assertion after null check
   const companyData = company as Company;
 
-  // 3. Check if user is a client of this company
-  // Use the user session + RLS (tenant boundary enforced in DB, not UI)
-  const { data: client, error: clientError } = await supabase
-    .from('clients')
-    .select('*')
-    .eq('company_id', companyData.id)
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .single();
-
-  if (clientError || !client) {
-    // User is not a client of this company
+  // Verify client belongs to this company
+  if (clientError || !clientWithProfile) {
     redirect(`/site/${companySlug}?error=not_authorized`);
   }
 
-  // 4. Get user's profile
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { profile: profileData, ...clientData } = clientWithProfile as any;
 
-  if (profileError || !profile) {
-    // User has no profile - redirect to complete setup
+  if ((clientData as { company_id?: string }).company_id !== companyData.id) {
+    redirect(`/site/${companySlug}?error=not_authorized`);
+  }
+
+  if (!profileData) {
     redirect('/signup?step=profile');
   }
 
-  // 5. All checks passed - render the client layout
   return (
-    <ClientProvider 
-      company={companyData} 
-      profile={profile as Profile}
-      client={client as Client}
+    <ClientProvider
+      company={companyData}
+      profile={profileData as Profile}
+      client={clientData as Client}
     >
       <ClientLayoutClient companySlug={companySlug}>
         {children}
@@ -75,18 +68,3 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
     </ClientProvider>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

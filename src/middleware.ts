@@ -74,10 +74,18 @@ function getSubdomain(hostname: string): string | null {
   return subdomain;
 }
 
+// Fast cookie check — avoids Supabase network round-trip for protected routes.
+// Supabase stores the session as sb-<projectRef>-auth-token (possibly chunked as .0/.1).
+function hasAuthCookie(req: NextRequest): boolean {
+  return req.cookies.getAll().some(
+    (c) => /^sb-.+-auth-token/.test(c.name) && c.value.length > 0
+  );
+}
+
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const hostname = req.headers.get('host') || '';
-  
+
   // Initialize response early for Supabase client
   const res = NextResponse.next();
   
@@ -252,6 +260,35 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // ----- STORE ROUTES (/store/*) -----
+  // Fast cookie check — no Supabase network call, eliminates TTFB latency spike.
+  // The page layout handles full session/company verification after load.
+  if (path.startsWith('/store/')) {
+    if (!hasAuthCookie(req)) {
+      const redirectUrl = new URL('/signin', req.url);
+      redirectUrl.searchParams.set('redirect', path);
+      return NextResponse.redirect(redirectUrl);
+    }
+    return NextResponse.next();
+  }
+
+  // ----- CLIENT ROUTES (/client/*) -----
+  // Same fast cookie check for client portal routes.
+  if (path.startsWith('/client/')) {
+    if (!hasAuthCookie(req)) {
+      const pathParts = path.split('/');
+      const companySlug = pathParts[2];
+      if (companySlug) {
+        const redirectUrl = new URL(`/site/${companySlug}?login=true`, req.url);
+        return NextResponse.redirect(redirectUrl);
+      }
+      const redirectUrl = new URL('/signin', req.url);
+      redirectUrl.searchParams.set('redirect', path);
+      return NextResponse.redirect(redirectUrl);
+    }
+    return NextResponse.next();
+  }
+
   try {
     // Create Supabase client with the request
     const supabase = createMiddlewareClient({ req, res });
@@ -260,39 +297,6 @@ export async function middleware(req: NextRequest) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-
-    // ----- CLIENT ROUTES (/client/*) -----
-    // These are protected and require client authentication
-    if (path.startsWith('/client/')) {
-      if (!session) {
-        // Extract company slug from path
-        const pathParts = path.split('/');
-        const companySlug = pathParts[2];
-        if (companySlug) {
-          const redirectUrl = new URL(`/site/${companySlug}?login=true`, req.url);
-          return NextResponse.redirect(redirectUrl);
-        }
-        // Redirect to signin with return URL
-        const redirectUrl = new URL('/signin', req.url);
-        redirectUrl.searchParams.set('redirect', path);
-        return NextResponse.redirect(redirectUrl);
-      }
-      // User is authenticated - let the layout handle client verification
-      return res;
-    }
-
-    // ----- STORE ROUTES (/store/*) -----
-    // These are protected and require authentication
-    if (path.startsWith('/store/')) {
-      if (!session) {
-        // Redirect to signin with return URL
-        const redirectUrl = new URL('/signin', req.url);
-        redirectUrl.searchParams.set('redirect', path);
-        return NextResponse.redirect(redirectUrl);
-      }
-      // User is authenticated - let the layout handle company verification
-      return res;
-    }
 
     // ----- PUBLIC AUTH ROUTES (/signin, /signup) -----
     if (publicRoutes.includes(path)) {

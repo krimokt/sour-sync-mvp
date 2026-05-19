@@ -142,7 +142,13 @@ export default function ShippingPage() {
       const to = from + ITEMS_PER_PAGE - 1;
       query = query.range(from, to);
 
-      const { data, error: fetchError, count } = await query;
+      const [
+        { data, error: fetchError, count },
+        { data: metricsData },
+      ] = await Promise.all([
+        query,
+        supabase.from('shipping').select('status').eq('company_id', company.id),
+      ]);
 
       if (fetchError) {
         throw fetchError;
@@ -150,12 +156,6 @@ export default function ShippingPage() {
 
       setShipments(data || []);
       setTotalPages(Math.ceil((count || 0) / ITEMS_PER_PAGE));
-
-      // Fetch metrics
-      const { data: metricsData } = await supabase
-        .from('shipping')
-        .select('status')
-        .eq('company_id', company.id);
 
       if (metricsData) {
         const typedMetricsData = metricsData as Array<{ status?: string | null }>;
@@ -493,11 +493,20 @@ export default function ShippingPage() {
       const pathsToSign = urls.filter((u) => u && !u.startsWith('http') && !signedMediaUrls[u]);
       if (pathsToSign.length === 0) return;
 
-      for (const path of pathsToSign) {
-        const { data } = await supabase.storage.from('shipment_updates').createSignedUrl(path, 60 * 60);
-        if (data?.signedUrl) {
-          setSignedMediaUrls((prev) => ({ ...prev, [path]: data.signedUrl }));
-        }
+      const results = await Promise.all(
+        pathsToSign.map((path) =>
+          supabase.storage
+            .from('shipment_updates')
+            .createSignedUrl(path, 60 * 60)
+            .then(({ data }) => ({ path, signedUrl: data?.signedUrl }))
+        )
+      );
+      const newUrls: Record<string, string> = {};
+      for (const { path, signedUrl } of results) {
+        if (signedUrl) newUrls[path] = signedUrl;
+      }
+      if (Object.keys(newUrls).length > 0) {
+        setSignedMediaUrls((prev) => ({ ...prev, ...newUrls }));
       }
     };
     run();

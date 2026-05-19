@@ -83,15 +83,12 @@ const fetchQuotations = async (
   const to = from + ITEMS_PER_PAGE - 1;
   query = query.range(from, to);
 
-  const { data, error, count } = await query;
+  const [{ data, error, count }, { data: metricsData }] = await Promise.all([
+    query,
+    supabase.from('quotations').select('status').eq('company_id', companyId),
+  ]);
 
   if (error) throw error;
-
-  // Fetch metrics in parallel (but only status column for efficiency)
-  const { data: metricsData } = await supabase
-    .from('quotations')
-    .select('status')
-    .eq('company_id', companyId);
 
   const metrics: QuotationMetrics = {
     total: metricsData?.length || 0,

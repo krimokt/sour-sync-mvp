@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Modal } from '@/components/ui/modal';
-import { CloseIcon } from '@/icons';
-import { Eye, Package, MapPin, Truck, FileText, Link as LinkIcon, Image as ImageIcon, CheckCircle, Loader2, Layers } from 'lucide-react';
+import {
+  Package, MapPin, Truck, Link as LinkIcon,
+  CheckCircle, Loader2, Layers, Clock, X, FileText,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import Button from '@/components/ui/button/Button';
 import { VariantGroup } from '@/types/database';
 
 interface QuotationReviewModalProps {
@@ -32,72 +33,56 @@ interface QuotationReviewModalProps {
   };
 }
 
-// Helper function to get country name from code
 const getCountryName = (code: string): string => {
   if (!code) return code;
-  
-  // Filter out subdivision codes (codes with hyphens like "GB-ENG", "ES-CT")
-  // These are ISO 3166-2 subdivision codes, not ISO 3166-1 country codes
-  if (code.includes('-')) {
-    // Extract the country part (before the hyphen)
-    const countryCode = code.split('-')[0];
-    code = countryCode;
-  }
-  
-  // Validate it's a 2-letter country code
-  if (code.length !== 2) {
-    return code;
-  }
-  
+  const c = code.includes('-') ? code.split('-')[0] : code;
+  if (c.length !== 2) return code;
   try {
-    const displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
-    const name = displayNames.of(code.toUpperCase());
-    return name || code;
-  } catch {
-    return code;
-  }
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(c.toUpperCase()) || code;
+  } catch { return code; }
 };
 
-// Helper function to get emoji flag from country code
-const getCountryEmoji = (countryCode: string): string => {
+const getCountryEmoji = (code: string): string => {
   try {
-    const codePoints = countryCode
-      .toUpperCase()
-      .split('')
-      .map(char => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  } catch {
-    return '🏳️';
-  }
+    return String.fromCodePoint(...code.toUpperCase().split('').map(ch => 127397 + ch.charCodeAt(0)));
+  } catch { return '🏳️'; }
 };
 
 interface PriceOption {
   id: number;
   title: string;
   price: string;
+  perUnit?: string;
   description?: string;
   deliveryTime?: string;
-  image?: string;
+  images: string[];
+  priceDescription?: string;
 }
 
 export default function QuotationReviewModal({ isOpen, onClose, quotation }: QuotationReviewModalProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showPriceOptions, setShowPriceOptions] = useState(false);
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
-  // Collect all images
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
   const allImages = [
     ...(quotation.image_url ? [quotation.image_url] : []),
-    ...(quotation.product_images || [])
+    ...(quotation.product_images || []),
   ].filter(Boolean);
 
-  // Fetch quotation with price options
-  const fetchQuotationWithOptions = async () => {
+  const parseImages = (field?: string | null): string[] => {
+    if (!field) return [];
+    try {
+      const p = JSON.parse(field);
+      return Array.isArray(p) ? p : [p].filter(Boolean);
+    } catch { return field ? [field] : []; }
+  };
+
+  const fetchOptions = useCallback(async () => {
     if (!quotation.id) return;
-    
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -108,312 +93,229 @@ export default function QuotationReviewModal({ isOpen, onClose, quotation }: Quo
 
       if (error) throw error;
 
-      const typedData = data as {
-        title_option1?: string | null;
-        total_price_option1?: string | null;
-        description_option1?: string | null;
-        delivery_time_option1?: string | null;
-        image_option1?: string | null;
-        title_option2?: string | null;
-        total_price_option2?: string | null;
-        description_option2?: string | null;
-        delivery_time_option2?: string | null;
-        image_option2?: string | null;
-        title_option3?: string | null;
-        total_price_option3?: string | null;
-        description_option3?: string | null;
-        delivery_time_option3?: string | null;
-        image_option3?: string | null;
-        selected_option?: number | null;
-        variant_groups?: VariantGroup[] | null;
-        [key: string]: unknown;
-      };
-
-      // Build price options array
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = data as any;
       const options: PriceOption[] = [];
-      
-      if (typedData.title_option1 || typedData.total_price_option1) {
-        options.push({
-          id: 1,
-          title: typedData.title_option1 || 'Option 1',
-          price: typedData.total_price_option1 || '0',
-          description: typedData.description_option1 || undefined,
-          deliveryTime: typedData.delivery_time_option1 || undefined,
-          image: typedData.image_option1 || undefined,
-        });
-      }
-      
-      if (typedData.title_option2 || typedData.total_price_option2) {
-        options.push({
-          id: 2,
-          title: typedData.title_option2 || 'Option 2',
-          price: typedData.total_price_option2 || '0',
-          description: typedData.description_option2 || undefined,
-          deliveryTime: typedData.delivery_time_option2 || undefined,
-          image: typedData.image_option2 || undefined,
-        });
-      }
-      
-      if (typedData.title_option3 || typedData.total_price_option3) {
-        options.push({
-          id: 3,
-          title: typedData.title_option3 || 'Option 3',
-          price: typedData.total_price_option3 || '0',
-          description: typedData.description_option3 || undefined,
-          deliveryTime: typedData.delivery_time_option3 || undefined,
-          image: typedData.image_option3 || undefined,
-        });
+
+      for (const n of [1, 2, 3]) {
+        if (d[`title_option${n}`] || d[`total_price_option${n}`]) {
+          options.push({
+            id: n,
+            title: d[`title_option${n}`] || `Option ${n}`,
+            price: d[`total_price_option${n}`] || '0',
+            perUnit: d[`price_per_unit_option${n}`] || undefined,
+            description: d[`description_option${n}`] || undefined,
+            deliveryTime: d[`delivery_time_option${n}`] || undefined,
+            images: parseImages(d[`image_option${n}`]),
+            priceDescription: d[`price_description_option${n}`] || undefined,
+          });
+        }
       }
 
       setPriceOptions(options);
-      if (typedData.selected_option) {
-        setSelectedOption(typedData.selected_option);
-      }
-      setShowPriceOptions(true);
-    } catch (error) {
-      console.error('Error fetching quotation:', error);
-      alert('Failed to load quotation options. Please try again.');
+      if (d.selected_option) setSelectedOption(d.selected_option);
+    } catch (e) {
+      console.error('Error fetching options:', e);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [quotation.id]);
 
-  // Save selected option
-  const handleSaveOption = async () => {
+  // Auto-load on open
+  useEffect(() => {
+    if (isOpen) {
+      fetchOptions();
+      setSaveSuccess(false);
+      setSaveError('');
+    } else {
+      setSelectedOption(null);
+      setPriceOptions([]);
+      setSelectedImageIndex(0);
+    }
+  }, [isOpen, fetchOptions]);
+
+  const handleSave = async () => {
     if (!selectedOption || !quotation.id) return;
-
     setIsSaving(true);
+    setSaveError('');
     try {
-      const { error } = await (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        supabase.from('quotations') as any
-      )
-        .update({
-          selected_option: selectedOption,
-          status: 'Approved',
-          updated_at: new Date().toISOString(),
-        })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('quotations') as any)
+        .update({ selected_option: selectedOption, status: 'Approved', updated_at: new Date().toISOString() })
         .eq('id', quotation.id);
-
       if (error) throw error;
-
-      alert('Quotation option saved successfully!');
-      onClose();
-    } catch (error) {
-      console.error('Error saving option:', error);
-      alert('Failed to save quotation option. Please try again.');
+      setSaveSuccess(true);
+      setTimeout(() => { onClose(); }, 900);
+    } catch (e) {
+      setSaveError('Failed to save. Please try again.');
+      console.error(e);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setShowPriceOptions(false);
-      setSelectedOption(null);
-      setPriceOptions([]);
-    }
-  }, [isOpen]);
+  const fmt = (p: string) => {
+    const n = parseFloat(p);
+    return isNaN(n) ? p : `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const destination = [
+    quotation.destination_country ? `${getCountryEmoji(quotation.destination_country)} ${getCountryName(quotation.destination_country)}` : null,
+    quotation.destination_city,
+  ].filter(Boolean).join(', ');
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-4xl h-auto mx-auto p-4 sm:p-6 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#06b6d4]/10 dark:bg-[#06b6d4]/20 rounded-lg">
-            <Eye className="w-5 h-5 text-[#06b6d4]" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Quotation Review</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{quotation.quotation_id}</p>
-          </div>
-        </div>
-        <button 
-          onClick={onClose}
-          className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+    <Modal isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-2xl w-full mx-auto p-0 overflow-hidden">
+
+      {/* ── Sticky header ── */}
+      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'rgba(6,182,212,0.1)' }}
         >
-          <CloseIcon className="w-5 h-5" />
-        </button>
+          <FileText size={15} style={{ color: '#06b6d4' }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">Quotation Review</p>
+          <p className="text-[11px] text-gray-400 font-mono">{quotation.quotation_id}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {quotation.status && (
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
+              quotation.status.toLowerCase() === 'approved'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : quotation.status.toLowerCase() === 'rejected'
+                ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            }`}>
+              {quotation.status}
+            </span>
+          )}
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <X size={15} />
+          </button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="max-h-[calc(100vh-200px)] overflow-y-auto px-1 py-2">
-        <div className="space-y-6">
-          {/* Product Information Section */}
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2 mb-4">
-              <Package className="w-5 h-5 text-[#06b6d4]" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Product Information</h3>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Product Name
-                </label>
-                <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white">
-                  {quotation.product_name || '-'}
-                </div>
-              </div>
+      {/* ── Scrollable body ── */}
+      <div
+        className="overflow-y-auto"
+        style={{ maxHeight: 'calc(100vh - 148px)', background: 'oklch(0.975 0.004 238)' }}
+      >
+        <div className="p-5 space-y-3" style={{ fontFamily: 'var(--font-jakarta, system-ui, sans-serif)' }}>
 
-              {quotation.product_url && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Product URL
-                  </label>
-                  <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md">
-                    <a
-                      href={quotation.product_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#06b6d4] hover:underline flex items-center gap-2"
-                    >
-                      <LinkIcon className="w-4 h-4" />
-                      {quotation.product_url}
-                    </a>
+          {/* ── Product summary card ── */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+            <div className="flex gap-4 p-4">
+              {/* Product image */}
+              <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-800">
+                {allImages[selectedImageIndex] ? (
+                  <div className="relative w-full h-full">
+                    <Image src={allImages[selectedImageIndex]} alt={quotation.product_name} fill className="object-contain" unoptimized />
                   </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Quantity Required
-                </label>
-                <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white">
-                  {quotation.quantity || '-'}
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package size={28} className="text-gray-300 dark:text-gray-600" />
+                  </div>
+                )}
               </div>
 
-              {/* Product Images */}
-              {allImages.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Product Images ({allImages.length})
-                  </label>
-                  <div className="space-y-3">
-                    {/* Main Image Display */}
-                    <div className="relative w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                      {allImages[selectedImageIndex] ? (
-                        <Image
-                          src={allImages[selectedImageIndex]}
-                          alt={`Product image ${selectedImageIndex + 1}`}
-                          fill
-                          className="object-contain"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <ImageIcon className="w-12 h-12 text-gray-400" />
-                        </div>
-                      )}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 leading-snug">
+                  {quotation.product_name}
+                </h3>
+                {quotation.product_url && (
+                  <a
+                    href={quotation.product_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-[#06b6d4] hover:underline mb-2 truncate max-w-full"
+                  >
+                    <LinkIcon size={11} />
+                    {quotation.product_url.replace(/^https?:\/\//, '').slice(0, 50)}{quotation.product_url.length > 53 ? '…' : ''}
+                  </a>
+                )}
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-1">
+                  {[
+                    { icon: <Package size={11} />, label: 'Qty', value: String(quotation.quantity) },
+                    destination ? { icon: <MapPin size={11} />, label: 'To', value: destination } : null,
+                    quotation.shipping_method ? { icon: <Truck size={11} />, label: 'Via', value: quotation.shipping_method } : null,
+                    quotation.service_type ? { icon: <FileText size={11} />, label: 'Service', value: quotation.service_type } : null,
+                  ].filter(Boolean).map((item) => item && (
+                    <div key={item.label} className="flex items-center gap-1.5">
+                      <span className="text-gray-400">{item.icon}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{item.label}</span>
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{item.value}</span>
                     </div>
-                    
-                    {/* Thumbnail Navigation */}
-                    {allImages.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pb-2">
-                        {allImages.map((image, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setSelectedImageIndex(index)}
-                            className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${
-                              selectedImageIndex === index
-                                ? 'border-[#06b6d4]'
-                                : 'border-gray-300 dark:border-gray-600'
-                            }`}
-                          >
-                            <Image
-                              src={image}
-                              alt={`Thumbnail ${index + 1}`}
-                              width={80}
-                              height={80}
-                              className="w-full h-full object-cover"
-                              unoptimized
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              )}
-
-              {quotation.variant_specs && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Variant/Specs
-                  </label>
-                  <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white whitespace-pre-wrap">
-                    {quotation.variant_specs}
-                  </div>
-                </div>
-              )}
-
-              {quotation.notes && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Notes
-                  </label>
-                  <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white whitespace-pre-wrap">
-                    {quotation.notes}
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
+
+            {/* Thumbnail strip */}
+            {allImages.length > 1 && (
+              <div className="flex gap-2 px-4 pb-4 overflow-x-auto">
+                {allImages.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImageIndex(i)}
+                    className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-colors ${
+                      selectedImageIndex === i ? 'border-[#06b6d4]' : 'border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <Image src={img} alt={`Image ${i + 1}`} width={56} height={56} className="w-full h-full object-cover" unoptimized />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Notes + specs */}
+            {(quotation.notes || quotation.variant_specs) && (
+              <div className="border-t border-gray-100 dark:border-gray-800 px-4 pb-4 pt-3 space-y-3">
+                {quotation.notes && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Client notes</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{quotation.notes}</p>
+                  </div>
+                )}
+                {quotation.variant_specs && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Variant specs</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{quotation.variant_specs}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Variant Groups Section */}
+          {/* ── Variant groups ── */}
           {quotation.variant_groups && quotation.variant_groups.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 mb-4">
-                <Layers className="w-5 h-5 text-[#06b6d4]" />
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Variant Groups</h3>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Layers size={13} style={{ color: '#06b6d4' }} />
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Variant groups</p>
               </div>
-              
-              <div className="space-y-4">
-                {quotation.variant_groups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-base">
-                      {group.name || `Group ${groupIndex + 1}`}
-                    </h4>
-                    <div className="space-y-2">
-                      {group.values && group.values.length > 0 ? (
-                        group.values.map((value, valueIndex) => (
-                          <div key={valueIndex} className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-                            <div className="flex items-start gap-4">
-                              <div className="flex-1">
-                                <div className="font-medium text-gray-900 dark:text-white mb-1">
-                                  {value.name || `Value ${valueIndex + 1}`}
-                                </div>
-                                {value.moq && (
-                                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                                    MOQ: {value.moq}
-                                  </div>
-                                )}
-                              </div>
-                              {value.images && value.images.length > 0 && (
-                                <div className="flex gap-2">
-                                  {value.images.map((imageUrl, imgIndex) => (
-                                    <div key={imgIndex} className="relative w-16 h-16 overflow-hidden rounded-md border border-gray-300 dark:border-gray-600">
-                                      <Image
-                                        src={imageUrl}
-                                        alt={`${value.name} variant image`}
-                                        fill
-                                        className="object-cover"
-                                        unoptimized
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+              <div className="space-y-3">
+                {quotation.variant_groups.map((group, gi) => (
+                  <div key={gi} className="flex items-start gap-3">
+                    <span className="text-xs font-semibold text-gray-500 pt-1 min-w-[56px] flex-shrink-0">
+                      {group.name || `Group ${gi + 1}`}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.values?.map((v, vi) => (
+                        <div key={vi} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                          {v.images?.[0] && (
+                            <div className="relative w-4 h-4 rounded overflow-hidden flex-shrink-0">
+                              <Image src={v.images[0]} alt={v.name} fill className="object-cover" unoptimized />
                             </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 italic p-3">
-                          No values in this group
+                          )}
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{v.name}</span>
+                          {v.moq && <span className="text-[10px] text-gray-400">MOQ {v.moq}</span>}
                         </div>
-                      )}
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -421,201 +323,179 @@ export default function QuotationReviewModal({ isOpen, onClose, quotation }: Quo
             </div>
           )}
 
-          {/* Shipping Information Section */}
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-[#06b6d4]" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Shipping Information</h3>
-            </div>
-            
-            <div className="space-y-4">
-              {quotation.destination_country && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Destination Country
-                  </label>
-                  <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white flex items-center gap-2">
-                    <span className="text-xl">{getCountryEmoji(quotation.destination_country)}</span>
-                    <span>{getCountryName(quotation.destination_country)}</span>
-                  </div>
-                </div>
-              )}
-
-              {quotation.destination_city && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Destination City
-                  </label>
-                  <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white">
-                    {quotation.destination_city}
-                  </div>
-                </div>
-              )}
-
-              {quotation.shipping_method && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Shipping Method
-                  </label>
-                  <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-[#06b6d4]" />
-                    <span>{quotation.shipping_method}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Service Details Section */}
-          {quotation.service_type && (
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-5 h-5 text-[#06b6d4]" />
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Service Details</h3>
+          {/* ── Price options ── */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2">
+                <CheckCircle size={13} style={{ color: '#06b6d4' }} />
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Pricing options</p>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Service Type
-                </label>
-                <div className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-white">
-                  {quotation.service_type}
-                </div>
-              </div>
+              <button
+                onClick={fetchOptions}
+                disabled={isLoading}
+                className="text-[11px] text-[#06b6d4] hover:underline flex items-center gap-1 disabled:opacity-50"
+              >
+                {isLoading && <Loader2 size={11} className="animate-spin" />}
+                Refresh
+              </button>
             </div>
-          )}
 
-          {/* Price Options Section */}
-          {showPriceOptions && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <CheckCircle className="w-5 h-5 text-[#06b6d4]" />
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Price Options</h3>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 size={22} className="animate-spin text-gray-300 dark:text-gray-600" />
               </div>
-
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#06b6d4]" />
+            ) : priceOptions.length === 0 ? (
+              <div className="py-10 text-center">
+                <div className="mx-auto mb-2 w-10 h-10 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                  <Package size={18} className="text-gray-300 dark:text-gray-600" />
                 </div>
-              ) : priceOptions.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {priceOptions.map((option) => (
+                <p className="text-sm text-gray-500 dark:text-gray-400">No pricing options set yet</p>
+                <p className="text-xs text-gray-400 mt-0.5">Set options in the quotation editor first</p>
+              </div>
+            ) : (
+              <div className="p-4">
+                {/* Option cards — horizontal scroll on mobile */}
+                <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory">
+                  {priceOptions.map((opt) => {
+                    const sel = selectedOption === opt.id;
+                    return (
                       <button
-                        key={option.id}
-                        onClick={() => setSelectedOption(option.id)}
-                        className={`p-4 border-2 rounded-lg transition-all duration-200 text-left ${
-                          selectedOption === option.id
-                            ? 'border-[#06b6d4] bg-[#06b6d4]/10 dark:bg-[#06b6d4]/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                        }`}
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setSelectedOption(opt.id)}
+                        className="flex-shrink-0 snap-start text-left flex flex-col rounded-2xl border-2 overflow-hidden transition-all duration-150 focus:outline-none"
+                        style={{
+                          width: 'calc(50% - 6px)',
+                          minWidth: '176px',
+                          borderColor: sel ? '#06b6d4' : 'oklch(0.91 0.005 238)',
+                          background: sel ? 'oklch(0.975 0.015 195)' : 'oklch(0.975 0.004 238)',
+                          boxShadow: sel ? '0 0 0 1px #06b6d4' : 'none',
+                        }}
                       >
-                        {option.image && (
-                          <div className="relative w-full h-32 mb-3 rounded-md overflow-hidden">
-                            <Image
-                              src={option.image}
-                              alt={option.title}
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
+                        {/* Option number + selected */}
+                        <div
+                          className="flex items-center justify-between px-3.5 py-2.5"
+                          style={{ borderBottom: `1px solid ${sel ? 'rgba(6,182,212,0.2)' : 'oklch(0.92 0.005 238)'}` }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+                              style={sel
+                                ? { background: '#06b6d4', color: '#fff' }
+                                : { background: 'oklch(0.92 0.007 238)', color: 'oklch(0.5 0.01 238)' }
+                              }
+                            >
+                              {opt.id}
+                            </div>
+                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate max-w-[90px]">
+                              {opt.title}
+                            </span>
+                          </div>
+                          {sel && (
+                            <div
+                              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full flex-shrink-0"
+                              style={{ background: '#06b6d4', color: '#fff' }}
+                            >
+                              <CheckCircle size={8} /> Selected
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Image */}
+                        {opt.images.length > 0 && (
+                          <div className="relative w-full h-28 overflow-hidden flex-shrink-0">
+                            <Image src={opt.images[0]} alt={opt.title} fill className="object-cover" unoptimized />
                           </div>
                         )}
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                          {option.title}
-                        </h4>
-                        <p className="text-xl font-bold text-[#06b6d4] mb-2">
-                          ${parseFloat(option.price || '0').toLocaleString()}
-                        </p>
-                        {option.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {option.description}
+
+                        {/* Price */}
+                        <div className="px-3.5 pt-3 pb-1">
+                          <p
+                            className="text-xl font-extrabold tracking-tight"
+                            style={{ color: sel ? '#06b6d4' : 'oklch(0.2 0.01 238)' }}
+                          >
+                            {fmt(opt.price)}
                           </p>
+                          {opt.perUnit && (
+                            <p className="text-[11px] text-gray-400 mt-0.5">{fmt(opt.perUnit)} per unit</p>
+                          )}
+                        </div>
+
+                        {/* Delivery */}
+                        {opt.deliveryTime && (
+                          <div className="px-3.5 pb-2 flex items-center gap-1.5">
+                            <Clock size={11} className="text-gray-400 flex-shrink-0" />
+                            <span className="text-[11px] text-gray-500 dark:text-gray-400">{opt.deliveryTime}</span>
+                          </div>
                         )}
-                        {option.deliveryTime && (
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Delivery: {option.deliveryTime}
-                          </p>
+
+                        {/* Description */}
+                        {opt.description && (
+                          <p className="px-3.5 pb-3 text-[11px] text-gray-400 leading-relaxed line-clamp-3">{opt.description}</p>
                         )}
-                        {selectedOption === option.id && (
-                          <div className="mt-3 flex items-center gap-2 text-[#06b6d4]">
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="text-sm font-medium">Selected</span>
+
+                        {/* Pricing note */}
+                        {opt.priceDescription && (
+                          <div className="mx-3.5 mb-3.5 px-2.5 py-2 rounded-xl" style={{ background: 'rgba(6,182,212,0.07)' }}>
+                            <p className="text-[10px] text-gray-500 leading-relaxed">{opt.priceDescription}</p>
                           </div>
                         )}
                       </button>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <Button
-                      onClick={handleSaveOption}
-                      disabled={!selectedOption || isSaving}
-                      variant="primary"
-                      className="flex-1"
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        'Save Selection'
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setShowPriceOptions(false);
-                        setSelectedOption(null);
-                      }}
-                      variant="outline"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
+                    );
+                  })}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  No price options available for this quotation.
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Metadata */}
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <span>Created: {new Date(quotation.created_at).toLocaleString()}</span>
-            <div className="flex items-center gap-3">
-              {quotation.status && (
-                <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full">
-                  Status: {quotation.status}
-                </span>
-              )}
-              {!showPriceOptions && (
-                <Button
-                  onClick={fetchQuotationWithOptions}
-                  disabled={isLoading}
-                  variant="primary"
-                  className="flex items-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Start Making Quotation
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+                {/* Feedback */}
+                {saveError && (
+                  <div className="mt-3 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                    <X size={13} /> {saveError}
+                  </div>
+                )}
+                {saveSuccess && (
+                  <div className="mt-3 px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs flex items-center gap-2">
+                    <CheckCircle size={13} /> Saved — quotation approved!
+                  </div>
+                )}
+
+                {/* Save CTA */}
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={!selectedOption || isSaving || saveSuccess}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                    style={{
+                      background: saveSuccess ? '#10b981' : '#06b6d4',
+                      boxShadow: selectedOption && !isSaving ? '0 4px 14px rgba(6,182,212,0.35)' : 'none',
+                    }}
+                  >
+                    {isSaving ? (
+                      <><Loader2 size={15} className="animate-spin" /> Saving...</>
+                    ) : saveSuccess ? (
+                      <><CheckCircle size={15} /> Approved!</>
+                    ) : (
+                      'Approve & Save Selection'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-5 py-3 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* ── Footer: date ── */}
+          <p className="text-[11px] text-gray-400 text-center pb-1">
+            Submitted {new Date(quotation.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+          </p>
+
         </div>
       </div>
     </Modal>
   );
 }
-

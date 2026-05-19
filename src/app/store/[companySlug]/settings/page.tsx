@@ -12,7 +12,7 @@ import PaymentSettings from '@/components/settings/PaymentSettings';
 import QuotationSettings from '@/components/settings/QuotationSettings';
 import { countries as countryCodes } from 'country-flag-icons';
 import { CloseIcon } from '@/icons';
-import { Eye, EyeOff, Send, Mail } from 'lucide-react';
+import { Eye, EyeOff, Send, Mail, Building2, User, LogOut } from 'lucide-react';
 
 // Helper function to get emoji flag from country code
 const getCountryEmoji = (countryCode: string): string => {
@@ -336,15 +336,38 @@ export default function SettingsPage() {
   }
 
   return (
-    <>
-      <PageBreadcrumb pageTitle="Settings" />
+    <div className="space-y-6">
+      {/* Page header + section nav */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageBreadcrumb pageTitle="Settings" />
+        <nav className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { href: '#company', label: 'Company' },
+            { href: '#profile', label: 'Profile' },
+            ...(isOwner ? [
+              { href: '#payment', label: 'Payment' },
+              { href: '#quotation', label: 'Quotation' },
+              { href: '#email', label: 'Email' },
+            ] : []),
+            { href: '#account', label: 'Account' },
+          ].map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              className="px-3 py-1.5 text-xs font-semibold rounded-full border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-[#06b6d4]/8 hover:border-[#06b6d4]/30 hover:text-[#06b6d4] transition-colors"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+      </div>
 
       {message && (
         <div
-          className={`mb-6 p-4 rounded-lg ${
+          className={`p-4 rounded-xl ${
             message.type === 'success'
-              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-              : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-100 dark:border-green-900'
+              : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-100 dark:border-red-900'
           }`}
         >
           {message.text}
@@ -353,11 +376,17 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Company Settings */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-              Company Settings
-            </h2>
+        <div id="company" className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800/80 bg-gray-50/60 dark:bg-white/[0.01]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#06b6d4]/10 flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-4 h-4 text-[#06b6d4]" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Company Settings</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Brand, region &amp; plan</p>
+              </div>
+            </div>
             {isOwner && (
               <Button
                 variant="outline"
@@ -368,7 +397,7 @@ export default function SettingsPage() {
               </Button>
             )}
           </div>
-
+          <div className="p-6">
           <div className="space-y-4">
             <div>
               <Label>Company Logo</Label>
@@ -451,12 +480,11 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       placeholder="Search countries..."
-                      value={country && !countrySearchQuery 
-                        ? countries.find(c => c.code === country)?.name || "" 
+                      value={country && !countrySearchQuery
+                        ? countries.find(c => c.code === country)?.name || ""
                         : countrySearchQuery}
                       onChange={handleCountrySearchChange}
                       onFocus={() => {
-                        // When user focuses on input, clear it if it shows the selected country name
                         if (country && countrySearchQuery === countries.find(c => c.code === country)?.name) {
                           setCountrySearchQuery("");
                         }
@@ -478,7 +506,6 @@ export default function SettingsPage() {
                       </button>
                     )}
                   </div>
-                  
                   <div className={`overflow-y-auto border border-gray-300 rounded-md transition-all duration-200 ${
                     country ? 'h-auto max-h-[60px]' : 'h-[200px]'
                   }`}>
@@ -496,7 +523,7 @@ export default function SettingsPage() {
                           }}
                           className={`flex items-center gap-2 p-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
                             country === countryOption.code
-                              ? "bg-[#06b6d4]/10 dark:bg-[#06b6d4]/20 border-l-2 border-l-[#06b6d4] dark:border-l-[#06b6d4]"
+                              ? "bg-[#06b6d4]/10 dark:bg-[#06b6d4]/20"
                               : ""
                           }`}
                         >
@@ -561,14 +588,23 @@ export default function SettingsPage() {
               </Button>
             )}
           </div>
+          </div>
         </div>
 
         {/* Profile Settings */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
-            Profile Settings
-          </h2>
-
+        <div id="profile" className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800/80 bg-gray-50/60 dark:bg-white/[0.01]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#0f7aff]/10 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-[#0f7aff]" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Profile Settings</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Name, contact &amp; role</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-6">
           <div className="space-y-4">
             <div>
               <Label>Full Name</Label>
@@ -608,21 +644,22 @@ export default function SettingsPage() {
               {isSaving ? 'Saving...' : 'Save Profile'}
             </Button>
           </div>
+          </div>
         </div>
       </div>
 
       {/* Payment Settings */}
       {isOwner && (
-        <div className="mt-6">
+        <div id="payment">
           <PaymentSettings companyId={company.id} companySlug={company.slug} />
         </div>
       )}
 
       {/* Quotation Settings */}
       {isOwner && (
-        <div className="mt-6">
-          <QuotationSettings 
-            companyId={company.id} 
+        <div id="quotation">
+          <QuotationSettings
+            companyId={company.id}
             initialCountries={(company.quotation_countries as string[]) || []}
             initialInputFields={
               (company.quotation_input_fields as string[]) || ['product_name', 'product_url', 'quantity', 'product_images', 'variant_specs', 'notes']
@@ -633,17 +670,20 @@ export default function SettingsPage() {
 
       {/* Email Settings */}
       {isOwner && (
-        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-          <div className="flex items-center gap-3 mb-1">
-            <Mail className="w-5 h-5 text-[#06b6d4]" />
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Email Settings</h2>
+        <div id="email" className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800/80 bg-gray-50/60 dark:bg-white/[0.01]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                <Mail className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Email Settings</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Resend API &amp; sending domain</p>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Connect Resend to send OTP verification emails from your own domain (e.g. noreply@yourdomain.com).
-          </p>
-
+          <div className="p-6">
           <div className="space-y-4 max-w-lg">
-            {/* Resend API Key */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Resend API Key
@@ -667,7 +707,6 @@ export default function SettingsPage() {
               <p className="mt-1 text-xs text-gray-400">Get your key at resend.com → API Keys</p>
             </div>
 
-            {/* From domain */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Sending Domain
@@ -685,11 +724,10 @@ export default function SettingsPage() {
               <p className="mt-1 text-xs text-gray-400">Must be verified in your Resend account</p>
             </div>
 
-            {/* Info box */}
             <div className="rounded-xl bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900 p-4 text-xs text-cyan-700 dark:text-cyan-300 space-y-1">
               <p className="font-semibold">Setup checklist</p>
               <p>1. Create a free account at resend.com</p>
-              <p>2. Add & verify your domain (adds DNS records)</p>
+              <p>2. Add &amp; verify your domain (adds DNS records)</p>
               <p>3. Create an API key and paste it above</p>
               <p>4. Enter your verified domain and save</p>
             </div>
@@ -714,22 +752,33 @@ export default function SettingsPage() {
               )}
             </div>
           </div>
+          </div>
         </div>
       )}
 
-      {/* Sign Out Section */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
-          Account
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Sign out of your account on this device.
-        </p>
-        <Button variant="outline" onClick={handleSignOut}>
-          Sign Out
-        </Button>
+      {/* Account / Sign Out */}
+      <div id="account" className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800/80 bg-gray-50/60 dark:bg-white/[0.01]">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+              <LogOut className="w-4 h-4 text-red-500" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Account</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Session &amp; sign out</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 flex items-center justify-between gap-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Sign out of your account on this device.
+          </p>
+          <Button variant="outline" onClick={handleSignOut}>
+            Sign Out
+          </Button>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 

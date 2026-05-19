@@ -37,11 +37,8 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
   const router = useRouter();
 
   const handleSuccess = (clientData?: { id: string; email?: string; fullName?: string; phone?: string }) => {
-    router.refresh(); // Refresh to show new client
-    
-    // If client data is provided and we should generate magic link, open the modal
+    router.refresh();
     if (clientData) {
-      // Wait a bit for the refresh to complete, then open magic link modal
       setTimeout(() => {
         setSelectedClient({
           id: clientData.id,
@@ -76,7 +73,7 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
         throw new Error(data.error || 'Failed to update client status');
       }
 
-      router.refresh(); // Refresh to show updated status
+      router.refresh();
       setOpenMenuId(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'An error occurred');
@@ -89,13 +86,11 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <PageBreadcrumb pageTitle="Clients" />
-        <Button
-          className="bg-brand-500 hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-600 text-white dark:text-white gap-2"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="w-4 h-4" />
-          Create New Client
+
+        <Button className="bg-brand-500 hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-600 text-white dark:text-white gap-2" onClick={() => setIsModalOpen(true)}>
+          <Plus className="w-4 h-4" />Create New Client
         </Button>
+
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -158,8 +153,8 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      client.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
-                      client.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : 
+                      client.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                      client.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
                       client.status === 'inactive' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
                       'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                     }`}>
@@ -269,4 +264,3 @@ export default function ClientsPageClient({ clients, companySlug }: ClientsPageC
     </div>
   );
 }
-

@@ -390,17 +390,64 @@
   color: oklch(0.52 0.008 230);
 }
 
-/* ── StoreSidebar nav items: grouped sections + left accent indicator ── */
+/* ── AppHeader: divided-zones layout ── */
+
+@utility hdr2-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: oklch(0.52 0.01 238);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  &:hover { background: oklch(0.94 0.01 235); color: oklch(0.38 0.14 250); }
+}
+
+@utility hdr2-divider {
+  width: 1px;
+  height: 28px;
+  background: oklch(0.90 0.006 235);
+  flex-shrink: 0;
+}
+
+@utility hdr2-search {
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid oklch(0.91 0.006 235);
+  background: oklch(0.975 0.004 238);
+  padding: 0 16px 0 38px;
+  font-size: 13px;
+  color: oklch(0.28 0.01 238);
+  transition: border-color 0.15s;
+  &:focus { border-color: #06b6d4; outline: none; }
+}
+
+@utility hdr2-notif-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #06b6d4;
+  box-shadow: 0 0 0 2px white;
+}
+
+/* ── StoreSidebar nav items ── */
 
 @utility ss-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 8px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14.5px;
+  font-weight: 600;
   text-decoration: none;
   transition: background 0.12s, color 0.12s;
   width: 100%;
@@ -408,14 +455,14 @@
 }
 
 @utility ss-item-active {
-  background: oklch(0.958 0.026 193);
-  color: #06b6d4;
+  background: oklch(0.94 0.03 193);
+  color: oklch(0.42 0.10 193);
   &::before {
     content: '';
     position: absolute;
-    left: 0; top: 6px; bottom: 6px;
-    width: 3px;
-    border-radius: 0 2px 2px 0;
+    left: 0; top: 5px; bottom: 5px;
+    width: 4px;
+    border-radius: 0 3px 3px 0;
     background: #06b6d4;
   }
 }
@@ -429,12 +476,34 @@
 @utility ss-icon-inactive { color: #94a3b8; flex-shrink: 0; }
 
 @utility ss-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14.5px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.01em;
+}
+
+@utility v3-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 8px;
+}
+
+@utility v3-hr {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.13;
+}
+
+@utility v3-group-text {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* ── AppSidebar nav items (V1: grouped sections + left accent indicator) ── */

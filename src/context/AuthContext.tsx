@@ -17,6 +17,38 @@ type AuthContextType = {
   refreshProfile: () => Promise<void>;
 };
 
+const CACHE_KEY = 'ss_auth_cache';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+interface AuthCache {
+  userId: string;
+  profile: Profile;
+  company: Company | null;
+  cachedAt: number;
+}
+
+function readCache(userId: string): AuthCache | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cache: AuthCache = JSON.parse(raw);
+    if (cache.userId !== userId) return null;
+    if (Date.now() - cache.cachedAt > CACHE_TTL) return null;
+    return cache;
+  } catch { return null; }
+}
+
+function writeCache(userId: string, profile: Profile, company: Company | null) {
+  try {
+    const cache: AuthCache = { userId, profile, company, cachedAt: Date.now() };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  } catch { /* ignore storage errors */ }
+}
+
+function clearCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -26,56 +58,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Fetch profile and company for a user
+  // Single joined query — profiles + company in one round trip, no redundant getSession()
   const fetchProfileAndCompany = async (userId: string) => {
-    try {
-      // Ensure we have a valid session before querying
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session status when fetching profile:', session ? 'Active' : 'None', 'User ID:', userId);
-      
-      if (!session) {
-        console.log('No active session, skipping profile fetch');
-        setProfile(null);
-        setCompany(null);
-        return;
-      }
+    // Serve from cache immediately if fresh
+    const cached = readCache(userId);
+    if (cached) {
+      setProfile(cached.profile);
+      setCompany(cached.company);
+      // Revalidate in background without blocking render
+      fetchProfileAndCompany_network(userId);
+      return;
+    }
+    await fetchProfileAndCompany_network(userId);
+  };
 
-      // Get profile
-      const { data: profileData, error: profileError } = await supabase
+  const fetchProfileAndCompany_network = async (userId: string) => {
+    try {
+      // One query: profile joined with company — eliminates the sequential waterfall
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, company:companies(*)')
         .eq('id', userId)
         .single();
 
-      if (profileError) {
-        console.error('Profile fetch error:', profileError.message, profileError.code);
-        setProfile(null);
-        setCompany(null);
-        return;
-      }
-      
-      if (!profileData) {
-        console.log('No profile data returned for user:', userId);
+      if (error || !data) {
         setProfile(null);
         setCompany(null);
         return;
       }
 
-      setProfile(profileData as Profile);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { company: companyData, ...profileData } = data as any;
+      const profile = profileData as Profile;
+      const company = (companyData && !Array.isArray(companyData)) ? companyData as Company : null;
 
-      // Get company if profile has company_id
-      const typedProfileData = profileData as { company_id?: string | null; [key: string]: unknown } | null;
-      if (typedProfileData?.company_id) {
-        const { data: companyData, error: companyError } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('id', typedProfileData.company_id)
-          .single();
-
-        if (!companyError && companyData) {
-          setCompany(companyData as Company);
-        }
-      }
+      setProfile(profile);
+      setCompany(company);
+      writeCache(userId, profile, company);
     } catch (error) {
       console.error('Error fetching profile and company:', error);
     }
@@ -93,54 +112,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const getSession = async () => {
       try {
-        console.log('AuthContext: Getting session...');
         setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('AuthContext: Session result -', session ? 'Found' : 'None');
 
         if (!isMounted) return;
 
         if (session?.user) {
           setUser(session.user);
-          console.log('AuthContext: Fetching profile for user...');
           await fetchProfileAndCompany(session.user.id);
-          console.log('AuthContext: Profile fetch complete');
         } else {
           setUser(null);
           setProfile(null);
           setCompany(null);
         }
       } catch (error) {
-        console.error('Error getting session:', error);
+        console.error('AuthContext error:', error);
         if (isMounted) {
           setUser(null);
           setProfile(null);
           setCompany(null);
         }
       } finally {
-        if (isMounted) {
-          console.log('AuthContext: Setting loading to false');
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
     getSession();
 
-    // Listen for auth changes
+    // Listen for auth changes — only act on SIGNED_OUT to avoid
+    // duplicate profile fetches already handled by getSession() above
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
-        
-        // Only handle SIGNED_IN if we don't already have a user
-        // (to avoid duplicate profile fetches with getSession)
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Don't call fetchProfile again if getSession already did it
-          // The initial getSession handles the first load
-        } else if (event === 'SIGNED_OUT') {
+      (event) => {
+        if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);
           setCompany(null);
+          clearCache();
         }
       }
     );
@@ -261,6 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      clearCache();
       await supabase.auth.signOut();
       setUser(null);
       setProfile(null);

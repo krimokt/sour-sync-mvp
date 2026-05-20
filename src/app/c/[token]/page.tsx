@@ -1,18 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import { useMagicLink } from '@/components/portal/MagicLinkProvider';
 import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
-import CreateQuotationButton from './quotations/CreateQuotationButton';
+import QuotationFormModalWithToken from '@/components/quotation/QuotationFormModalWithToken';
 import { FileText, CreditCard, Truck, Plus, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function PortalHomePage() {
   const { data } = useMagicLink();
   const pathname = usePathname();
+  const router = useRouter();
   const token = pathname.split('/')[2];
   const basePath = `/c/${token}`;
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning,' : hour < 17 ? 'Good afternoon,' : 'Good evening,';
@@ -37,19 +40,17 @@ export default function PortalHomePage() {
         {/* Action Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {data.scopes.includes('create') && (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:shadow-md hover:border-[#06b6d4]/30 transition-all group cursor-pointer">
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="text-left bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:shadow-md hover:border-[#06b6d4]/30 transition-all group cursor-pointer w-full"
+            >
               <div className="w-12 h-12 rounded-2xl bg-[#06b6d4]/10 flex items-center justify-center mb-4">
                 <Plus className="w-6 h-6 text-[#06b6d4]" />
               </div>
               <p className="font-bold text-gray-900 dark:text-white">Create Quotation</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Request pricing for new products</p>
-              <div className="mt-4">
-                <CreateQuotationButton
-                  token={token}
-                  allowedCountries={data.quotationCountries || []}
-                />
-              </div>
-            </div>
+              <p className="text-[#06b6d4] text-sm font-medium mt-4">Create Quote →</p>
+            </button>
           )}
 
           {data.scopes.includes('view') && (
@@ -103,6 +104,17 @@ export default function PortalHomePage() {
           </p>
         </div>
       </main>
+
+      <QuotationFormModalWithToken
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        token={token}
+        allowedCountries={data.quotationCountries || []}
+        onSuccess={() => {
+          setIsCreateOpen(false);
+          setTimeout(() => router.push(`${basePath}/quotations`), 1500);
+        }}
+      />
     </div>
   );
 }

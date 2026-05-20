@@ -3,10 +3,12 @@ import { QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,        // data stays fresh 30s — no spinner on revisit
-      gcTime: 5 * 60_000,       // keep unused data in cache 5 min
+      staleTime: 3 * 60_000,    // 3 min — no re-fetch on VPN where every round-trip costs
+      gcTime: 15 * 60_000,      // 15 min in memory — survive tab switches
       retry: 1,
+      retryDelay: 2000,         // wait 2s before retry (VPN may have brief drops)
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false, // don't hammer on VPN reconnect
     },
   },
 });

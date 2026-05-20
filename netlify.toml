@@ -3,6 +3,9 @@
   # Note: @netlify/plugin-nextjs automatically handles the publish directory
   # Do NOT set publish directory in Netlify UI - let the plugin handle it
 
+[functions]
+  node_bundler = "esbuild"
+
 [build.environment]
   NODE_VERSION = "20"
   PNPM_VERSION = "10"
@@ -32,6 +35,16 @@
   for = "/_next/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/_next/image*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store"
 
 # Force HTTPS - Redirect all HTTP traffic to HTTPS
 [[redirects]]

@@ -48,9 +48,35 @@ export default function ImageUploader({
     }
   };
 
+  const compressImage = (file: File, maxWidth = 1200, quality = 0.82): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob || blob.size >= file.size) { resolve(file); return; }
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  };
+
   const handleFiles = async (files: File[]) => {
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    
+
     if (imageFiles.length === 0) {
       alert('Please select image files only');
       return;
@@ -70,23 +96,21 @@ export default function ImageUploader({
     let completed = 0;
 
     for (const file of filesToUpload) {
+      const compressed = await compressImage(file);
       try {
-        // Generate unique filename
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${companyId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const fileName = `${companyId}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
 
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
           .from('product-images')
-          .upload(fileName, file, {
+          .upload(fileName, compressed, {
             cacheControl: '3600',
             upsert: false,
           });
 
         if (error) {
           console.error('Upload error:', error);
-          // If bucket doesn't exist, upload as base64 fallback
-          const base64 = await fileToBase64(file);
+          const base64 = await fileToBase64(compressed);
           uploadedUrls.push(base64);
         } else {
           // Get public URL
@@ -102,7 +126,7 @@ export default function ImageUploader({
       } catch (error) {
         console.error('Error uploading file:', error);
         // Fallback to base64
-        const base64 = await fileToBase64(file);
+        const base64 = await fileToBase64(compressed);
         uploadedUrls.push(base64);
         completed++;
         setUploadProgress(Math.round((completed / filesToUpload.length) * 100));

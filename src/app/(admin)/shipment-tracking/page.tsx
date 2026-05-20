@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useShipmentsQuery, shipmentKeys } from "@/hooks/useShipmentsQuery";
 import { 
   Table, 
   TableBody, 
@@ -64,14 +66,27 @@ interface ReceiverInfo {
 
 export default function ShipmentTrackingPage() {
   const { user } = useAuth();
-  const [shipmentData, setShipmentData] = useState<ShipmentTrackingData[]>([]);
+  const queryClient = useQueryClient();
+
+  // React Query — data is prefetched in AdminLayout, so this is instant on first visit
+  const { data: shipmentData = [], isLoading: loading, error: queryError } = useShipmentsQuery();
+  const error = queryError instanceof Error ? queryError.message : null;
+
   const [selectedShipment, setSelectedShipment] = useState<ShipmentTrackingData | null>(null);
-  const [filteredShipmentData, setFilteredShipmentData] = useState<ShipmentTrackingData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter client-side from cached data — no extra fetch
+  const filteredShipmentData = useMemo(() => {
+    if (!searchQuery.trim()) return shipmentData as unknown as ShipmentTrackingData[];
+    const q = searchQuery.toLowerCase();
+    return (shipmentData as unknown as ShipmentTrackingData[]).filter(s =>
+      s.quotation?.quotation_id?.toLowerCase().includes(q) ||
+      s.quotation?.product_name?.toLowerCase().includes(q)
+    );
+  }, [shipmentData, searchQuery]);
+
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+
   // Status management states
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
@@ -135,124 +150,12 @@ export default function ShipmentTrackingPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Fetch shipment data from Supabase - get user's shipments
+  // Fetch saved receivers (lightweight, not part of main query)
   useEffect(() => {
-    const fetchShipmentData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Step 1: Fetch all shipments
-        const { data: allShipments, error: shippingError } = await supabase
-          .from('shipping')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .range(0, 199); // cap at 200 rows to avoid unbounded fetches
-
-        if (shippingError) {
-          console.error("Error accessing shipping table:", shippingError);
-          setError("Failed to load shipping data: " + shippingError.message);
-          setLoading(false);
-          return;
-        }
-
-        if (!allShipments || allShipments.length === 0) {
-          setShipmentData([]);
-          setFilteredShipmentData([]);
-          setLoading(false);
-          return;
-        }
-
-        type ShippingRow = {
-          id: string;
-          user_id: string | null;
-          quotation_id: string | null;
-          status: string | null;
-          location: string | null;
-          created_at: string;
-          delivered_at: string | null;
-          estimated_delivery: string | null;
-          videos_urls: string[] | null;
-          images_urls: string[] | null;
-          receiver_name?: string | null;
-          receiver_phone?: string | null;
-          receiver_address?: string | null;
-        };
-
-        const shipmentsRows = (allShipments ?? []) as unknown as ShippingRow[];
-
-        const userIds = [...new Set(shipmentsRows.map(r => r.user_id).filter((id): id is string => id != null))];
-        const quotationIds = [...new Set(shipmentsRows.map(r => r.quotation_id).filter((id): id is string => id != null))];
-
-        // Step 2: Fetch profiles and quotations in parallel — cuts round trips from 3 to 2
-        const [profilesResult, quotationsResult] = await Promise.all([
-          userIds.length > 0
-            ? supabase.from('profiles').select('id, full_name, email').in('id', userIds)
-            : Promise.resolve({ data: [] as Array<{ id: string; full_name: string; email: string }>, error: null }),
-          quotationIds.length > 0
-            ? supabase.from('quotations').select('id, quotation_id, product_name, image_url, shipping_country, shipping_city, shipping_method').in('id', quotationIds)
-            : Promise.resolve({ data: [] as QuotationData[], error: null }),
-        ]);
-
-        if (profilesResult.error) console.error("Error fetching user data:", profilesResult.error);
-        if (quotationsResult.error) {
-          console.error("Error fetching quotation data:", quotationsResult.error);
-          setError("Failed to load quotation details");
-          setLoading(false);
-          return;
-        }
-
-        const usersMap: Record<string, { full_name: string; email: string }> = {};
-        (profilesResult.data ?? []).forEach((u: { id: string; full_name: string; email: string }) => {
-          usersMap[u.id] = { full_name: u.full_name, email: u.email };
-        });
-
-        const quotationsMap: Record<string, QuotationData> = {};
-        ((quotationsResult.data ?? []) as unknown as QuotationData[]).forEach((q) => {
-          quotationsMap[q.id] = q;
-        });
-
-        // Step 3: Merge in memory
-        const combinedData = shipmentsRows.map((shippingItem) => ({
-          ...shippingItem,
-          quotation: shippingItem.quotation_id ? (quotationsMap[shippingItem.quotation_id] ?? null) : null,
-          user: shippingItem.user_id ? (usersMap[shippingItem.user_id] ?? null) : null,
-        }));
-
-        setShipmentData(combinedData);
-        setFilteredShipmentData(combinedData);
-      } catch (err) {
-        console.error("Exception in fetchShipmentData:", err);
-        setError("An unexpected error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    const fetchSavedReceivers = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('shipping_receivers')
-          .select('*')
-          .eq('user_id', user.id);
-          
-        if (error) {
-          console.error("Error fetching saved receivers:", error);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          setSavedReceivers(data);
-        }
-      } catch (err) {
-        console.error("Exception fetching saved receivers:", err);
-      }
-    };
-    
-    fetchShipmentData();
-    fetchSavedReceivers();
+    if (!user?.id) return;
+    supabase.from('shipping_receivers').select('*').eq('user_id', user.id).then(({ data }) => {
+      if (data && data.length > 0) setSavedReceivers(data);
+    });
   }, [user?.id]);
 
   // Effect to check URL parameters for quotation ID
@@ -290,19 +193,7 @@ export default function ShipmentTrackingPage() {
 
   // Handle search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value.toLowerCase();
-    setSearchQuery(query);
-    
-    if (query.trim() === "") {
-      setFilteredShipmentData(shipmentData);
-    } else {
-      const filtered = shipmentData.filter(
-        shipment => 
-          shipment.quotation?.quotation_id?.toLowerCase().includes(query) ||
-          shipment.quotation?.product_name?.toLowerCase().includes(query)
-      );
-      setFilteredShipmentData(filtered);
-    }
+    setSearchQuery(e.target.value);
   };
 
   // View shipment details
@@ -418,34 +309,8 @@ export default function ShipmentTrackingPage() {
         throw updateError;
       }
       
-      // Update the local state to reflect the change
-      setShipmentData(prevData => 
-        prevData.map(shipment => 
-          shipment.id === selectedShipment.id 
-            ? { 
-                ...shipment, 
-                status: 'processing',
-                receiver_name: receiverInfo.receiver_name,
-                receiver_phone: receiverInfo.receiver_phone,
-                receiver_address: receiverInfo.receiver_address
-              } 
-            : shipment
-        )
-      );
-      
-      setFilteredShipmentData(prevData => 
-        prevData.map(shipment => 
-          shipment.id === selectedShipment.id 
-            ? { 
-                ...shipment, 
-                status: 'processing',
-                receiver_name: receiverInfo.receiver_name,
-                receiver_phone: receiverInfo.receiver_phone,
-                receiver_address: receiverInfo.receiver_address
-              } 
-            : shipment
-        )
-      );
+      // Invalidate cache — Realtime will also trigger a refetch
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
       
       // If we're saving for later, update the local state
       if (saveForLater && !useExistingReceiver) {
@@ -537,24 +402,7 @@ export default function ShipmentTrackingPage() {
         .eq('id', selectedShipment.id);
         
       if (updateError) throw updateError;
-      
-      // Update local state
-      setShipmentData(prevData =>
-        prevData.map(shipment =>
-          shipment.id === selectedShipment.id
-            ? { ...shipment, status: newStatus }
-            : shipment
-        )
-      );
-      
-      setFilteredShipmentData(prevData =>
-        prevData.map(shipment =>
-          shipment.id === selectedShipment.id
-            ? { ...shipment, status: newStatus }
-            : shipment
-        )
-      );
-      
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
       setShowStatusModal(false);
     } catch (err) {
       console.error("Error updating status:", err);
@@ -667,19 +515,8 @@ export default function ShipmentTrackingPage() {
         } : null
       };
       
-      setShipmentData(prevData =>
-        prevData.map(shipment =>
-          shipment.id === selectedShipment.id ? updatedShipment : shipment
-        )
-      );
-      
-      setFilteredShipmentData(prevData =>
-        prevData.map(shipment =>
-          shipment.id === selectedShipment.id ? updatedShipment : shipment
-        )
-      );
-      
       setSelectedShipment(updatedShipment);
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
       setIsEditingDetails(false);
     } catch (err) {
       console.error("Error updating shipment details:", err);
@@ -784,24 +621,8 @@ export default function ShipmentTrackingPage() {
         throw new Error(`Failed to update shipping record: ${updateError.message}`);
       }
       
-      // Update local state
-      const updatedShipment = {
-        ...selectedShipment,
-        [`${type}_urls`]: [...existingUrls, ...uploadedUrls]
-      };
-      
-      setSelectedShipment(updatedShipment);
-      setShipmentData(prevData =>
-        prevData.map(shipment =>
-          shipment.id === selectedShipment.id ? updatedShipment : shipment
-        )
-      );
-      
-      setFilteredShipmentData(prevData =>
-        prevData.map(shipment =>
-          shipment.id === selectedShipment.id ? updatedShipment : shipment
-        )
-      );
+      setSelectedShipment({ ...selectedShipment, [`${type}_urls`]: [...existingUrls, ...uploadedUrls] });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
       
     } catch (err) {
       console.error("Error uploading files:", err);

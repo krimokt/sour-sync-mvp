@@ -7,7 +7,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster as UIToaster } from "@/components/ui/toaster";
 import { Toaster } from "sonner";
-import { SupabaseProvider } from '@/context/SupabaseProvider'
+import { SupabaseProvider } from '@/context/SupabaseProvider';
+import { QueryProvider } from '@/providers/QueryProvider';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -80,9 +81,11 @@ export default function RootLayout({
       <body className="font-jakarta dark:bg-gray-900">
         <ThemeProvider>
           <AuthProvider>
-            <SupabaseProvider>
-              <SidebarProvider>{children}</SidebarProvider>
-            </SupabaseProvider>
+            <QueryProvider>
+              <SupabaseProvider>
+                <SidebarProvider>{children}</SidebarProvider>
+              </SupabaseProvider>
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
         <UIToaster />

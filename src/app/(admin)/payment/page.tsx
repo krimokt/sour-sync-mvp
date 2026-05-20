@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Image from "next/image";
+import { usePaymentsQuery, paymentKeys } from "@/hooks/usePaymentsQuery";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Profile {
   id: string;
@@ -45,11 +47,11 @@ const showToast = (message: string, type: 'success' | 'error') => {
 };
 
 export default function PaymentPage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data: payments = [], isLoading: loading, error: queryError } = usePaymentsQuery();
+  const error = queryError instanceof Error ? queryError.message : null;
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [currentProofUrl, setCurrentProofUrl] = useState<string | null>(null);
   const [quotationModalOpen, setQuotationModalOpen] = useState(false);
@@ -57,234 +59,30 @@ export default function PaymentPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState<string | null>(null);
 
-  // Fetch all payment records from Supabase
-  useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Step 1: Fetch all payments
-        const { data: paymentsData, error: paymentsError } = await supabase
-          .from('payments')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (paymentsError) {
-          console.error("Error fetching payments:", paymentsError);
-          setError(`Failed to load payments: ${paymentsError.message}`);
-          return;
-        }
-        
-        if (!paymentsData || paymentsData.length === 0) {
-          setPayments([]);
-          setFilteredPayments([]);
-          setLoading(false);
-          return;
-        }
-
-        // Provide a concrete shape for payments rows to avoid 'never' inference
-        type PaymentRow = {
-          id: string;
-          user_id: string | null;
-          total_amount: number | string;
-          method: string;
-          status: string;
-          proof_url: string | null;
-          created_at: string;
-          quotation_ids: string[] | string | null;
-          payment_proof: string | null;
-          reference_number: string | null;
-        };
-
-        const paymentsRows = (paymentsData ?? []) as unknown as PaymentRow[];
-
-        // Collect unique user IDs
-        const userIds = [...new Set(paymentsRows.map(p => p.user_id).filter(Boolean))] as string[];
-
-        // Collect quotation IDs (array or comma-separated string format)
-        const quotationIds: string[] = [];
-        paymentsRows.forEach(payment => {
-          if (payment.quotation_ids && Array.isArray(payment.quotation_ids)) {
-            payment.quotation_ids.forEach((id) => { if (id && typeof id === 'string') quotationIds.push(id); });
-          } else if (payment.quotation_ids && typeof payment.quotation_ids === 'string') {
-            quotationIds.push(...payment.quotation_ids.split(',').map(id => id.trim()).filter(Boolean));
-          }
-        });
-        const uniqueQuotationIds = [...new Set(quotationIds)];
-
-        const referenceNumbers = [...new Set(paymentsRows.map(p => p.reference_number).filter(Boolean))] as string[];
-
-        // Run all enrichment queries in parallel — cuts 4 sequential calls down to 2 round trips
-        const [profilesResult, quotationsByIdResult, quotationsByRefResult] = await Promise.all([
-          userIds.length > 0
-            ? supabase.from('profiles').select('id, email, full_name').in('id', userIds)
-            : Promise.resolve({ data: [] as Profile[], error: null }),
-          uniqueQuotationIds.length > 0
-            ? supabase.from('quotations').select('id, quotation_id, product_name, total_price_option1, image_url').in('id', uniqueQuotationIds)
-            : Promise.resolve({ data: [] as Quotation[], error: null }),
-          referenceNumbers.length > 0
-            ? supabase.from('quotations').select('id, quotation_id, product_name, total_price_option1, image_url').in('quotation_id', referenceNumbers)
-            : Promise.resolve({ data: [] as Quotation[], error: null }),
-        ]);
-
-        if (profilesResult.error) console.error("Error fetching profiles:", profilesResult.error);
-        if (quotationsByIdResult.error) console.error("Error fetching quotations by ID:", quotationsByIdResult.error);
-        if (quotationsByRefResult.error) console.error("Error fetching quotations by reference:", quotationsByRefResult.error);
-
-        const profilesRows = (profilesResult.data ?? []) as unknown as Profile[];
-        const profilesMap = profilesRows.reduce((acc, profile) => { acc[profile.id] = profile; return acc; }, {} as Record<string, Profile>);
-
-        const quotationsMap: Record<string, Quotation> = {};
-        ((quotationsByIdResult.data ?? []) as unknown as Quotation[]).forEach(q => { quotationsMap[q.id] = q; });
-        ((quotationsByRefResult.data ?? []) as unknown as Quotation[]).forEach(q => { quotationsMap[q.id] = q; });
-        
-        // Step 6: Combine all data
-        const enrichedPayments: Payment[] = paymentsRows.map(payment => {
-          // Get profile for this payment
-          const profile = payment.user_id ? profilesMap[payment.user_id] : undefined;
-          
-          // Get quotations for this payment
-          const quotations: Quotation[] = [];
-          
-          // Try to match by quotation_ids array
-          if (payment.quotation_ids) {
-            // Handle array format
-            if (Array.isArray(payment.quotation_ids)) {
-              payment.quotation_ids.forEach((id: string) => {
-                if (quotationsMap[id]) {
-                  quotations.push(quotationsMap[id]);
-                }
-              });
-            }
-            // Handle string format
-            else if (typeof payment.quotation_ids === 'string') {
-              payment.quotation_ids.split(',').forEach((id: string) => {
-                const trimmedId = id.trim();
-                if (trimmedId && quotationsMap[trimmedId]) {
-                  quotations.push(quotationsMap[trimmedId]);
-                }
-              });
-            }
-          }
-          
-          // If no quotations found by ID, try to match by reference number
-          if (quotations.length === 0 && payment.reference_number) {
-            Object.values(quotationsMap).forEach(quotation => {
-              if (quotation.quotation_id === payment.reference_number) {
-                quotations.push(quotation);
-              }
-            });
-          }
-          
-          return {
-            id: payment.id,
-            user_id: payment.user_id,
-            total_amount: String(payment.total_amount),
-            method: payment.method,
-            status: payment.status,
-            proof_url: payment.proof_url,
-            created_at: payment.created_at,
-            quotation_ids: Array.isArray(payment.quotation_ids)
-              ? payment.quotation_ids
-              : (typeof payment.quotation_ids === 'string'
-                ? payment.quotation_ids.split(',').map((id) => id.trim()).filter(Boolean)
-                : null),
-            payment_proof: payment.payment_proof,
-            reference_number: payment.reference_number,
-            profile,
-            quotations: quotations.length > 0 ? quotations : undefined
-          };
-        });
-        
-        setPayments(enrichedPayments);
-        setFilteredPayments(enrichedPayments);
-      } catch (err) {
-        console.error("Unexpected error:", err);
-        setError("An unexpected error occurred while fetching payments");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchPayments();
-  }, []);
-
-  // Search functionality
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredPayments(payments);
-      return;
-    }
-    
-    const query = searchQuery.toLowerCase();
-    const filtered = payments.filter(payment => 
-      payment.id.toLowerCase().includes(query) ||
-      (payment.user_id && payment.user_id.toLowerCase().includes(query)) ||
-      (payment.profile?.email && payment.profile.email.toLowerCase().includes(query)) ||
-      (payment.profile?.full_name && payment.profile.full_name.toLowerCase().includes(query)) ||
-      (payment.reference_number && payment.reference_number.toLowerCase().includes(query)) ||
-      payment.method.toLowerCase().includes(query) ||
-      payment.status.toLowerCase().includes(query) ||
-      (payment.quotations && payment.quotations.some(q => 
-        q.product_name.toLowerCase().includes(query) || 
-        q.quotation_id.toLowerCase().includes(query)
-      ))
+  // Client-side search on cached data — no extra queries
+  const filteredPayments = useMemo(() => {
+    if (!searchQuery.trim()) return payments;
+    const q = searchQuery.toLowerCase();
+    return payments.filter(p =>
+      p.id.toLowerCase().includes(q) ||
+      (p.profile?.email && p.profile.email.toLowerCase().includes(q)) ||
+      (p.profile?.full_name && p.profile.full_name.toLowerCase().includes(q)) ||
+      (p.reference_number && p.reference_number.toLowerCase().includes(q)) ||
+      p.method.toLowerCase().includes(q) ||
+      p.status.toLowerCase().includes(q) ||
+      (p.quotations && p.quotations.some(qt => qt.product_name.toLowerCase().includes(q) || qt.quotation_id.toLowerCase().includes(q)))
     );
-    
-    setFilteredPayments(filtered);
   }, [searchQuery, payments]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-  const formatAmount = (amount: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(Number(amount));
-  };
+  const formatAmount = (amount: string) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amount));
 
-  // Refresh data function 
-  const refreshData = async () => {
-    setLoading(true);
+  const refreshData = () => {
     setSearchQuery("");
-    
-    try {
-      // Re-fetch all payment data
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (paymentsError) {
-        console.error("Error fetching payments:", paymentsError);
-        setError(`Failed to refresh: ${paymentsError.message}`);
-      return;
-    }
-    
-      if (!paymentsData || paymentsData.length === 0) {
-        setPayments([]);
-        setFilteredPayments([]);
-      return;
-    }
-    
-      // Proceed with processing the data as in the original fetch
-      // This is a simplified version - you'd repeat the same steps to get profiles and quotations
-      setPayments(paymentsData);
-      setFilteredPayments(paymentsData);
-      
-    } catch (err) {
-      console.error("Unexpected error during refresh:", err);
-      setError("An unexpected error occurred while refreshing payments");
-    } finally {
-      setLoading(false);
-    }
+    queryClient.invalidateQueries({ queryKey: paymentKeys.all() });
   };
 
   // Handle opening proof modal
@@ -319,23 +117,7 @@ export default function PaymentPage() {
         return;
       }
       
-      // Update state locally instead of fetching all data again
-      setPayments(prevPayments => 
-        prevPayments.map(payment => 
-          payment.id === paymentId 
-            ? { ...payment, status: newStatus } 
-            : payment
-        )
-      );
-      
-      setFilteredPayments(prevPayments => 
-        prevPayments.map(payment => 
-          payment.id === paymentId 
-            ? { ...payment, status: newStatus } 
-              : payment
-        )
-      );
-      
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all() });
       showToast(`Payment status changed to ${newStatus}`, 'success');
       setIsStatusDropdownOpen(null);
     } catch (err) {

@@ -10,10 +10,14 @@ import {
   ArrowLeft,
   ShoppingCart,
   Clock,
-  DollarSign,
   AlertCircle,
   Info,
+  Package,
+  MapPin,
+  Truck,
+  Link2,
 } from 'lucide-react';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import CheckoutModal from '@/components/portal/CheckoutModal';
@@ -50,10 +54,22 @@ interface Quotation {
   product_images?: string[];
 }
 
-const optionThemes = [
-  { accent: '#6366f1', label: 'Standard', lightBg: 'bg-indigo-50 dark:bg-indigo-950/40', borderColor: '#6366f1' },
-  { accent: '#06b6d4', label: 'Popular', lightBg: 'bg-cyan-50 dark:bg-cyan-950/40', borderColor: '#06b6d4' },
-  { accent: '#f59e0b', label: 'Premium', lightBg: 'bg-amber-50 dark:bg-amber-950/40', borderColor: '#f59e0b' },
+const OPTION_THEMES = [
+  {
+    accent: '#6366f1',
+    label: 'Standard',
+    lightBg: 'bg-indigo-50 dark:bg-indigo-950/40',
+  },
+  {
+    accent: '#06b6d4',
+    label: 'Popular',
+    lightBg: 'bg-cyan-50 dark:bg-cyan-950/40',
+  },
+  {
+    accent: '#f59e0b',
+    label: 'Premium',
+    lightBg: 'bg-amber-50 dark:bg-amber-950/40',
+  },
 ];
 
 function parseOptionImages(raw: string | undefined): string[] {
@@ -66,6 +82,28 @@ function parseOptionImages(raw: string | undefined): string[] {
   }
 }
 
+function StatusBadge({ status }: { status?: string }) {
+  if (status === 'Approved') {
+    return (
+      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/60">
+        Approved
+      </span>
+    );
+  }
+  if (status === 'Rejected') {
+    return (
+      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-100 dark:border-red-800/60">
+        Rejected
+      </span>
+    );
+  }
+  return (
+    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-100 dark:border-amber-800/60">
+      {status || 'Pending'}
+    </span>
+  );
+}
+
 export default function QuotationDetailPage() {
   const pathname = usePathname();
   const router = useRouter();
@@ -76,21 +114,15 @@ export default function QuotationDetailPage() {
   const [quotation, setQuotation] = useState<Quotation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const fetchQuotation = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-
     try {
       const response = await fetch(`/api/c/${token}/quotations/${quotationId}`);
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch quotation');
-      }
-
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch quotation');
       setQuotation(result.quotation);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load quotation');
@@ -103,60 +135,22 @@ export default function QuotationDetailPage() {
     fetchQuotation();
   }, [fetchQuotation]);
 
-  const handleApprove = async () => {
-    if (!confirm('Are you sure you want to approve this quotation?')) {
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      const response = await fetch(`/api/c/${token}/quotations/${quotationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Approved' }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to approve quotation');
-      }
-
-      setQuotation(result.quotation);
-      router.refresh();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to approve quotation');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const handleSelectOption = async (optionNumber: number) => {
     if (!quotation) return;
-
-    // Optimize: Update local state immediately for instant feedback
     setQuotation({ ...quotation, selected_option: optionNumber });
-
-    // Sync with server in background
     try {
       const response = await fetch(`/api/c/${token}/quotations/${quotationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ selected_option: optionNumber }),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
-        // Revert on error
         setQuotation({ ...quotation, selected_option: quotation.selected_option });
         throw new Error(result.error || 'Failed to select option');
       }
-
-      // Update with server response to ensure consistency
       setQuotation(result.quotation);
     } catch (err) {
-      // Only show error if it's not a network issue (user already sees the change)
       console.error('Failed to sync option selection:', err);
     }
   };
@@ -168,7 +162,7 @@ export default function QuotationDetailPage() {
         <PortalNav />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-7 h-7 animate-spin text-[#06b6d4]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#06b6d4]" />
           </div>
         </main>
       </div>
@@ -181,37 +175,20 @@ export default function QuotationDetailPage() {
         <PortalHeader />
         <PortalNav />
         <main className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-5">
-            <p className="text-red-700 dark:text-red-400 text-sm">{error || 'Quotation not found'}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/60 rounded-2xl p-5">
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {error || 'Quotation not found'}
+            </p>
           </div>
         </main>
       </div>
     );
   }
 
-  const images = quotation.image_urls || quotation.product_images || (quotation.image_url ? [quotation.image_url] : []);
-
-  const statusBadge = () => {
-    if (quotation.status === 'Approved') {
-      return (
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-          Approved
-        </span>
-      );
-    }
-    if (quotation.status === 'Rejected') {
-      return (
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
-          Rejected
-        </span>
-      );
-    }
-    return (
-      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
-        {quotation.status || 'Pending'}
-      </span>
-    );
-  };
+  const images =
+    quotation.image_urls ||
+    quotation.product_images ||
+    (quotation.image_url ? [quotation.image_url] : []);
 
   const optionData = [
     {
@@ -247,28 +224,30 @@ export default function QuotationDetailPage() {
       <PortalHeader />
       <PortalNav />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Back Link */}
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+        {/* Back */}
         <Link
           href={`${basePath}/quotations`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Quotations
         </Link>
 
-        {/* Product Hero Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-6">
-          {/* Images Strip */}
+        {/* Product card */}
+        <div className="bg-white dark:bg-gray-900/70 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
           {images.length > 0 && (
-            <div className="flex gap-3 p-4 overflow-x-auto bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex gap-2.5 p-4 overflow-x-auto bg-gray-50 dark:bg-gray-800/40">
               {images.map((img, idx) => (
-                <div key={idx} className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden">
+                <div
+                  key={idx}
+                  className="shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700"
+                >
                   <Image
                     src={img}
                     alt={`Product image ${idx + 1}`}
-                    width={96}
-                    height={96}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -276,46 +255,71 @@ export default function QuotationDetailPage() {
             </div>
           )}
 
-          {/* Product Details */}
           <div className="p-6">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 mb-5">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                   {quotation.product_name || 'Quotation'}
                 </h1>
-                <p className="text-sm font-mono text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-xs font-mono text-gray-400 dark:text-gray-500 mt-0.5">
                   {quotation.quotation_id || quotation.id}
                 </p>
               </div>
-              {statusBadge()}
+              <StatusBadge status={quotation.status} />
             </div>
 
-            {/* Detail Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-5">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Quantity</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{quotation.quantity || 1}</p>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Destination</p>
+            {/* Details grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Package className="w-3.5 h-3.5 text-gray-400" />
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    Quantity
+                  </p>
+                </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {[quotation.destination_city, quotation.destination_country].filter(Boolean).join(', ') || '—'}
+                  {quotation.quantity || 1}
                 </p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Shipping Method</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{quotation.shipping_method || 'TBD'}</p>
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    Destination
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {[quotation.destination_city, quotation.destination_country]
+                    .filter(Boolean)
+                    .join(', ') || '—'}
+                </p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Truck className="w-3.5 h-3.5 text-gray-400" />
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    Shipping
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {quotation.shipping_method || 'TBD'}
+                </p>
               </div>
               {quotation.product_url && (
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 col-span-2 sm:col-span-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Product URL</p>
+                <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Link2 className="w-3.5 h-3.5 text-gray-400" />
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                      Product Link
+                    </p>
+                  </div>
                   <a
                     href={quotation.product_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-semibold text-[#06b6d4] hover:underline"
                   >
-                    View Product
+                    View
                   </a>
                 </div>
               )}
@@ -323,123 +327,134 @@ export default function QuotationDetailPage() {
           </div>
         </div>
 
-        {/* Price Options Section */}
+        {/* Price options */}
         {quotation.status === 'Approved' && hasOptions && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-lg bg-[#06b6d4]/10 flex items-center justify-center">
-                <DollarSign className="w-3.5 h-3.5 text-[#06b6d4]" />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Choose Your Option</h2>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 ml-8">
-              Select the pricing option that works best for you
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white mb-3 px-1">
+              Choose Your Option
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {optionData.map(({ n, price, title, description, deliveryTime, imageRaw }) => {
-                const theme = optionThemes[n - 1];
+                const theme = OPTION_THEMES[n - 1];
                 const isSelected = quotation.selected_option === n;
                 const optionImages = parseOptionImages(imageRaw);
                 const priceNum = parseFloat(price!);
-                const perUnit = quotation.quantity && quotation.quantity > 1
-                  ? (priceNum / quotation.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  : null;
+                const perUnit =
+                  quotation.quantity && quotation.quantity > 1
+                    ? (priceNum / quotation.quantity).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                    : null;
 
                 return (
                   <div
                     key={n}
                     onClick={() => handleSelectOption(n)}
                     className={`cursor-pointer rounded-2xl border-2 overflow-hidden transition-all duration-200 ${
-                      isSelected ? '' : 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
+                      isSelected
+                        ? ''
+                        : 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
                     }`}
-                    style={isSelected
-                      ? { borderColor: theme.accent, boxShadow: `0 4px 20px ${theme.accent}22` }
-                      : {}}
+                    style={
+                      isSelected
+                        ? {
+                            borderColor: theme.accent,
+                            boxShadow: `0 4px 20px ${theme.accent}22`,
+                          }
+                        : {}
+                    }
                   >
-                    <div className="overflow-hidden">
-                      {/* Card Header */}
-                      <div className={`${theme.lightBg} px-4 py-3 border-b border-gray-100 dark:border-gray-800`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm text-white"
-                              style={{ backgroundColor: isSelected ? theme.accent : '#9ca3af' }}
-                            >
-                              {n}
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900 dark:text-white">Option {n}</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{theme.label}</p>
-                            </div>
+                    {/* Header */}
+                    <div
+                      className={`${theme.lightBg} px-4 py-3 border-b border-gray-100 dark:border-gray-800`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm text-white"
+                            style={{
+                              backgroundColor: isSelected ? theme.accent : '#9ca3af',
+                            }}
+                          >
+                            {n}
                           </div>
-                          {isSelected ? (
-                            <span
-                              className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-                              style={{ color: theme.accent, backgroundColor: `${theme.accent}18` }}
-                            >
-                              <CheckCircle className="w-3 h-3" />
-                              Selected
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400 font-medium">Select</span>
-                          )}
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              Option {n}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {theme.label}
+                            </p>
+                          </div>
                         </div>
+                        {isSelected ? (
+                          <span
+                            className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                            style={{
+                              color: theme.accent,
+                              backgroundColor: `${theme.accent}18`,
+                            }}
+                          >
+                            <CheckCircle className="w-3 h-3" />
+                            Selected
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 font-medium">Select</span>
+                        )}
                       </div>
+                    </div>
 
-                      {/* Option Image */}
-                      {optionImages[0] && (
-                        <div className="relative h-36 bg-gray-50 dark:bg-gray-800">
-                          <Image
-                            src={optionImages[0]}
-                            alt={title || `Option ${n}`}
-                            fill
-                            className="object-cover"
-                          />
+                    {/* Option image */}
+                    {optionImages[0] && (
+                      <div className="relative h-36 bg-gray-50 dark:bg-gray-800">
+                        <Image
+                          src={optionImages[0]}
+                          alt={title || `Option ${n}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {/* Price */}
+                    <div className="p-4 bg-white dark:bg-gray-900">
+                      <div className="flex items-end gap-2 mb-3">
+                        <span className="text-3xl font-extrabold text-gray-900 dark:text-white tabular-nums">
+                          ${priceNum.toLocaleString()}
+                        </span>
+                        {perUnit && (
+                          <span className="text-sm text-gray-500 pb-1">
+                            ${perUnit} / unit
+                          </span>
+                        )}
+                      </div>
+                      {deliveryTime && (
+                        <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-2">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{deliveryTime}</span>
                         </div>
                       )}
+                      {description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                          {description}
+                        </p>
+                      )}
 
-                      {/* Price Display */}
-                      <div className="p-4">
-                        <div className="flex items-end gap-2 mb-3">
-                          <span className="text-3xl font-extrabold text-gray-900 dark:text-white">
-                            ${priceNum.toLocaleString()}
-                          </span>
-                          {perUnit && (
-                            <span className="text-sm text-gray-500 pb-1">
-                              ${perUnit} / unit
-                            </span>
-                          )}
-                        </div>
-
-                        {deliveryTime && (
-                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-2">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>{deliveryTime}</span>
-                          </div>
-                        )}
-
-                        {description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {description}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Select CTA */}
-                      <div className="px-4 pb-4">
-                        <button
-                          className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                            isSelected
-                              ? 'text-white'
-                              : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          }`}
-                          style={isSelected ? { backgroundColor: theme.accent } : {}}
-                          onClick={(e) => { e.stopPropagation(); handleSelectOption(n); }}
-                        >
-                          {isSelected ? 'Selected' : 'Choose this option'}
-                        </button>
-                      </div>
+                      <button
+                        className={`w-full mt-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                          isSelected
+                            ? 'text-white'
+                            : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}
+                        style={isSelected ? { backgroundColor: theme.accent } : {}}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectOption(n);
+                        }}
+                      >
+                        {isSelected ? 'Selected' : 'Choose this option'}
+                      </button>
                     </div>
                   </div>
                 );
@@ -448,15 +463,17 @@ export default function QuotationDetailPage() {
           </div>
         )}
 
-        {/* Action Banners */}
+        {/* Status banners */}
         {quotation.status === 'Pending' && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-2xl p-5">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/60 rounded-2xl p-5">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
               <div>
-                <p className="font-semibold text-amber-900 dark:text-amber-200">Awaiting Admin Review</p>
+                <p className="font-semibold text-amber-900 dark:text-amber-200 text-sm">
+                  Awaiting Review
+                </p>
                 <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
-                  Your quotation is being processed. You will be notified when a price is available.
+                  Your quotation is being reviewed. We will notify you once pricing is available.
                 </p>
               </div>
             </div>
@@ -464,20 +481,22 @@ export default function QuotationDetailPage() {
         )}
 
         {quotation.status === 'Approved' && quotation.selected_option && (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-5 mt-4">
-            <div className="flex items-center justify-between gap-4">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/60 rounded-2xl p-5">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
                 <div>
-                  <p className="font-semibold text-emerald-900 dark:text-emerald-200">
+                  <p className="font-semibold text-emerald-900 dark:text-emerald-200 text-sm">
                     Option {quotation.selected_option} Selected
                   </p>
-                  <p className="text-sm text-emerald-700 dark:text-emerald-400">Ready to proceed with payment</p>
+                  <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                    Ready to proceed with payment
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsCheckoutOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors flex-shrink-0"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors shrink-0"
               >
                 <ShoppingCart className="w-4 h-4" />
                 Proceed to Checkout
@@ -487,18 +506,17 @@ export default function QuotationDetailPage() {
         )}
 
         {quotation.status === 'Approved' && !quotation.selected_option && hasOptions && (
-          <div className="bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl p-5 mt-4">
+          <div className="bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl p-5">
             <div className="flex items-center gap-3">
-              <Info className="w-5 h-5 text-[#06b6d4] flex-shrink-0" />
+              <Info className="w-5 h-5 text-[#06b6d4] shrink-0" />
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Please select a price option above to proceed with payment.
+                Select a pricing option above to proceed with payment.
               </p>
             </div>
           </div>
         )}
       </main>
 
-      {/* Checkout Modal */}
       {quotation && (
         <CheckoutModal
           isOpen={isCheckoutOpen}

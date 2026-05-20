@@ -525,9 +525,9 @@ const QuotationFormModalWithToken: React.FC<QuotationFormModalWithTokenProps> = 
                     setFormData({ ...formData, destinationCountry: country.code });
                     setSearchQuery("");
                   }}
-                  className={`w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 ${
+                  className={`w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors ${
                     formData.destinationCountry === country.code
-                      ? "bg-[#0f7aff]/10 border-l-4 border-[#0f7aff]"
+                      ? "bg-[#06b6d4]/10"
                       : ""
                   }`}
                 >

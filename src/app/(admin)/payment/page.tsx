@@ -82,8 +82,6 @@ export default function PaymentPage() {
           setLoading(false);
           return;
         }
-        
-        console.log(`Successfully fetched ${paymentsData.length} payment records`);
 
         // Provide a concrete shape for payments rows to avoid 'never' inference
         type PaymentRow = {
@@ -100,103 +98,46 @@ export default function PaymentPage() {
         };
 
         const paymentsRows = (paymentsData ?? []) as unknown as PaymentRow[];
-        
-        // Debug: Check quotation_ids format in payments
-        console.log("Sample payment quotation_ids:", 
-          paymentsRows.slice(0, 3).map(p => ({ 
-            id: p.id, 
-            quotation_ids: p.quotation_ids,
-            type: p.quotation_ids ? typeof p.quotation_ids : 'null',
-            isArray: p.quotation_ids ? Array.isArray(p.quotation_ids) : false
-          }))
-        );
-        
-        // Step 2: Get unique user IDs
-        const userIds = [...new Set(paymentsRows.map(payment => payment.user_id).filter(Boolean))];
-        
-        // Step 3: Fetch profiles for those user IDs
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, email, full_name')
-          .in('id', userIds);
-          
-        if (profilesError) {
-          console.error("Error fetching profiles:", profilesError);
-        }
-        
-        // Create a map of user_id -> profile for quick lookup
-        const profilesRows = (profilesData ?? []) as unknown as Profile[]
-        const profilesMap = profilesRows.reduce((acc, profile) => {
-          acc[profile.id] = profile;
-          return acc;
-        }, {} as Record<string, Profile>);
-        
-        // Step 4: Get all quotation IDs from all payments
-        // Handle different potential formats of quotation_ids
+
+        // Collect unique user IDs
+        const userIds = [...new Set(paymentsRows.map(p => p.user_id).filter(Boolean))] as string[];
+
+        // Collect quotation IDs (array or comma-separated string format)
         const quotationIds: string[] = [];
         paymentsRows.forEach(payment => {
-          // Handle array of IDs
           if (payment.quotation_ids && Array.isArray(payment.quotation_ids)) {
-            payment.quotation_ids.forEach((id) => {
-              if (id && typeof id === 'string') {
-                quotationIds.push(id);
-              }
-            });
-          }
-          // Handle string format (comma-separated IDs)
-          else if (payment.quotation_ids && typeof payment.quotation_ids === 'string') {
-            const ids = payment.quotation_ids.split(',').map((id) => id.trim());
-            quotationIds.push(...ids.filter(Boolean));
+            payment.quotation_ids.forEach((id) => { if (id && typeof id === 'string') quotationIds.push(id); });
+          } else if (payment.quotation_ids && typeof payment.quotation_ids === 'string') {
+            quotationIds.push(...payment.quotation_ids.split(',').map(id => id.trim()).filter(Boolean));
           }
         });
-        
-        console.log(`Extracted ${quotationIds.length} quotation IDs from payments`);
-        
-        // Get reference numbers to look up associated quotations
-        const referenceNumbers = paymentsRows
-          .map(p => p.reference_number)
-          .filter(Boolean) as string[];
-        
-        console.log(`Found ${referenceNumbers.length} reference numbers to check for quotations`);
-        
-        // Step 5: Fetch quotation data using both ID and reference number
+        const uniqueQuotationIds = [...new Set(quotationIds)];
+
+        const referenceNumbers = [...new Set(paymentsRows.map(p => p.reference_number).filter(Boolean))] as string[];
+
+        // Run all enrichment queries in parallel — cuts 4 sequential calls down to 2 round trips
+        const [profilesResult, quotationsByIdResult, quotationsByRefResult] = await Promise.all([
+          userIds.length > 0
+            ? supabase.from('profiles').select('id, email, full_name').in('id', userIds)
+            : Promise.resolve({ data: [] as Profile[], error: null }),
+          uniqueQuotationIds.length > 0
+            ? supabase.from('quotations').select('id, quotation_id, product_name, total_price_option1, image_url').in('id', uniqueQuotationIds)
+            : Promise.resolve({ data: [] as Quotation[], error: null }),
+          referenceNumbers.length > 0
+            ? supabase.from('quotations').select('id, quotation_id, product_name, total_price_option1, image_url').in('quotation_id', referenceNumbers)
+            : Promise.resolve({ data: [] as Quotation[], error: null }),
+        ]);
+
+        if (profilesResult.error) console.error("Error fetching profiles:", profilesResult.error);
+        if (quotationsByIdResult.error) console.error("Error fetching quotations by ID:", quotationsByIdResult.error);
+        if (quotationsByRefResult.error) console.error("Error fetching quotations by reference:", quotationsByRefResult.error);
+
+        const profilesRows = (profilesResult.data ?? []) as unknown as Profile[];
+        const profilesMap = profilesRows.reduce((acc, profile) => { acc[profile.id] = profile; return acc; }, {} as Record<string, Profile>);
+
         const quotationsMap: Record<string, Quotation> = {};
-        
-        // First fetch by IDs if we have any
-        if (quotationIds.length > 0) {
-          const { data: quotationsDataById, error: quotationsErrorById } = await supabase
-            .from('quotations')
-            .select('id, quotation_id, product_name, total_price_option1, image_url')
-            .in('id', quotationIds);
-            
-          if (quotationsErrorById) {
-            console.error("Error fetching quotations by ID:", quotationsErrorById);
-          } else if (quotationsDataById) {
-            console.log(`Found ${quotationsDataById.length} matching quotations by ID`);
-            
-            (quotationsDataById as unknown as Quotation[]).forEach((quotation) => {
-              quotationsMap[quotation.id] = quotation;
-            });
-          }
-        }
-        
-        // Then fetch by reference numbers
-        if (referenceNumbers.length > 0) {
-          const { data: quotationsDataByRef, error: quotationsErrorByRef } = await supabase
-            .from('quotations')
-            .select('id, quotation_id, product_name, total_price_option1, image_url')
-            .in('quotation_id', referenceNumbers);
-            
-          if (quotationsErrorByRef) {
-            console.error("Error fetching quotations by reference:", quotationsErrorByRef);
-          } else if (quotationsDataByRef) {
-            console.log(`Found ${quotationsDataByRef.length} matching quotations by reference number`);
-            
-            (quotationsDataByRef as unknown as Quotation[]).forEach((quotation) => {
-              quotationsMap[quotation.id] = quotation;
-            });
-          }
-        }
+        ((quotationsByIdResult.data ?? []) as unknown as Quotation[]).forEach(q => { quotationsMap[q.id] = q; });
+        ((quotationsByRefResult.data ?? []) as unknown as Quotation[]).forEach(q => { quotationsMap[q.id] = q; });
         
         // Step 6: Combine all data
         const enrichedPayments: Payment[] = paymentsRows.map(payment => {
@@ -349,7 +290,6 @@ export default function PaymentPage() {
   // Handle opening proof modal
   const handleViewProof = (proofUrl: string | null) => {
     if (proofUrl) {
-      console.log("Opening proof modal with URL:", proofUrl);
       setCurrentProofUrl(proofUrl);
       setIsProofModalOpen(true);
     }
@@ -358,7 +298,6 @@ export default function PaymentPage() {
   // Handle opening quotations modal
   const handleViewQuotations = (quotations: Quotation[] | undefined) => {
     if (quotations && quotations.length > 0) {
-      console.log("Opening quotations modal with", quotations.length, "items");
       setSelectedQuotations(quotations);
       setQuotationModalOpen(true);
     }

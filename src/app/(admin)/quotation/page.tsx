@@ -58,23 +58,32 @@ export default function QuotationPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Get the current user from auth context
-  const { user } = useAuth();
+  // Get the current user and company from auth context
+  const { user, company } = useAuth();
+
+  // Debounce search to avoid a query on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   // Wrap fetchData in useCallback to make it stable
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      if (!user?.id) {
+
+      if (!user?.id || !company?.id) {
         setError("Authentication required");
         setQuotations([]);
         setIsLoading(false);
         return;
       }
 
-      // Build the base query with proper join
+      const companyId = company.id;
+
+      // Build the base query with proper join, scoped to this company
       let query = supabase
         .from('quotations')
         .select(`
@@ -88,6 +97,7 @@ export default function QuotationPage() {
             role
           )
         `, { count: 'exact' })
+        .eq('company_id', companyId)
         .order('created_at', { ascending: false });
 
       // Apply status filter
@@ -95,10 +105,10 @@ export default function QuotationPage() {
         query = query.eq('status', selectedStatus);
       }
 
-      // Apply search filter if exists
-      if (searchQuery) {
+      // Apply search filter — only on own columns to avoid cross-join ilike issues
+      if (debouncedSearch) {
         query = query.or(
-          `product_name.ilike.%${searchQuery}%,quotation_id.ilike.%${searchQuery}%,profiles.email.ilike.%${searchQuery}%`
+          `product_name.ilike.%${debouncedSearch}%,quotation_id.ilike.%${debouncedSearch}%`
         );
       }
 
@@ -107,8 +117,23 @@ export default function QuotationPage() {
       const to = from + ITEMS_PER_PAGE - 1;
       query = query.range(from, to);
       
-      // Execute the query
-      const { data: quotationsData, error: quotationsError, count } = await query as unknown as {
+      // Execute main query + 4 HEAD-only count queries in parallel.
+      // HEAD requests return only the count — no row data transferred.
+      const [
+        quotationsResult,
+        { count: totalCount },
+        { count: approvedCount },
+        { count: pendingCount },
+        { count: rejectedCount },
+      ] = await Promise.all([
+        query,
+        supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'Approved'),
+        supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'Pending'),
+        supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'Rejected'),
+      ]);
+
+      const { data: quotationsData, error: quotationsError, count } = quotationsResult as unknown as {
         data: Array<{
           id: string;
           user_id: string;
@@ -160,8 +185,6 @@ export default function QuotationPage() {
         console.error('Error fetching quotations:', quotationsError);
         throw quotationsError;
       }
-
-      console.log('Raw quotations data:', quotationsData); // Debug log
 
       // Calculate total pages
       if (count !== null) {
@@ -224,21 +247,13 @@ export default function QuotationPage() {
 
       setQuotations(formattedData);
 
-      // Calculate metrics
-      const metricsRes = await supabase
-        .from('quotations')
-        .select('status');
-
-      const metricsData = (metricsRes.data ?? []) as unknown as Array<{ status?: string | null }>
-
-      if (metricsData && Array.isArray(metricsData)) {
-        const total = metricsData.length;
-        const approved = metricsData.filter(item => item.status === "Approved").length;
-        const pending = metricsData.filter(item => item.status === "Pending").length;
-        const rejected = metricsData.filter(item => item.status === "Rejected").length;
-        
-        setMetrics({ total, approved, pending, rejected });
-      }
+      // Set metrics from the parallel count queries (no extra round trip)
+      setMetrics({
+        total: totalCount ?? 0,
+        approved: approvedCount ?? 0,
+        pending: pendingCount ?? 0,
+        rejected: rejectedCount ?? 0,
+      });
 
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
@@ -246,9 +261,9 @@ export default function QuotationPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, currentPage, selectedStatus, searchQuery]);
+  }, [user?.id, company?.id, currentPage, selectedStatus, debouncedSearch]);
 
-  // Use fetchData in useEffect
+  // Re-fetch whenever the debounced search, filters, or page changes
   useEffect(() => {
     fetchData();
   }, [fetchData]);

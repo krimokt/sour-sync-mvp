@@ -141,29 +141,28 @@ export default function ShipmentTrackingPage() {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fetch all shipments first
+
+        // Step 1: Fetch all shipments
         const { data: allShipments, error: shippingError } = await supabase
           .from('shipping')
           .select('*')
-          .order('created_at', { ascending: false });
-          
+          .order('created_at', { ascending: false })
+          .range(0, 199); // cap at 200 rows to avoid unbounded fetches
+
         if (shippingError) {
           console.error("Error accessing shipping table:", shippingError);
           setError("Failed to load shipping data: " + shippingError.message);
           setLoading(false);
           return;
         }
-        
+
         if (!allShipments || allShipments.length === 0) {
-          // No shipments found
           setShipmentData([]);
           setFilteredShipmentData([]);
           setLoading(false);
           return;
         }
-        
-        // Get all user IDs from shipments
+
         type ShippingRow = {
           id: string;
           user_id: string | null;
@@ -182,78 +181,44 @@ export default function ShipmentTrackingPage() {
 
         const shipmentsRows = (allShipments ?? []) as unknown as ShippingRow[];
 
-        const userIds = shipmentsRows
-          .map(item => item.user_id)
-          .filter((id): id is string => id !== null && id !== undefined);
+        const userIds = [...new Set(shipmentsRows.map(r => r.user_id).filter((id): id is string => id != null))];
+        const quotationIds = [...new Set(shipmentsRows.map(r => r.quotation_id).filter((id): id is string => id != null))];
 
-        // Fetch user information if there are any user IDs
-        let usersMap: Record<string, { full_name: string; email: string }> = {};
-        if (userIds.length > 0) {
-          const { data: userData, error: userError } = await supabase
-            .from('profiles')
-            .select('id, full_name, email')
-            .in('id', userIds);
+        // Step 2: Fetch profiles and quotations in parallel — cuts round trips from 3 to 2
+        const [profilesResult, quotationsResult] = await Promise.all([
+          userIds.length > 0
+            ? supabase.from('profiles').select('id, full_name, email').in('id', userIds)
+            : Promise.resolve({ data: [] as Array<{ id: string; full_name: string; email: string }>, error: null }),
+          quotationIds.length > 0
+            ? supabase.from('quotations').select('id, quotation_id, product_name, image_url, shipping_country, shipping_city, shipping_method').in('id', quotationIds)
+            : Promise.resolve({ data: [] as QuotationData[], error: null }),
+        ]);
 
-          if (userError) {
-            console.error("Error fetching user data:", userError);
-          } else if (userData) {
-            const usersRows = (userData ?? []) as unknown as Array<{ id: string; full_name: string; email: string }>
-            usersMap = usersRows.reduce((acc, user) => ({
-              ...acc,
-              [user.id]: { full_name: user.full_name, email: user.email }
-            }), {} as Record<string, { full_name: string; email: string }>);
-          }
-        }
-        
-        // Get all quotation IDs from the shipping records, filtering out null/undefined values
-        const quotationIds = shipmentsRows
-          .map(item => item.quotation_id)
-          .filter((id): id is string => id !== null && id !== undefined);
-          
-        // If there are no valid quotation IDs, we can skip fetching quotations
-        if (quotationIds.length === 0) {
-          // Map shipping items without quotation data
-          const combinedData = shipmentsRows.map(shippingItem => ({
-            ...shippingItem,
-            quotation: null
-          }));
-          setShipmentData(combinedData);
-          setFilteredShipmentData(combinedData);
-          setLoading(false);
-          return;
-        }
-        
-        // Fetch related quotation data using only valid IDs
-        const { data: quotationData, error: quotationError } = await supabase
-          .from('quotations')
-          .select('id, quotation_id, product_name, image_url, shipping_country, shipping_city, shipping_method')
-          .in('id', quotationIds);
-          
-        if (quotationError) {
-          console.error("Error fetching quotation data:", quotationError);
+        if (profilesResult.error) console.error("Error fetching user data:", profilesResult.error);
+        if (quotationsResult.error) {
+          console.error("Error fetching quotation data:", quotationsResult.error);
           setError("Failed to load quotation details");
           setLoading(false);
           return;
         }
-        
-        // Create a map of quotations by ID for easier lookup
+
+        const usersMap: Record<string, { full_name: string; email: string }> = {};
+        (profilesResult.data ?? []).forEach((u: { id: string; full_name: string; email: string }) => {
+          usersMap[u.id] = { full_name: u.full_name, email: u.email };
+        });
+
         const quotationsMap: Record<string, QuotationData> = {};
-        const quotationRows = (quotationData ?? []) as unknown as QuotationData[];
-        quotationRows.forEach((quotation) => {
-          quotationsMap[quotation.id] = quotation;
+        ((quotationsResult.data ?? []) as unknown as QuotationData[]).forEach((q) => {
+          quotationsMap[q.id] = q;
         });
-        
-        // Join the shipping data with quotation data and user data
-        const combinedData = shipmentsRows.map((shippingItem) => {
-          const qId = shippingItem.quotation_id ?? undefined
-          const uId = shippingItem.user_id ?? undefined
-          return {
-            ...shippingItem,
-            quotation: qId ? (quotationsMap[qId] ?? null) : null,
-            user: uId ? (usersMap[uId] ?? null) : null,
-          }
-        });
-        
+
+        // Step 3: Merge in memory
+        const combinedData = shipmentsRows.map((shippingItem) => ({
+          ...shippingItem,
+          quotation: shippingItem.quotation_id ? (quotationsMap[shippingItem.quotation_id] ?? null) : null,
+          user: shippingItem.user_id ? (usersMap[shippingItem.user_id] ?? null) : null,
+        }));
+
         setShipmentData(combinedData);
         setFilteredShipmentData(combinedData);
       } catch (err) {

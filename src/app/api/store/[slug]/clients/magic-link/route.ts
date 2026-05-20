@@ -227,7 +227,7 @@ export async function POST(
     }
 
     // Generate the magic link URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const baseUrl = process.env.NODE_ENV === 'development' ? request.nextUrl.origin : (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin);
     const magicLinkUrl = `${baseUrl}/c/${token}`;
 
     return NextResponse.json({

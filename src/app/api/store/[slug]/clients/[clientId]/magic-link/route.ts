@@ -148,15 +148,13 @@ export async function POST(
       .eq('company_id', company.id)
       .single();
 
-    // Generate the full URL - use custom domain if available, otherwise use default
-    let baseUrl: string;
-    if (websiteSettings?.custom_domain) {
-      // Use custom domain with https protocol
-      baseUrl = `https://${websiteSettings.custom_domain}`;
-    } else {
-      // Fall back to default domain
-      baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    }
+    // In development use the request origin (localhost); in production use custom domain or env var
+    const baseUrl =
+      process.env.NODE_ENV === 'development'
+        ? request.nextUrl.origin
+        : websiteSettings?.custom_domain
+          ? `https://${websiteSettings.custom_domain}`
+          : (process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin);
     const magicLinkUrl = `${baseUrl}/c/${token}`;
 
     return NextResponse.json({

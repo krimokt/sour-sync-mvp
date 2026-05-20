@@ -2,7 +2,7 @@
 const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   images: {
-    domains: ['cfhochnjniddaztgwrbk.supabase.co', 'tlvwyobhndrtidetltcp.supabase.co'],
+    domains: ['tlvwyobhndrtidetltcp.supabase.co', 'tlvwyobhndrtidetltcp.supabase.co'],
     remotePatterns: [
       {
         protocol: 'https',

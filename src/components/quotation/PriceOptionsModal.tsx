@@ -47,7 +47,7 @@ interface PriceOptionsModalProps {
 
 // Helper to validate Supabase image URLs
 const isValidImageUrl = (url: string | null | undefined) =>
-  !!url && url.startsWith('https://cfhochnjniddaztgwrbk.supabase.co/');
+  !!url && url.startsWith('https://tlvwyobhndrtidetltcp.supabase.co/');
 
 export default function PriceOptionsModal({
   isOpen,

@@ -39,10 +39,10 @@ Replace the placeholders in the command with your actual Supabase credentials:
 
 ### Example Configuration
 
-If your Supabase URL is `https://cfhochnjniddaztgwrbk.supabase.co` and your anon key is `eyJhbGc...`, your command would be:
+If your Supabase URL is `https://tlvwyobhndrtidetltcp.supabase.co` and your anon key is `eyJhbGc...`, your command would be:
 
 ```bash
-npx -y @supabase/mcp-server-postgrest@latest --apiUrl https://cfhochnjniddaztgwrbk.supabase.co/rest/v1 --apiKey eyJhbGc... --schema public
+npx -y @supabase/mcp-server-postgrest@latest --apiUrl https://tlvwyobhndrtidetltcp.supabase.co/rest/v1 --apiKey eyJhbGc... --schema public
 ```
 
 ## Quick Setup Script

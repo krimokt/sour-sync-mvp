@@ -158,7 +158,7 @@ const CheckoutConfirmationModal: React.FC<CheckoutConfirmationModalProps> = ({
 
   // Helper to validate Supabase image URLs
   const isValidImageUrl = (url: string | null | undefined) =>
-    !!url && url.startsWith('https://cfhochnjniddaztgwrbk.supabase.co/');
+    !!url && url.startsWith('https://tlvwyobhndrtidetltcp.supabase.co/');
 
   if (!priceOptions.length) {
     return (

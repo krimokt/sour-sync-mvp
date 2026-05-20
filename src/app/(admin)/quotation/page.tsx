@@ -22,7 +22,7 @@ type StatusOption = typeof STATUS_OPTIONS[number];
 interface UserInfo { email: string; fullName: string; role: string; phone: string; country: string; }
 
 const isValidImageUrl = (url: string | null | undefined) =>
-  !!url && url.startsWith('https://cfhochnjniddaztgwrbk.supabase.co/');
+  !!url && url.startsWith('https://tlvwyobhndrtidetltcp.supabase.co/');
 
 /**
  * Thumbnail image for table rows.

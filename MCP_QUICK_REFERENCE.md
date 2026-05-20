@@ -50,8 +50,8 @@ bash ./scripts/setup-mcp-supabase.sh
 
 ## Example
 
-If your project URL is `https://cfhochnjniddaztgwrbk.supabase.co`:
-- API URL would be: `https://cfhochnjniddaztgwrbk.supabase.co/rest/v1`
+If your project URL is `https://tlvwyobhndrtidetltcp.supabase.co`:
+- API URL would be: `https://tlvwyobhndrtidetltcp.supabase.co/rest/v1`
 - Use your anon key from the Supabase dashboard
 
 ## After Setup

@@ -24,6 +24,41 @@ interface UserInfo { email: string; fullName: string; role: string; phone: strin
 const isValidImageUrl = (url: string | null | undefined) =>
   !!url && url.startsWith('https://cfhochnjniddaztgwrbk.supabase.co/');
 
+/**
+ * Thumbnail image for table rows.
+ * - Renders a grey placeholder immediately so the row lays out with no jank.
+ * - Loads the real image lazily (only when scrolled into view).
+ * - quality=40 + sizes="40px" tells Next.js to serve the smallest possible
+ *   variant (~2-5 KB instead of 100-500 KB).
+ * - Fades in once loaded so the transition is smooth.
+ */
+function TableThumbnail({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="relative w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+      {/* Placeholder shown until image is ready */}
+      {!loaded && (
+        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        width={40}
+        height={40}
+        loading="lazy"
+        quality={40}
+        sizes="40px"
+        className={`object-cover w-full h-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setLoaded(true)}
+        onError={e => {
+          (e.target as HTMLImageElement).style.display = 'none';
+          setLoaded(true);
+        }}
+      />
+    </div>
+  );
+}
+
 export default function QuotationPage() {
   const { user, company } = useAuth();
   const queryClient = useQueryClient();
@@ -231,13 +266,11 @@ export default function QuotationPage() {
                       <td className="px-4 py-4 text-gray-700 dark:text-gray-300 text-sm">{item.quotation_id}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 flex-shrink-0 overflow-hidden rounded-lg">
-                            {item.product?.image && isValidImageUrl(item.product.image) ? (
-                              <Image width={40} height={40} src={item.product.image} alt={item.product?.name || ''} className="object-cover w-full h-full" onError={e => { (e.target as HTMLImageElement).src = '/images/placeholder.png'; }} />
-                            ) : (
-                              <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 text-xs">📷</div>
-                            )}
-                          </div>
+                          {item.product?.image && isValidImageUrl(item.product.image) ? (
+                            <TableThumbnail src={item.product.image} alt={item.product?.name || ''} />
+                          ) : (
+                            <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 text-xs">📷</div>
+                          )}
                           <span className="font-medium text-gray-800 text-sm dark:text-white/90">{item.product.name}</span>
                         </div>
                       </td>

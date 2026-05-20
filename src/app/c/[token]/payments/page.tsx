@@ -5,7 +5,7 @@ import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
 import PaymentCard from '@/components/portal/PaymentCard';
 import { usePathname } from 'next/navigation';
-import { Loader2, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard, Clock, CheckCircle2 } from 'lucide-react';
 
 interface Payment {
   id: string;
@@ -38,10 +38,10 @@ export default function PaymentsPage() {
 
     try {
       const response = await fetch(`/api/c/${token}/payments`);
-      
+
       // Read response as text first to handle empty responses
       const responseText = await response.text();
-      
+
       if (!response.ok) {
         let errorMessage = 'Failed to fetch payments';
         try {
@@ -85,44 +85,60 @@ export default function PaymentsPage() {
     fetchPayments();
   }, [fetchPayments]);
 
-  const pendingPayments = payments.filter((p) => 
+  const pendingPayments = payments.filter((p) =>
     (p.status || '').toLowerCase() === 'pending'
   );
-  const completedPayments = payments.filter((p) => 
+  const completedPayments = payments.filter((p) =>
     ['completed', 'accepted'].includes((p.status || '').toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen">
       <PortalHeader />
       <PortalNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Payments
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Payments</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             View and manage your payment history
           </p>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-7 h-7 animate-spin text-[#06b6d4]" />
           </div>
         ) : error ? (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <p className="text-red-700 dark:text-red-400">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-5">
+            <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+          </div>
+        ) : payments.length === 0 ? (
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-14 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+              <CreditCard className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+            </div>
+            <p className="text-base font-semibold text-gray-900 dark:text-white mb-1">No payments yet</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Payments will appear here once you proceed to checkout on an approved quotation.
+            </p>
           </div>
         ) : (
-          <>
+          <div className="space-y-8">
             {pendingPayments.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Pending Payments
-                </h3>
-                <div className="space-y-4">
+              <div>
+                {/* Section Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">Pending Payments</h3>
+                  <span className="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-100 dark:border-amber-800">
+                    {pendingPayments.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
                   {pendingPayments.map((payment) => (
                     <PaymentCard
                       key={payment.id}
@@ -136,10 +152,17 @@ export default function PaymentsPage() {
 
             {completedPayments.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Payment History
-                </h3>
-                <div className="space-y-4">
+                {/* Section Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">Payment History</h3>
+                  <span className="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                    {completedPayments.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
                   {completedPayments.map((payment) => (
                     <PaymentCard
                       key={payment.id}
@@ -150,23 +173,9 @@ export default function PaymentsPage() {
                 </div>
               </div>
             )}
-
-            {payments.length === 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No payments found</p>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </main>
     </div>
   );
 }
-
-
-
-
-
-
-

@@ -6,7 +6,7 @@ import PortalHeader from '@/components/portal/PortalHeader';
 import PortalNav from '@/components/portal/PortalNav';
 import QuotationCard from '@/components/portal/QuotationCard';
 import CreateQuotationButton from './CreateQuotationButton';
-import { Loader2 } from 'lucide-react';
+import { Loader2, FileText } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface Quotation {
@@ -59,70 +59,77 @@ export default function QuotationsPage() {
     : quotations.filter((q) => (q.status || '').toLowerCase() === selectedStatus.toLowerCase());
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen">
       <PortalHeader />
       <PortalNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               Quotations
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
               View and manage your quotation requests
             </p>
           </div>
           {data.scopes.includes('create') && (
-            <CreateQuotationButton 
-              token={token} 
+            <CreateQuotationButton
+              token={token}
               onSuccess={fetchQuotations}
               allowedCountries={data.quotationCountries || []}
             />
           )}
         </div>
 
-        {/* Status Filter */}
-        <div className="mb-6">
-          <div className="flex gap-2">
-            {['All', 'Pending', 'Approved', 'Rejected'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedStatus === status
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
+        {/* Status Filter Pills */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {['All', 'Pending', 'Approved', 'Rejected'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setSelectedStatus(status)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                selectedStatus === status
+                  ? 'bg-[#06b6d4] text-white shadow-sm'
+                  : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-[#06b6d4]/30'
+              }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
 
-        {/* Quotations List */}
+        {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-7 h-7 animate-spin text-[#06b6d4]" />
           </div>
         ) : error ? (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <p className="text-red-700 dark:text-red-400">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4">
+            <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
           </div>
         ) : filteredQuotations.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">No quotations found</p>
-            {data.scopes.includes('create') && (
-              <CreateQuotationButton 
-                token={token} 
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-14 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+            </div>
+            <p className="text-base font-semibold text-gray-900 dark:text-white mb-1">No quotations found</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              {selectedStatus === 'All'
+                ? 'Create your first quotation request to get started.'
+                : `No ${selectedStatus.toLowerCase()} quotations at this time.`}
+            </p>
+            {data.scopes.includes('create') && selectedStatus === 'All' && (
+              <CreateQuotationButton
+                token={token}
                 onSuccess={fetchQuotations}
                 allowedCountries={data.quotationCountries || []}
               />
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-3">
             {filteredQuotations.map((quotation) => (
               <QuotationCard
                 key={quotation.id}
@@ -136,4 +143,3 @@ export default function QuotationsPage() {
     </div>
   );
 }
-

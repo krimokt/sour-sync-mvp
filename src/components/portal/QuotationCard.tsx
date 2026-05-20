@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, ChevronRight } from 'lucide-react';
 
 interface QuotationCardProps {
   quotation: {
@@ -20,10 +20,10 @@ interface QuotationCardProps {
 
 export default function QuotationCard({ quotation, basePath }: QuotationCardProps) {
   const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    pending: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800',
+    approved: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800',
+    rejected: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800',
+    confirmed: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
   };
 
   const statusIcons: Record<string, typeof Clock> = {
@@ -37,62 +37,61 @@ export default function QuotationCard({ quotation, basePath }: QuotationCardProp
   const StatusIcon = statusIcons[status] || FileText;
   const statusColor = statusColors[status] || statusColors.pending;
 
-  const imageUrl = quotation.image_url || 
+  const imageUrl = quotation.image_url ||
     (quotation.image_urls && quotation.image_urls.length > 0 ? quotation.image_urls[0] : null);
 
   return (
     <Link
       href={`${basePath}/quotations/${quotation.id}`}
-      className="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
+      className="group block bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-200"
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-center gap-4">
+        {/* Thumbnail */}
         {imageUrl ? (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden">
             <Image
               src={imageUrl}
               alt={quotation.product_name || 'Product'}
               width={80}
               height={80}
-              className="rounded-lg object-cover"
+              className="w-full h-full object-cover"
             />
           </div>
         ) : (
-          <div className="flex-shrink-0 w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-            <FileText className="w-8 h-8 text-gray-400" />
+          <div className="flex-shrink-0 w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+            <FileText className="w-7 h-7 text-gray-300 dark:text-gray-600" />
           </div>
         )}
 
+        {/* Middle Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                {quotation.product_name || 'Untitled Quotation'}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                {quotation.quotation_id || quotation.id}
-              </p>
-              {quotation.total_price_option1 && (
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  ${parseFloat(quotation.total_price_option1).toLocaleString()}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <span className={`px-3 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full ${statusColor}`}>
-                <StatusIcon className="w-3 h-3" />
-                {quotation.status || 'Pending'}
-              </span>
-              {quotation.created_at && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(quotation.created_at).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </div>
+          <p className="text-base font-bold text-gray-900 dark:text-white truncate">
+            {quotation.product_name || 'Untitled Quotation'}
+          </p>
+          <p className="text-xs font-mono text-gray-400 dark:text-gray-500 mt-0.5">
+            {quotation.quotation_id || quotation.id}
+          </p>
+          {quotation.total_price_option1 && (
+            <p className="text-xl font-bold text-[#06b6d4] mt-1">
+              ${parseFloat(quotation.total_price_option1).toLocaleString()}
+            </p>
+          )}
+        </div>
+
+        {/* Right: Status + Date + Arrow */}
+        <div className="flex-shrink-0 flex flex-col items-end gap-2">
+          <span className={`px-2.5 py-1 inline-flex items-center gap-1.5 text-xs font-semibold rounded-full ${statusColor}`}>
+            <StatusIcon className="w-3 h-3" />
+            {quotation.status || 'Pending'}
+          </span>
+          {quotation.created_at && (
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {new Date(quotation.created_at).toLocaleDateString()}
+            </p>
+          )}
+          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
     </Link>
   );
 }
-
-

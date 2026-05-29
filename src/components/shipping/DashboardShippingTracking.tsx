@@ -78,12 +78,9 @@ const DashboardShippingTracking: React.FC<DashboardShippingTrackingProps> = ({ p
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('DashboardShippingTracking - Props received:', passedShipmentData);
-
   useEffect(() => {
     // If data is passed as prop, use it instead of fetching
     if (passedShipmentData && passedShipmentData.length > 0) {
-      console.log('Using passed shipment data:', passedShipmentData);
       // Ensure the passed data has all required fields
       const formattedData = passedShipmentData.map(item => ({
         id: item.id || '',
@@ -215,12 +212,6 @@ const DashboardShippingTracking: React.FC<DashboardShippingTrackingProps> = ({ p
     fetchShipmentData();
   }, [user?.id, passedShipmentData]);
 
-  // right before the render
-  console.log('DashboardShippingTracking - Current state:', { 
-    isLoading, 
-    hasError: !!error, 
-    dataLength: shipmentData?.length || 0
-  });
 
   // Get status badge color
   const getStatusBadgeColor = (status: string): "primary" | "success" | "warning" | "info" | "error" => {

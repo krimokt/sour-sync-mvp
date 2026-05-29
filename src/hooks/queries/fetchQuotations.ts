@@ -66,15 +66,13 @@ export async function fetchQuotations({
   status?: string;
   search?: string;
 }): Promise<QuotationsResult> {
-  // Explicit list columns — never pull the heavy JSON image fields here.
-  // "Quotation_fees" is double-quoted: PostgREST v13+ rejects unquoted
-  // mixed-case identifiers in the URL.
+  // Explicit list columns — never pull the heavy image option columns here.
   const LIST_COLUMNS =
     'id, quotation_id, user_id, company_id, product_name, product_url, quantity, ' +
-    'status, created_at, image_url, shipping_method, service_type, shipping_country, ' +
-    'shipping_city, title_option1, total_price_option1, title_option2, ' +
-    'total_price_option2, title_option3, total_price_option3, selected_option, ' +
-    '"Quotation_fees", client_label, rejection_reason, ' +
+    'status, created_at, image_url, shipping_method, service_type, ' +
+    'shipping_country, shipping_city, ' +
+    'title_option1, total_price_option1, title_option2, total_price_option2, ' +
+    'title_option3, total_price_option3, selected_option, quotation_fees, ' +
     'profiles(id, email, full_name, phone, country, role)';
 
   let query = supabase

@@ -106,7 +106,7 @@ export default function QuotationPage() {
     shippingMethod: item.shipping_method || "",
     destination: item.shipping_city ? `${item.shipping_city}, ${item.shipping_country}` : "",
     hasImage: Boolean(item.image_url),
-    Quotation_fees: item.Quotation_fees,
+    Quotation_fees: item.quotation_fees,
     user: item.profiles ? {
       email: item.profiles.email || "",
       fullName: item.profiles.full_name || "",

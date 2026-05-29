@@ -10,6 +10,7 @@ import {
 import Button from '@/components/ui/button/Button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import TableThumbnail from '@/components/common/TableThumbnail';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/context/StoreContext';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
@@ -200,17 +201,10 @@ export default function QuotationsPage() {
                 <TableRow key={quotation.id}>
                   <TableCell className="px-4 py-4 w-[25%]">
                     <div className="flex items-center gap-3 min-w-0">
-                      {quotation.image_url || quotation.product_images?.[0] ? (
-                        <Image
-                          src={quotation.image_url || quotation.product_images?.[0] || ''}
-                          alt={quotation.product_name}
-                          width={40}
-                          height={40}
-                          className="rounded-lg object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg dark:bg-gray-700 flex-shrink-0" />
-                      )}
+                      <TableThumbnail
+                        src={quotation.image_url || quotation.product_images?.[0]}
+                        alt={quotation.product_name}
+                      />
                       <span className="font-medium text-gray-800 dark:text-white truncate">
                         {quotation.product_name}
                       </span>

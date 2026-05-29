@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import React from "react";
 import Button from "@/components/ui/button/Button";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
+import SharedTableThumbnail from "@/components/common/TableThumbnail";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { QuotationData } from "@/types/quotation";
@@ -24,40 +24,9 @@ interface UserInfo { email: string; fullName: string; role: string; phone: strin
 const isValidImageUrl = (url: string | null | undefined) =>
   !!url && url.startsWith('https://tlvwyobhndrtidetltcp.supabase.co/');
 
-/**
- * Thumbnail image for table rows.
- * - Renders a grey placeholder immediately so the row lays out with no jank.
- * - Loads the real image lazily (only when scrolled into view).
- * - quality=40 + sizes="40px" tells Next.js to serve the smallest possible
- *   variant (~2-5 KB instead of 100-500 KB).
- * - Fades in once loaded so the transition is smooth.
- */
-function TableThumbnail({ src, alt }: { src: string; alt: string }) {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <div className="relative w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-      {/* Placeholder shown until image is ready */}
-      {!loaded && (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
-      )}
-      <Image
-        src={src}
-        alt={alt}
-        width={40}
-        height={40}
-        loading="lazy"
-        quality={40}
-        sizes="40px"
-        className={`object-cover w-full h-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        onLoad={() => setLoaded(true)}
-        onError={e => {
-          (e.target as HTMLImageElement).style.display = 'none';
-          setLoaded(true);
-        }}
-      />
-    </div>
-  );
-}
+// Thumbnail moved to @/components/common/TableThumbnail — uses Supabase
+// Storage render transform directly (no Next/Netlify image-function hop).
+const TableThumbnail = SharedTableThumbnail;
 
 export default function QuotationPage() {
   const { user, company } = useAuth();

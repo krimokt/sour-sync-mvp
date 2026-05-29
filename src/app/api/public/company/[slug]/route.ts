@@ -67,7 +67,16 @@ export async function GET(
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ company });
+    return NextResponse.json(
+      { company },
+      {
+        headers: {
+          // Public company metadata — safe to cache on CDN edge for 5 min,
+          // serve stale for 30 min while revalidating in background
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=1800',
+        },
+      },
+    );
   } catch (e) {
     console.error('Unexpected error in company API:', e);
     const message = e instanceof Error ? e.message : 'Server error';

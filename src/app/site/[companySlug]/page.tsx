@@ -5,7 +5,6 @@ import PublishedBuilderSite from '@/components/storefront/PublishedBuilderSite';
 import { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

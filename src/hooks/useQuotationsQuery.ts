@@ -29,7 +29,7 @@ export function useQuotationsQuery({
     if (!companyId) return;
     const channel = supabase
       .channel(`rt:quotations:${companyId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'quotations' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quotations', filter: `company_id=eq.${companyId}` }, () => {
         queryClient.invalidateQueries({ queryKey: quotationKeys.all(companyId) });
       })
       .subscribe();

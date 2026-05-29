@@ -14,23 +14,26 @@ export interface DashboardData {
 
 export async function fetchDashboard({ companyId }: { companyId: string }): Promise<DashboardData> {
   const [quotRes, shipRes, activeShipRes, paymentsRes] = await Promise.all([
-    supabase.from('quotations').select('id, quotation_id, product_name, image_url, quantity, created_at, status, total_price_option1')
-      .eq('company_id', companyId).eq('status', 'Pending').order('created_at', { ascending: false }).limit(5),
-    supabase.from('shipping').select('id, status, location, created_at, estimated_delivery, quotation_id')
+    supabase.from('quotations')
+      .select('id, quotation_id, product_name, image_url, quantity, created_at, status, total_price_option1')
+      .eq('company_id', companyId).eq('status', 'Pending')
       .order('created_at', { ascending: false }).limit(5),
-    supabase.from('shipping').select('*', { count: 'exact', head: true }).eq('status', 'In Transit'),
-    supabase.from('payments').select('total_amount').eq('status', 'Approved'),
+    supabase.from('shipping')
+      .select('id, status, location, created_at, estimated_delivery, quotation:quotations(product_name, shipping_country, shipping_city)')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false }).limit(5),
+    supabase.from('shipping').select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId).eq('status', 'In Transit'),
+    supabase.from('payments').select('total_amount')
+      .eq('company_id', companyId).eq('status', 'Approved'),
   ]);
 
-  // Get quotation IDs from recent shipments for enrichment
-  type RawShip = { id: string; status: string; location: string | null; created_at: string; estimated_delivery: string | null; quotation_id: string | null };
+  type RawShip = {
+    id: string; status: string; location: string | null; created_at: string;
+    estimated_delivery: string | null;
+    quotation: { product_name: string; shipping_country: string; shipping_city: string } | null;
+  };
   const shipRows = (shipRes.data ?? []) as unknown as RawShip[];
-  const quotIds = [...new Set(shipRows.map(r => r.quotation_id).filter(Boolean))] as string[];
-  const quotMap: Record<string, { product_name: string; shipping_country: string; shipping_city: string }> = {};
-  if (quotIds.length > 0) {
-    const { data } = await supabase.from('quotations').select('id, product_name, shipping_country, shipping_city').in('id', quotIds);
-    (data ?? []).forEach((q: { id: string; product_name: string; shipping_country: string; shipping_city: string }) => { quotMap[q.id] = q; });
-  }
 
   const totalSpend = (paymentsRes.data ?? []).reduce((sum, p) => {
     const v = (p as { total_amount: number | string }).total_amount;
@@ -50,7 +53,7 @@ export async function fetchDashboard({ companyId }: { companyId: string }): Prom
     recentShipments: shipRows.map(r => ({
       ...r,
       location: r.location ?? '',
-      quotation: r.quotation_id ? (quotMap[r.quotation_id] ?? null) : null,
+      quotation: r.quotation ?? null,
     })),
   };
 }

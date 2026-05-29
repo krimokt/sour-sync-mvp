@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import React from "react";
 import Button from "@/components/ui/button/Button";
 import { Badge } from "@/components/ui/badge";
@@ -140,6 +140,7 @@ export default function QuotationPage() {
 
   const metrics = data?.metrics ?? { total: 0, approved: 0, pending: 0, rejected: 0 };
   const totalPages = data?.totalPages ?? 1;
+  const pageNumbers = useMemo(() => Array.from({ length: totalPages }, (_, i) => i + 1), [totalPages]);
 
   const handleEdit = (quotation: QuotationData) => { setCurrentQuotation(quotation); setIsEditModalOpen(true); };
   const handleCloseEditModal = () => { setCurrentQuotation(null); setIsEditModalOpen(false); };
@@ -316,10 +317,10 @@ export default function QuotationPage() {
               </div>
               <div className="flex gap-1">
                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">Previous</Button>
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <Button key={i + 1} variant={currentPage === i + 1 ? 'primary' : 'outline'} size="sm" onClick={() => setCurrentPage(i + 1)}
-                    className={currentPage === i + 1 ? 'bg-[#1E88E5] hover:bg-[#0D47A1]' : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'}>
-                    {i + 1}
+                {pageNumbers.map((n) => (
+                  <Button key={n} variant={currentPage === n ? 'primary' : 'outline'} size="sm" onClick={() => setCurrentPage(n)}
+                    className={currentPage === n ? 'bg-[#1E88E5] hover:bg-[#0D47A1]' : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'}>
+                    {n}
                   </Button>
                 ))}
                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages} className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">Next</Button>

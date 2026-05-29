@@ -16,9 +16,10 @@ export function useDashboardQuery({ companyId }: { companyId: string | undefined
   useEffect(() => {
     if (!companyId) return;
     const invalidate = () => queryClient.invalidateQueries({ queryKey: dashboardKeys.all(companyId) });
-    const ch1 = supabase.channel('rt:dash:quotations').on('postgres_changes', { event: '*', schema: 'public', table: 'quotations' }, invalidate).subscribe();
-    const ch2 = supabase.channel('rt:dash:shipping').on('postgres_changes', { event: '*', schema: 'public', table: 'shipping' }, invalidate).subscribe();
-    const ch3 = supabase.channel('rt:dash:payments').on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, invalidate).subscribe();
+    const filter = `company_id=eq.${companyId}`;
+    const ch1 = supabase.channel(`rt:dash:quotations:${companyId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'quotations', filter }, invalidate).subscribe();
+    const ch2 = supabase.channel(`rt:dash:shipping:${companyId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'shipping', filter }, invalidate).subscribe();
+    const ch3 = supabase.channel(`rt:dash:payments:${companyId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter }, invalidate).subscribe();
     return () => {
       supabase.removeChannel(ch1);
       supabase.removeChannel(ch2);

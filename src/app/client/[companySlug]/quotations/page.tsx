@@ -16,7 +16,8 @@ import { supabase } from '@/lib/supabase';
 import { useClient } from '@/context/ClientContext';
 import StatCard from '@/components/common/StatCard';
 import { Send, CheckCircle, Clock, X, Package, Plus, ChevronUp, ChevronDown, Eye, Download, ZoomIn, ZoomOut, RotateCw, Layers } from 'lucide-react';
-import QuotationFormModal from '@/components/quotation/QuotationFormModal';
+import dynamic from 'next/dynamic';
+const QuotationFormModal = dynamic(() => import('@/components/quotation/QuotationFormModal'), { ssr: false });
 import Button from '@/components/ui/button/Button';
 import { VariantGroup } from '@/types/database';
 import {

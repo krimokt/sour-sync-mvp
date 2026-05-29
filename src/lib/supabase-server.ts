@@ -1,5 +1,6 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import type { Database } from '@/types/supabase';
 
 // Server-side Supabase client for Server Components
@@ -8,10 +9,11 @@ export function createServerSupabaseClient() {
   return createServerComponentClient<Database>({ cookies: () => cookieStore });
 }
 
-// Get company by slug
-export async function getCompanyBySlug(slug: string) {
+// Get company by slug — per-request memoized so multiple callers in the same
+// request (middleware -> layout -> page) share a single round-trip.
+export const getCompanyBySlug = cache(async (slug: string) => {
   const supabase = createServerSupabaseClient();
-  
+
   const { data: company, error } = await supabase
     .from('companies')
     .select('*')
@@ -24,17 +26,14 @@ export async function getCompanyBySlug(slug: string) {
   }
 
   return company;
-}
+});
 
-// Get current user's profile
-export async function getCurrentProfile() {
+// Get current user's profile — per-request memoized
+export const getCurrentProfile = cache(async () => {
   const supabase = createServerSupabaseClient();
-  
+
   const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const { data: profile, error } = await supabase
     .from('profiles')
@@ -48,7 +47,7 @@ export async function getCurrentProfile() {
   }
 
   return profile;
-}
+});
 
 // Get current user with their profile and company
 export async function getCurrentUserWithCompany() {

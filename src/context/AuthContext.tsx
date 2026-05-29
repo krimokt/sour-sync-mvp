@@ -1,7 +1,7 @@
 'use client';
 
 import { User, AuthError } from '@supabase/supabase-js';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Company, Profile } from './StoreContext';
@@ -279,8 +279,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const value = useMemo(
+    () => ({ user, profile, company, loading, signIn, signUp, signOut, refreshProfile }),
+    [user, profile, company, loading],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, profile, company, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

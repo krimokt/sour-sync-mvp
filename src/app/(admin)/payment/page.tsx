@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import Image from "next/image";
 import { usePaymentsQuery, paymentKeys } from "@/hooks/usePaymentsQuery";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 
 interface Profile {
   id: string;
@@ -48,7 +49,8 @@ const showToast = (message: string, type: 'success' | 'error') => {
 
 export default function PaymentPage() {
   const queryClient = useQueryClient();
-  const { data: payments = [], isLoading: loading, error: queryError } = usePaymentsQuery();
+  const { company } = useAuth();
+  const { data: payments = [], isLoading: loading, error: queryError } = usePaymentsQuery({ companyId: company?.id });
   const error = queryError instanceof Error ? queryError.message : null;
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,7 +84,7 @@ export default function PaymentPage() {
 
   const refreshData = () => {
     setSearchQuery("");
-    queryClient.invalidateQueries({ queryKey: paymentKeys.all() });
+    queryClient.invalidateQueries({ queryKey: paymentKeys.all(company?.id ?? "") });
   };
 
   // Handle opening proof modal
@@ -117,7 +119,7 @@ export default function PaymentPage() {
         return;
       }
       
-      queryClient.invalidateQueries({ queryKey: paymentKeys.all() });
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all(company?.id ?? "") });
       showToast(`Payment status changed to ${newStatus}`, 'success');
       setIsStatusDropdownOpen(null);
     } catch (err) {

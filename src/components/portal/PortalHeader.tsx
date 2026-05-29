@@ -6,7 +6,8 @@ import { Plus } from 'lucide-react';
 import { useMagicLink } from './MagicLinkProvider';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import QuotationFormModalWithToken from '@/components/quotation/QuotationFormModalWithToken';
+import dynamic from 'next/dynamic';
+const QuotationFormModalWithToken = dynamic(() => import('@/components/quotation/QuotationFormModalWithToken'), { ssr: false });
 
 export default function PortalHeader() {
   const { data } = useMagicLink();

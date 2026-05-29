@@ -30,13 +30,13 @@ export function DataPrefetcher({ companyId }: { companyId: string | undefined })
         staleTime: 30_000,
       }),
       queryClient.prefetchQuery({
-        queryKey: shipmentKeys.all(),
-        queryFn: fetchShipments,
+        queryKey: shipmentKeys.all(companyId),
+        queryFn: () => fetchShipments({ companyId }),
         staleTime: 30_000,
       }),
       queryClient.prefetchQuery({
-        queryKey: paymentKeys.all(),
-        queryFn: fetchPayments,
+        queryKey: paymentKeys.all(companyId),
+        queryFn: () => fetchPayments({ companyId }),
         staleTime: 30_000,
       }),
       queryClient.prefetchQuery({

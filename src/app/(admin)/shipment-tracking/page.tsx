@@ -65,11 +65,11 @@ interface ReceiverInfo {
 }
 
 export default function ShipmentTrackingPage() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const queryClient = useQueryClient();
 
   // React Query — data is prefetched in AdminLayout, so this is instant on first visit
-  const { data: shipmentData = [], isLoading: loading, error: queryError } = useShipmentsQuery();
+  const { data: shipmentData = [], isLoading: loading, error: queryError } = useShipmentsQuery({ companyId: company?.id });
   const error = queryError instanceof Error ? queryError.message : null;
 
   const [selectedShipment, setSelectedShipment] = useState<ShipmentTrackingData | null>(null);
@@ -310,7 +310,7 @@ export default function ShipmentTrackingPage() {
       }
       
       // Invalidate cache — Realtime will also trigger a refetch
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all(company?.id ?? "") });
       
       // If we're saving for later, update the local state
       if (saveForLater && !useExistingReceiver) {
@@ -402,7 +402,7 @@ export default function ShipmentTrackingPage() {
         .eq('id', selectedShipment.id);
         
       if (updateError) throw updateError;
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all(company?.id ?? "") });
       setShowStatusModal(false);
     } catch (err) {
       console.error("Error updating status:", err);
@@ -516,7 +516,7 @@ export default function ShipmentTrackingPage() {
       };
       
       setSelectedShipment(updatedShipment);
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all(company?.id ?? "") });
       setIsEditingDetails(false);
     } catch (err) {
       console.error("Error updating shipment details:", err);
@@ -622,7 +622,7 @@ export default function ShipmentTrackingPage() {
       }
       
       setSelectedShipment({ ...selectedShipment, [`${type}_urls`]: [...existingUrls, ...uploadedUrls] });
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.all() });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all(company?.id ?? "") });
       
     } catch (err) {
       console.error("Error uploading files:", err);

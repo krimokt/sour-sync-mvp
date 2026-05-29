@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import React from 'react';
-import html2pdf from 'html2pdf.js';
+// html2pdf is lazy-loaded inside the export handler — saves ~80KB on first paint
 import { Table, TableBody, TableHeader, TableRow } from '@/components/ui/table';
 import Button from '@/components/ui/button/Button';
 import { Badge } from '@/components/ui/badge';
@@ -776,7 +776,8 @@ export default function ClientPaymentsPage() {
         }
       };
 
-      // Generate and download PDF
+      // Generate and download PDF — lazy-load html2pdf only when user clicks export
+      const html2pdf = (await import('html2pdf.js')).default;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await html2pdf().set(opt as any).from(element).save();
       

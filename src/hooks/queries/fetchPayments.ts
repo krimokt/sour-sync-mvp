@@ -18,50 +18,74 @@ export interface PaymentRow {
   quotations?: PaymentQuotation[];
 }
 
+const PAYMENT_COLUMNS = `
+  id, user_id, total_amount, method, status, proof_url,
+  created_at, quotation_ids, payment_proof, reference_number,
+  profile:profiles(id, email, full_name)
+`;
+
 type RawPayment = {
   id: string; user_id: string | null; total_amount: number | string; method: string; status: string;
   proof_url: string | null; created_at: string; quotation_ids: string[] | string | null;
   payment_proof: string | null; reference_number: string | null;
+  profile?: PaymentProfile | null;
 };
 
-export async function fetchPayments(): Promise<PaymentRow[]> {
+const normalizeIds = (raw: string[] | string | null): string[] =>
+  Array.isArray(raw) ? raw.filter(Boolean)
+    : typeof raw === 'string' ? raw.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+export async function fetchPayments({
+  companyId,
+  limit = 50,
+  offset = 0,
+}: { companyId: string; limit?: number; offset?: number }): Promise<PaymentRow[]> {
   const { data, error } = await supabase
     .from('payments')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .select(PAYMENT_COLUMNS)
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
   const rows = data as unknown as RawPayment[];
 
-  const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))] as string[];
-  const quotationIds: string[] = [];
-  rows.forEach(r => {
-    if (Array.isArray(r.quotation_ids)) r.quotation_ids.forEach(id => { if (id) quotationIds.push(id); });
-    else if (typeof r.quotation_ids === 'string') quotationIds.push(...r.quotation_ids.split(',').map(s => s.trim()).filter(Boolean));
-  });
-  const refNumbers = [...new Set(rows.map(r => r.reference_number).filter(Boolean))] as string[];
-
-  const [profilesRes, quotByIdRes, quotByRefRes] = await Promise.all([
-    userIds.length > 0 ? supabase.from('profiles').select('id, email, full_name').in('id', userIds) : Promise.resolve({ data: [] as PaymentProfile[], error: null }),
-    quotationIds.length > 0 ? supabase.from('quotations').select('id, quotation_id, product_name, total_price_option1, image_url').in('id', [...new Set(quotationIds)]) : Promise.resolve({ data: [] as PaymentQuotation[], error: null }),
-    refNumbers.length > 0 ? supabase.from('quotations').select('id, quotation_id, product_name, total_price_option1, image_url').in('quotation_id', refNumbers) : Promise.resolve({ data: [] as PaymentQuotation[], error: null }),
-  ]);
-
-  const profilesMap: Record<string, PaymentProfile> = {};
-  (profilesRes.data ?? []).forEach((p: PaymentProfile) => { profilesMap[p.id] = p; });
+  // Collect all quotation IDs referenced (one round-trip instead of two)
+  const quotationIds = new Set<string>();
+  const refNumbers = new Set<string>();
+  for (const r of rows) {
+    normalizeIds(r.quotation_ids).forEach(id => quotationIds.add(id));
+    if (r.reference_number) refNumbers.add(r.reference_number);
+  }
 
   const quotationsMap: Record<string, PaymentQuotation> = {};
-  (quotByIdRes.data ?? []).forEach((q: PaymentQuotation) => { quotationsMap[q.id] = q; });
-  (quotByRefRes.data ?? []).forEach((q: PaymentQuotation) => { quotationsMap[q.id] = q; });
+  if (quotationIds.size > 0 || refNumbers.size > 0) {
+    // Single query combining id + quotation_id matches via OR
+    const filters: string[] = [];
+    if (quotationIds.size > 0) filters.push(`id.in.(${[...quotationIds].join(',')})`);
+    if (refNumbers.size > 0) filters.push(`quotation_id.in.(${[...refNumbers].join(',')})`);
+    const { data: qData } = await supabase
+      .from('quotations')
+      .select('id, quotation_id, product_name, total_price_option1, image_url')
+      .eq('company_id', companyId)
+      .or(filters.join(','));
+    (qData ?? []).forEach((q: unknown) => {
+      const qt = q as PaymentQuotation;
+      if (qt?.id) quotationsMap[qt.id] = qt;
+    });
+  }
 
   return rows.map(r => {
+    const ids = normalizeIds(r.quotation_ids);
     const quotations: PaymentQuotation[] = [];
-    if (Array.isArray(r.quotation_ids)) r.quotation_ids.forEach(id => { if (quotationsMap[id]) quotations.push(quotationsMap[id]); });
-    else if (typeof r.quotation_ids === 'string') r.quotation_ids.split(',').forEach(id => { const q = quotationsMap[id.trim()]; if (q) quotations.push(q); });
+    for (const id of ids) if (quotationsMap[id]) quotations.push(quotationsMap[id]);
     if (quotations.length === 0 && r.reference_number) {
-      Object.values(quotationsMap).forEach(q => { if (q.quotation_id === r.reference_number) quotations.push(q); });
+      for (const q of Object.values(quotationsMap)) {
+        if (q.quotation_id === r.reference_number) quotations.push(q);
+      }
     }
     return {
       id: r.id,
@@ -71,10 +95,10 @@ export async function fetchPayments(): Promise<PaymentRow[]> {
       status: r.status,
       proof_url: r.proof_url,
       created_at: r.created_at,
-      quotation_ids: Array.isArray(r.quotation_ids) ? r.quotation_ids : (typeof r.quotation_ids === 'string' ? r.quotation_ids.split(',').map(s => s.trim()).filter(Boolean) : null),
+      quotation_ids: ids.length > 0 ? ids : null,
       payment_proof: r.payment_proof,
       reference_number: r.reference_number,
-      profile: r.user_id ? profilesMap[r.user_id] : undefined,
+      profile: r.profile ?? undefined,
       quotations: quotations.length > 0 ? quotations : undefined,
     };
   });

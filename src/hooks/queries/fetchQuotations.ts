@@ -78,32 +78,27 @@ export async function fetchQuotations({
   const from = (page - 1) * ITEMS_PER_PAGE;
   query = query.range(from, from + ITEMS_PER_PAGE - 1);
 
-  const [
-    rowsResult,
-    { count: totalCount },
-    { count: approvedCount },
-    { count: pendingCount },
-    { count: rejectedCount },
-  ] = await Promise.all([
+  // Single scan of `status` column for all metrics — replaces 4 separate COUNT queries.
+  const [rowsResult, statusesResult] = await Promise.all([
     query,
-    supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId),
-    supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'Approved'),
-    supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'Pending'),
-    supabase.from('quotations').select('*', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'Rejected'),
+    supabase.from('quotations').select('status').eq('company_id', companyId),
   ]);
 
   if (rowsResult.error) throw rowsResult.error;
 
-  const total = totalCount ?? 0;
+  const statuses = (statusesResult.data ?? []) as Array<{ status?: string }>;
+  let approved = 0, pending = 0, rejected = 0;
+  for (const s of statuses) {
+    if (s.status === 'Approved') approved++;
+    else if (s.status === 'Pending') pending++;
+    else if (s.status === 'Rejected') rejected++;
+  }
+  const total = statuses.length;
+
   return {
     rows: (rowsResult.data ?? []) as QuotationRow[],
     total,
     totalPages: Math.ceil((rowsResult.count ?? total) / ITEMS_PER_PAGE),
-    metrics: {
-      total,
-      approved: approvedCount ?? 0,
-      pending: pendingCount ?? 0,
-      rejected: rejectedCount ?? 0,
-    },
+    metrics: { total, approved, pending, rejected },
   };
 }

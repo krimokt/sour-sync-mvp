@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Button from '@/components/ui/button/Button';
 import { Plus } from 'lucide-react';
-import QuotationFormModalWithToken from '@/components/quotation/QuotationFormModalWithToken';
+import dynamic from 'next/dynamic';
+const QuotationFormModalWithToken = dynamic(() => import('@/components/quotation/QuotationFormModalWithToken'), { ssr: false });
 
 interface CreateQuotationButtonProps {
   token: string;

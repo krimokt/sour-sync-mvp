@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Button from "@/components/ui/button/Button";
 import Image from "next/image";
 import DashboardShippingTracking from "@/components/shipping/DashboardShippingTracking";
-import QuotationFormModal from "@/components/quotation/QuotationFormModal";
+import dynamic from "next/dynamic";
+const QuotationFormModal = dynamic(() => import("@/components/quotation/QuotationFormModal"), { ssr: false });
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardQuery } from "@/hooks/useDashboardQuery";

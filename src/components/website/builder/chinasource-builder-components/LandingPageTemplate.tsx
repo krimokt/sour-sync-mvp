@@ -11,6 +11,7 @@ import { EditableText, EditableIcon, EditableImage } from './EditorComponents';
 import Sidebar from './Sidebar';
 import PartnerLogoCarousel from './PartnerLogoCarousel';
 import SiteFooter from './SiteFooter';
+import SourcingRequestForm from './SourcingRequestForm';
 
 interface LandingPageTemplateProps {
   data: FormData;
@@ -203,7 +204,21 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   );
 
   return (
-    <div className="min-h-screen flex bg-white" style={{ fontFamily: 'var(--font-jakarta, system-ui, sans-serif)' }}>
+    <div
+      className="min-h-screen flex bg-white"
+      style={{
+        fontFamily: 'var(--font-jakarta, system-ui, sans-serif)',
+        // Theme tokens — every hardcoded oklch in this file now resolves here.
+        // Override per-tenant later by replacing these declarations.
+        ['--ink-deep' as string]: 'var(--ink-deep)',
+        ['--ink-tint' as string]: 'var(--ink-tint)',
+        ['--ink-line' as string]: 'var(--ink-line)',
+        ['--ink-line-soft' as string]: 'var(--ink-line-soft)',
+        ['--surface-soft' as string]: 'var(--surface-soft)',
+        ['--text-on-deep' as string]: 'var(--text-on-deep)',
+        ['--text-on-deep-muted' as string]: 'var(--text-on-deep-muted)',
+      }}
+    >
       {!hideSidebar && (
         <Sidebar
           content={content}
@@ -223,14 +238,26 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         {/* ── HERO ── */}
         <section
           id="hero"
-          className="relative min-h-screen flex items-center overflow-hidden"
-          style={{ background: 'oklch(0.12 0.018 240)' }}
+          className="relative min-h-[clamp(640px,calc(100vh-4rem),900px)] flex items-center overflow-hidden"
+          style={{ background: 'var(--ink-deep)' }}
           onClick={() => setActiveSection('hero')}
         >
           {/* Background image with dark overlay */}
           <div className="absolute inset-0">
-            <img src={content.hero.backgroundImage} className="w-full h-full object-cover opacity-20" alt="" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, oklch(0.12 0.018 240) 50%, oklch(0.16 0.02 230) 100%)' }} />
+            {/* Hero backdrop — 20% opacity, so dimension precision matters
+                less than file size. Render via next/image with priority so it
+                lands in the LCP path. */}
+            {content.hero.backgroundImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={content.hero.backgroundImage}
+                className="w-full h-full object-cover opacity-20"
+                alt=""
+                loading="eager"
+                decoding="async"
+              />
+            ) : null}
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, oklch(0.12 0.018 240) 50%, var(--ink-tint) 100%)' }} />
           </div>
 
           {/* Subtle grid */}
@@ -258,7 +285,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             />
 
             {/* Subheadline */}
-            <p className="text-lg text-white/60 max-w-2xl mb-10 leading-relaxed font-normal">
+            <p className="text-lg text-white/80 max-w-2xl mb-10 leading-relaxed font-normal">
               <EditableText value={content.hero.subheadline} onChange={v => updateContent('hero.subheadline', v)} readOnly={readOnly} />
             </p>
 
@@ -266,15 +293,15 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             <div className="flex flex-wrap gap-4">
               <a
                 href="#contact"
-                className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 shadow-lg"
-                style={{ background: accent.hex, boxShadow: `0 8px 30px ${accent.hex}40` }}
+                className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold transition-opacity hover:opacity-95"
+                style={{ background: accent.hex }}
               >
                 {content.hero.ctaPrimary.text} <ArrowUpRight size={15} />
               </a>
               <a
                 href="#solutions"
                 className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold border transition-all hover:bg-white/10"
-                style={{ borderColor: 'oklch(0.35 0.01 240)' }}
+                style={{ borderColor: 'var(--ink-line-soft)' }}
               >
                 See Our Services
               </a>
@@ -288,7 +315,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 { icon: <Clock size={14} />, label: 'End-to-End Operations' },
                 { icon: <Package size={14} />, label: 'Quality Control Included' },
               ].map((t, i) => (
-                <div key={i} className="flex items-center gap-2 text-white/50 text-xs font-medium">
+                <div key={i} className="flex items-center gap-2 text-white/75 text-xs font-medium">
                   <span style={{ color: accent.hex }}>{t.icon}</span>
                   {t.label}
                 </div>
@@ -302,9 +329,6 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
           <section id="products" className="py-28 px-8 bg-white" onClick={() => setActiveSection('products')}>
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-14">
-                <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
-                  Featured
-                </span>
                 <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
                   <EditableText
                     value={content.products.title}
@@ -376,7 +400,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         <section
           id="solutions"
           className="py-28 px-8"
-          style={{ background: 'oklch(0.975 0.006 238)' }}
+          style={{ background: 'var(--surface-soft)' }}
           onClick={() => setActiveSection('solutions')}
         >
           <div className="max-w-6xl mx-auto">
@@ -416,9 +440,6 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                   <p className="text-gray-500 text-sm leading-relaxed">
                     <EditableText value={item.description} onChange={v => updateContent(`solutions.items.${idx}.description`, v)} readOnly={readOnly} />
                   </p>
-                  <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold transition-colors" style={{ color: accent.hex }}>
-                    Learn more <ArrowUpRight size={13} />
-                  </div>
                 </div>
               ))}
             </div>
@@ -429,9 +450,6 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         <section id="process" className="py-28 px-8 bg-white" onClick={() => setActiveSection('howItWorks')}>
           <div className="max-w-6xl mx-auto">
             <div className="text-center max-w-2xl mx-auto mb-20">
-              <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
-                How It Works
-              </span>
               <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">
                 <EditableText value={content.howItWorks.title} onChange={v => updateContent('howItWorks.title', v)} readOnly={readOnly} />
               </h2>
@@ -449,7 +467,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                   <div key={idx} className="flex flex-col items-center text-center group">
                     <div
                       className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-extrabold text-white mb-6 shadow-md transition-transform group-hover:-translate-y-1 relative z-10"
-                      style={{ background: `oklch(0.12 0.018 240)`, border: `2px solid ${accent.hex}30` }}
+                      style={{ background: 'var(--ink-deep)', border: `2px solid ${accent.hex}30` }}
                     >
                       <span style={{ color: accent.hex }}>0{idx + 1}</span>
                     </div>
@@ -470,7 +488,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         <section
           id="about"
           className="py-28 px-8 overflow-hidden"
-          style={{ background: 'oklch(0.12 0.018 240)' }}
+          style={{ background: 'var(--ink-deep)' }}
           onClick={() => setActiveSection('about')}
         >
           <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-20">
@@ -487,13 +505,6 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 className="w-full aspect-[4/5] object-cover rounded-2xl relative z-10"
                 readOnly={readOnly}
               />
-              {/* Floating stat */}
-              <div
-                className="absolute -bottom-6 -right-4 bg-white p-5 rounded-2xl shadow-xl z-20 text-center"
-              >
-                <div className="text-3xl font-extrabold text-gray-900">99%</div>
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-0.5">Retention</div>
-              </div>
             </div>
 
             {/* Text */}
@@ -504,7 +515,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               <h2 className="text-4xl lg:text-5xl font-extrabold mb-6 tracking-tight leading-tight">
                 <EditableText value={content.about.title} onChange={v => updateContent('about.title', v)} readOnly={readOnly} />
               </h2>
-              <p className="text-lg leading-relaxed mb-12" style={{ color: 'oklch(0.65 0.008 230)' }}>
+              <p className="text-lg leading-relaxed mb-12" style={{ color: 'var(--text-on-deep)' }}>
                 <EditableText value={content.about.description} onChange={v => updateContent('about.description', v)} readOnly={readOnly} />
               </p>
 
@@ -515,7 +526,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                       {m.value}
                       <span style={{ color: accent.hex }}>{m.suffix}</span>
                     </div>
-                    <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.5 0.008 230)' }}>
+                    <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-on-deep-muted)' }}>
                       {m.label}
                     </div>
                   </div>
@@ -530,9 +541,6 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
           <section id="certificates" className="py-28 px-8 bg-gray-50" onClick={() => setActiveSection('certificates')}>
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-14">
-                <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
-                  Trusted &amp; Certified
-                </span>
                 <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
                   <EditableText
                     value={content.certificates.title}
@@ -577,9 +585,6 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
             {/* Left */}
             <div>
-              <span className="text-xs font-bold uppercase tracking-[0.12em] mb-4 block" style={{ color: accent.hex }}>
-                Get In Touch
-              </span>
               <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4 leading-tight">
                 <EditableText value={content.contact.title} onChange={v => updateContent('contact.title', v)} readOnly={readOnly} />
               </h2>
@@ -670,37 +675,8 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               </div>
             </div>
 
-            {/* Right — Form */}
-            <div className="rounded-2xl p-8 border border-gray-100" style={{ background: 'oklch(0.975 0.006 238)' }}>
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Start a Sourcing Request</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="First name"
-                    className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
-                    style={{ '--tw-ring-color': `${accent.hex}30` } as React.CSSProperties}
-                  />
-                  <input type="text" placeholder="Last name"
-                    className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
-                  />
-                </div>
-                <input type="email" placeholder="Business email"
-                  className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
-                />
-                <input type="text" placeholder="Company name"
-                  className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full transition-shadow"
-                />
-                <textarea rows={4} placeholder="What products do you need? Include quantity, destination, and any specifications."
-                  className="bg-white px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 w-full resize-none transition-shadow"
-                />
-                <button
-                  className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 shadow-md flex items-center justify-center gap-2"
-                  style={{ background: accent.hex, boxShadow: `0 4px 16px ${accent.hex}35` }}
-                >
-                  Send Sourcing Request <ArrowUpRight size={15} />
-                </button>
-                <p className="text-center text-xs text-gray-400">We respond within 24 hours. No commitment required.</p>
-              </div>
-            </div>
+            {/* Right — Form (real submit, labels, validation) */}
+            <SourcingRequestForm companySlug={slug} accentColor={accent.hex} />
           </div>
         </section>
 

@@ -74,6 +74,11 @@ export default function PartnerLogoCarousel({
         .animate-marquee {
           animation: marquee 35s linear infinite;
         }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-marquee {
+            animation: none;
+          }
+        }
       `}</style>
     </section>
   );

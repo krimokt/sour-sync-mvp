@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { EditableText, EditableIcon, EditableImage } from './EditorComponents';
 import Sidebar from './Sidebar';
+import PartnerLogoCarousel from './PartnerLogoCarousel';
+import SiteFooter from './SiteFooter';
 
 interface LandingPageTemplateProps {
   data: FormData;
@@ -64,10 +66,10 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
 
   /* ── Navbar ── */
   const navLinks = [
+    ...(content.products?.items?.length ? ['Products'] : []),
     'Solutions',
     'Process',
     'About',
-    ...(content.products?.items?.length ? ['Products'] : []),
     ...(content.certificates?.items?.length ? ['Certificates'] : []),
     'Contact',
   ];
@@ -295,7 +297,82 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
           </div>
         </section>
 
-        {/* ── SOLUTIONS ── */}
+        {/* ── PRODUCTS (top 6, populated server-side from products table) ── */}
+        {content.products?.items && content.products.items.length > 0 && (
+          <section id="products" className="py-28 px-8 bg-white" onClick={() => setActiveSection('products')}>
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-14">
+                <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
+                  Featured
+                </span>
+                <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+                  <EditableText
+                    value={content.products.title}
+                    onChange={v => updateContent('products.title', v)}
+                    readOnly={readOnly}
+                  />
+                </h2>
+                {content.products.subtitle && (
+                  <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
+                    <EditableText
+                      value={content.products.subtitle}
+                      onChange={v => updateContent('products.subtitle', v)}
+                      readOnly={readOnly}
+                    />
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {content.products.items.slice(0, 6).map((p) => (
+                  <a
+                    key={p.id}
+                    href={p.href}
+                    className="group block bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
+                  >
+                    <div className="aspect-square bg-gray-100 overflow-hidden">
+                      {p.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <Package className="w-10 h-10" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 line-clamp-2">{p.name}</h3>
+                      {p.price != null && p.price > 0 && (
+                        <p className="mt-1 text-sm font-bold" style={{ color: accent.hex }}>
+                          ${p.price.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+              <div className="text-center mt-10">
+                <a
+                  href={`/site/${slug}/products`}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: accent.hex }}
+                >
+                  View all products
+                  <ArrowUpRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── PARTNER LOGO CAROUSEL ── */}
+        <PartnerLogoCarousel accentColor={accent.hex} />
+
+        {/* ── SOLUTIONS (What We Do) ── */}
         <section
           id="solutions"
           className="py-28 px-8"
@@ -447,78 +524,6 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             </div>
           </div>
         </section>
-
-        {/* ── PRODUCTS (top 6, populated server-side from products table) ── */}
-        {content.products?.items && content.products.items.length > 0 && (
-          <section id="products" className="py-28 px-8 bg-white" onClick={() => setActiveSection('products')}>
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-14">
-                <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
-                  Featured
-                </span>
-                <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
-                  <EditableText
-                    value={content.products.title}
-                    onChange={v => updateContent('products.title', v)}
-                    readOnly={readOnly}
-                  />
-                </h2>
-                {content.products.subtitle && (
-                  <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
-                    <EditableText
-                      value={content.products.subtitle}
-                      onChange={v => updateContent('products.subtitle', v)}
-                      readOnly={readOnly}
-                    />
-                  </p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {content.products.items.slice(0, 6).map((p) => (
-                  <a
-                    key={p.id}
-                    href={p.href}
-                    className="group block bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
-                  >
-                    <div className="aspect-square bg-gray-100 overflow-hidden">
-                      {p.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.image}
-                          alt={p.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <Package className="w-10 h-10" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 line-clamp-2">{p.name}</h3>
-                      {p.price != null && p.price > 0 && (
-                        <p className="mt-1 text-sm font-bold" style={{ color: accent.hex }}>
-                          ${p.price.toFixed(2)}
-                        </p>
-                      )}
-                    </div>
-                  </a>
-                ))}
-              </div>
-              <div className="text-center mt-10">
-                <a
-                  href={`/site/${slug}/products`}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: accent.hex }}
-                >
-                  View all products
-                  <ArrowUpRight className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* ── CERTIFICATES (upload-managed via builder) ── */}
         {content.certificates?.items && content.certificates.items.length > 0 && (
@@ -700,19 +705,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="py-10 px-8 bg-white border-t border-gray-100">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: accent.hex }}>
-                {data.companyName.charAt(0).toUpperCase()}
-              </div>
-              <span className="font-bold text-sm text-gray-900">{data.companyName}</span>
-            </div>
-            <p className="text-xs text-gray-400">
-              Powered by <a href="https://soursync.com" className="font-semibold hover:text-gray-700 transition-colors">SourSync</a> &middot; Privacy &middot; Terms
-            </p>
-          </div>
-        </footer>
+        <SiteFooter data={data} content={content} accentColor={accent.hex} companySlug={slug} />
       </main>
     </div>
   );

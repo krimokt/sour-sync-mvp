@@ -26,13 +26,16 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({ products, companySlug }: ProductGridProps) {
-  const handleAddToCart = async (productId: string) => {
-    // TODO: Implement add to cart
-    console.log('Add to cart:', productId);
+  // Public storefront — unauthenticated visitors. Ordering / quoting requires
+  // a client account, so route through signin with a redirect back.
+  const handleAddToCart = (productId: string) => {
+    const next = `/site/${companySlug}/products/${productId}`;
+    window.location.href = `/site/${companySlug}/signin?next=${encodeURIComponent(next)}`;
   };
 
   const handleRequestQuote = (productId: string) => {
-    window.location.href = `/site/${companySlug}/quote?product=${productId}`;
+    const next = `/site/${companySlug}/products/${productId}?action=quote`;
+    window.location.href = `/site/${companySlug}/signin?next=${encodeURIComponent(next)}`;
   };
 
   return (
@@ -137,7 +140,7 @@ function ProductCard({ product, companySlug, onAddToCart, onRequestQuote }: Prod
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               <ShoppingCart className="w-4 h-4" />
-              Add to Cart
+              Order
             </button>
           )}
           <button

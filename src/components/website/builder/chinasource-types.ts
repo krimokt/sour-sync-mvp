@@ -26,7 +26,32 @@ export interface TrustMetric {
   suffix?: string;
 }
 
+export interface ProductTile {
+  id: string;
+  name: string;
+  image: string | null;
+  href: string;
+  price?: number | null;
+}
+
+export interface Certificate {
+  url: string;
+  label?: string;
+}
+
 export interface GeneratedContent {
+  /** Top 6 published products — fetched server-side from `products` table. */
+  products?: {
+    title: string;
+    subtitle?: string;
+    items: ProductTile[];
+  };
+  /** Uploaded certification images (ISO, CE, …). Managed via builder. */
+  certificates?: {
+    title: string;
+    subtitle?: string;
+    items: Certificate[];
+  };
   hero: {
     tagline: string;
     headline: string;

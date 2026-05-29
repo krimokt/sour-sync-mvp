@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import ContactSection from '../../components/ContactSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -294,14 +295,23 @@ export default async function ProductDetailPage({
               )}
             </div>
 
-            {/* CTA */}
+            {/* CTA — server-component page, so use a plain anchor that routes
+                through signin with a return path. Authenticated users will
+                pass through to the client portal product flow. */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                className="flex-1 px-6 py-3 rounded-lg text-white font-medium transition-colors hover:opacity-90"
+              <Link
+                href={`/site/${company.slug}/signin?next=${encodeURIComponent(`/site/${company.slug}/products/${product.id}?action=order`)}`}
+                className="flex-1 px-6 py-3 rounded-lg text-white font-medium text-center transition-colors hover:opacity-90"
                 style={{ backgroundColor: themeColor }}
               >
+                Order Now
+              </Link>
+              <Link
+                href={`/site/${company.slug}/signin?next=${encodeURIComponent(`/site/${company.slug}/products/${product.id}?action=quote`)}`}
+                className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium text-center hover:bg-gray-50 transition-colors"
+              >
                 Request Quote
-              </button>
+              </Link>
               <Link
                 href={`/site/${company.slug}/products`}
                 className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium text-center hover:bg-gray-50 transition-colors"
@@ -357,6 +367,9 @@ export default async function ProductDetailPage({
           </section>
         )}
       </div>
+
+      {/* Contact form — every product page has a "talk to us" CTA */}
+      <ContactSection companySlug={company.slug} themeColor={themeColor} />
     </div>
   );
 }

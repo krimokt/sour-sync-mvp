@@ -110,7 +110,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
         throw new Error(data.error || 'Sign in failed');
       }
 
-      window.location.href = `/client/${params.companySlug}`;
+      window.location.href = searchParams.get('next') || `/client/${params.companySlug}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setIsLoading(false);
@@ -184,7 +184,7 @@ export default function ClientSignInPage({ params }: ClientSignInPageProps) {
       });
 
       if (loginRes.ok) {
-        window.location.href = `/client/${params.companySlug}`;
+        window.location.href = searchParams.get('next') || `/client/${params.companySlug}`;
         return;
       }
 

@@ -21,6 +21,7 @@ export default function StoreHeader({ companyName, logoUrl, themeColor = '#3B82F
   const navLinks = [
     { href: `/site/${companySlug}`, label: 'Home' },
     { href: `/site/${companySlug}/products`, label: 'Products' },
+    { href: `/site/${companySlug}/about`, label: 'About' },
     { href: `/site/${companySlug}/services`, label: 'Services' },
     { href: `/site/${companySlug}/track`, label: 'Track Order' },
   ];

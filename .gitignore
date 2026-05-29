@@ -43,3 +43,10 @@ next-env.d.ts
 # package-lock.json — kept committed so Netlify can `npm ci` deterministically
 yarn.lock
 .vercel
+
+# local agent / dev-tool state
+.claude/
+.impeccable/
+
+# HAR captures
+*.har

@@ -63,7 +63,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   };
 
   /* ── Navbar ── */
-  const navLinks = ['Solutions', 'Process', 'About', 'Contact'];
+  const navLinks = [
+    'Solutions',
+    'Process',
+    'About',
+    ...(content.products?.items?.length ? ['Products'] : []),
+    ...(content.certificates?.items?.length ? ['Certificates'] : []),
+    'Contact',
+  ];
   const slug = companySlug || data.companyName.toLowerCase().replace(/\s+/g, '-');
   const signInHref = `/site/${slug}/signin`;
 
@@ -440,6 +447,125 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             </div>
           </div>
         </section>
+
+        {/* ── PRODUCTS (top 6, populated server-side from products table) ── */}
+        {content.products?.items && content.products.items.length > 0 && (
+          <section id="products" className="py-28 px-8 bg-white" onClick={() => setActiveSection('products')}>
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-14">
+                <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
+                  Featured
+                </span>
+                <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+                  <EditableText
+                    value={content.products.title}
+                    onChange={v => updateContent('products.title', v)}
+                    readOnly={readOnly}
+                  />
+                </h2>
+                {content.products.subtitle && (
+                  <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
+                    <EditableText
+                      value={content.products.subtitle}
+                      onChange={v => updateContent('products.subtitle', v)}
+                      readOnly={readOnly}
+                    />
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {content.products.items.slice(0, 6).map((p) => (
+                  <a
+                    key={p.id}
+                    href={p.href}
+                    className="group block bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
+                  >
+                    <div className="aspect-square bg-gray-100 overflow-hidden">
+                      {p.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <Package className="w-10 h-10" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 line-clamp-2">{p.name}</h3>
+                      {p.price != null && p.price > 0 && (
+                        <p className="mt-1 text-sm font-bold" style={{ color: accent.hex }}>
+                          ${p.price.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+              <div className="text-center mt-10">
+                <a
+                  href={`/site/${slug}/products`}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: accent.hex }}
+                >
+                  View all products
+                  <ArrowUpRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── CERTIFICATES (upload-managed via builder) ── */}
+        {content.certificates?.items && content.certificates.items.length > 0 && (
+          <section id="certificates" className="py-28 px-8 bg-gray-50" onClick={() => setActiveSection('certificates')}>
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-14">
+                <span className="text-xs font-bold uppercase tracking-[0.12em] mb-3 block" style={{ color: accent.hex }}>
+                  Trusted &amp; Certified
+                </span>
+                <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+                  <EditableText
+                    value={content.certificates.title}
+                    onChange={v => updateContent('certificates.title', v)}
+                    readOnly={readOnly}
+                  />
+                </h2>
+                {content.certificates.subtitle && (
+                  <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
+                    <EditableText
+                      value={content.certificates.subtitle}
+                      onChange={v => updateContent('certificates.subtitle', v)}
+                      readOnly={readOnly}
+                    />
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                {content.certificates.items.map((c, i) => (
+                  <figure key={i} className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={c.url}
+                      alt={c.label || `Certificate ${i + 1}`}
+                      loading="lazy"
+                      className="w-full h-40 object-contain"
+                    />
+                    {c.label && (
+                      <figcaption className="mt-2 text-center text-xs text-gray-600">
+                        {c.label}
+                      </figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ── CONTACT ── */}
         <section id="contact" className="py-28 px-8 bg-white" onClick={() => setActiveSection('contact')}>

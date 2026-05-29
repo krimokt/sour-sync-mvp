@@ -3,12 +3,46 @@
 import React, { useState, useEffect } from 'react';
 import BuilderForm from './chinasource-builder-components/BuilderForm';
 import { LandingPageTemplate } from './chinasource-builder-components/LandingPageTemplate';
+import { CertificateManagerButton } from './chinasource-builder-components/CertificateManager';
+import type { Certificate } from './chinasource-types';
 import { generateLandingPageContent } from './chinasource-services/gemini';
-import { AppState, FormData, GeneratedContent } from './chinasource-types';
+import { AppState, FormData, GeneratedContent, ProductTile } from './chinasource-types';
 import { WebsiteSettings } from '@/types/website';
 import { supabase } from '@/lib/supabase';
 import { customToast } from '@/utils/toastUtils';
 import { Save, Globe, ArrowLeft, ExternalLink } from 'lucide-react';
+
+/** Fetch top 6 published products for the company, shaped for the builder. */
+async function fetchTopProducts(companyId: string, companySlug: string): Promise<ProductTile[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase.from('products') as any)
+    .select('id, name, images, price')
+    .eq('company_id', companyId)
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(6);
+  return ((data || []) as Array<{ id: string; name: string; images?: string[] | null; price?: number | null }>)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      image: p.images?.[0] || null,
+      price: p.price ?? null,
+      href: `/site/${companySlug}/products/${p.id}`,
+    }));
+}
+
+/** Merge a fresh products snapshot into existing builder content. */
+function withProducts(content: GeneratedContent, items: ProductTile[]): GeneratedContent {
+  if (items.length === 0) return content;
+  return {
+    ...content,
+    products: {
+      title: content.products?.title || 'Featured products',
+      subtitle: content.products?.subtitle || 'Hand-picked from our catalog',
+      items,
+    },
+  };
+}
 
 interface ChinaSourceBuilderProps {
   companyId: string;
@@ -45,7 +79,9 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
         const savedData = privateRow?.builder_data as { formData: FormData; generatedContent: GeneratedContent } | null | undefined;
         if (savedData?.formData && savedData?.generatedContent) {
           setFormData(savedData.formData);
-          setGeneratedContent(savedData.generatedContent);
+          // Refresh the product list on every visit so the catalog stays in sync.
+          const tiles = await fetchTopProducts(companyId, companySlug);
+          setGeneratedContent(withProducts(savedData.generatedContent, tiles));
           setAppState('preview');
           return;
         }
@@ -54,7 +90,8 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
         const legacySaved = (initialSettings as WebsiteSettings & { builder_data?: { formData: FormData; generatedContent: GeneratedContent } }).builder_data;
         if (legacySaved?.formData && legacySaved?.generatedContent) {
           setFormData(legacySaved.formData);
-          setGeneratedContent(legacySaved.generatedContent);
+          const tiles = await fetchTopProducts(companyId, companySlug);
+          setGeneratedContent(withProducts(legacySaved.generatedContent, tiles));
           setAppState('preview');
         }
       } catch (error) {
@@ -71,7 +108,8 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
 
     try {
       const content = await generateLandingPageContent(data);
-      setGeneratedContent(content);
+      const tiles = await fetchTopProducts(companyId, companySlug);
+      setGeneratedContent(withProducts(content, tiles));
       setAppState('preview');
     } catch (error) {
       console.error("Failed to generate content", error);
@@ -174,6 +212,23 @@ export default function ChinaSourceBuilder({ companyId, companySlug, initialSett
           </button>
           
           <div className="flex items-center gap-3 z-[101]">
+            <CertificateManagerButton
+              companyId={companyId}
+              certificates={generatedContent?.certificates?.items || []}
+              onChange={(items) => {
+                setGeneratedContent((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    certificates: {
+                      title: prev.certificates?.title || 'Certifications',
+                      subtitle: prev.certificates?.subtitle,
+                      items,
+                    },
+                  };
+                });
+              }}
+            />
             <button
               onClick={handleSave}
               disabled={isSaving || isPublishing}

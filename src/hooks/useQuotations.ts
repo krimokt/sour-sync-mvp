@@ -64,12 +64,14 @@ const fetchQuotations = async (
   // Explicit columns only — avoids hauling the heavy JSON image fields
   // (extra_images_option1/2/3, custom_images_option1/2, …) for every row.
   // Those are loaded on-demand by the detail/edit modals.
+  // NOTE: "Quotation_fees" is double-quoted because PostgREST v13+ requires
+  // explicit quoting for mixed-case identifiers in the URL.
   const LIST_COLUMNS =
     'id, quotation_id, user_id, product_name, product_url, quantity, status, ' +
     'created_at, image_url, shipping_method, service_type, shipping_country, ' +
     'shipping_city, title_option1, total_price_option1, title_option2, ' +
     'total_price_option2, title_option3, total_price_option3, selected_option, ' +
-    'Quotation_fees, client_label, rejection_reason';
+    '"Quotation_fees", client_label, rejection_reason';
 
   // Build main query
   let query = supabase

@@ -16,6 +16,7 @@ import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import StatCard from '@/components/common/StatCard';
 import { Package, Clock, Send, CheckCircle, ChevronDown, ChevronUp, Eye, FileText, Building2, MapPin, Info, Upload, Image as ImageIcon, Video, X } from 'lucide-react';
 import Image from 'next/image';
+import TableThumbnail from '@/components/common/TableThumbnail';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Input from '@/components/form/input/InputField';
 
@@ -839,21 +840,13 @@ export default function ShippingPage() {
                                     <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                       <td className="px-4 py-4">
                                         <div className="flex items-center gap-3">
-                                          <div className="relative w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
-                                            {item.image && item.image.trim() && !imageErrors.has(`${shipment.id}-${idx}`) ? (
-                                              <Image 
-                                                src={item.image} 
-                                                alt={item.product_name} 
-                                                fill 
-                                                className="object-contain p-1" 
-                                                onError={() => {
-                                                  setImageErrors(prev => new Set(prev).add(`${shipment.id}-${idx}`));
-                                                }}
-                                              />
-                                            ) : (
+                                          {item.image && item.image.trim() && !imageErrors.has(`${shipment.id}-${idx}`) ? (
+                                            <TableThumbnail src={item.image} alt={item.product_name} size={48} />
+                                          ) : (
+                                            <div className="relative w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
                                               <Package className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-                                            )}
-                                          </div>
+                                            </div>
+                                          )}
                                           <div className="flex-1 min-w-0">
                                             <p className="font-medium text-sm text-gray-900 dark:text-white">
                                               {item.product_name}
@@ -1136,21 +1129,13 @@ export default function ShippingPage() {
                               <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <td className="px-4 py-4">
                                   <div className="flex items-center gap-3">
-                                    <div className="relative w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
-                                      {item.image && item.image.trim() && !imageErrors.has(`${selectedShipment.id}-${idx}`) ? (
-                                        <Image 
-                                          src={item.image} 
-                                          alt={item.product_name} 
-                                          fill 
-                                          className="object-contain p-1" 
-                                          onError={() => {
-                                            setImageErrors(prev => new Set(prev).add(`${selectedShipment.id}-${idx}`));
-                                          }}
-                                        />
-                                      ) : (
+                                    {item.image && item.image.trim() && !imageErrors.has(`${selectedShipment.id}-${idx}`) ? (
+                                      <TableThumbnail src={item.image} alt={item.product_name} size={64} />
+                                    ) : (
+                                      <div className="relative w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
                                         <Package className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                                      )}
-                                    </div>
+                                      </div>
+                                    )}
                                     <div className="flex-1 min-w-0">
                                       <p className="font-medium text-sm text-gray-900 dark:text-white">
                                         {item.product_name}

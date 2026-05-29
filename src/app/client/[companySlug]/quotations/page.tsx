@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import TableThumbnail from '@/components/common/TableThumbnail';
 import { supabase } from '@/lib/supabase';
 import { useClient } from '@/context/ClientContext';
 import StatCard from '@/components/common/StatCard';
@@ -211,21 +212,11 @@ export default function ClientQuotationsPage() {
       cell: ({ row }) => {
         const quotation = row.original;
         return (
-          <div className="w-12 h-12">
-            {quotation.image_url || (quotation.product_images && quotation.product_images[0]) ? (
-              <Image
-                src={quotation.image_url || quotation.product_images![0]}
-                alt={quotation.product_name}
-                width={50}
-                height={50}
-                className="rounded-lg object-cover w-full h-full"
-              />
-            ) : (
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-gray-400" />
-              </div>
-            )}
-          </div>
+          <TableThumbnail
+            src={quotation.image_url || quotation.product_images?.[0]}
+            alt={quotation.product_name}
+            size={48}
+          />
         );
       },
       enableSorting: false,

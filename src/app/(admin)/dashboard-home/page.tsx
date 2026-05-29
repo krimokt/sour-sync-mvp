@@ -6,6 +6,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Button from "@/components/ui/button/Button";
 import Image from "next/image";
+import TableThumbnail from "@/components/common/TableThumbnail";
 import DashboardShippingTracking from "@/components/shipping/DashboardShippingTracking";
 import dynamic from "next/dynamic";
 const QuotationFormModal = dynamic(() => import("@/components/quotation/QuotationFormModal"), { ssr: false });
@@ -94,13 +95,7 @@ export default function DashboardHome() {
                       <TableCell className="px-5 py-4 text-gray-700 text-theme-sm dark:text-white/90">{item.id}</TableCell>
                       <TableCell className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 overflow-hidden rounded-lg relative">
-                            {item.image_url ? (
-                              <Image width={40} height={40} src={item.image_url} alt={item.product_name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-xs text-gray-500">No img</div>
-                            )}
-                          </div>
+                          <TableThumbnail src={item.image_url} alt={item.product_name} />
                           <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">{item.product_name}</span>
                         </div>
                       </TableCell>

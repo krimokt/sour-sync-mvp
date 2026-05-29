@@ -14,6 +14,7 @@ import {
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
 import Image from "next/image";
+import TableThumbnail from "@/components/common/TableThumbnail";
 import { Modal } from "@/components/ui/modal";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -1463,14 +1464,10 @@ export default function ShipmentTrackingPage() {
                       </TableCell>
                       <TableCell className="px-5 py-3 text-sm">
                         <div className="flex items-center gap-3">
-                          <div className="relative h-10 w-10 overflow-hidden rounded-lg flex-shrink-0">
-                            <Image
-                                src={shipment.quotation?.image_url || defaultProductImage}
-                                alt={shipment.quotation?.product_name || "Product"}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
+                          <TableThumbnail
+                            src={shipment.quotation?.image_url || defaultProductImage}
+                            alt={shipment.quotation?.product_name || "Product"}
+                          />
                           <div>
                               <div className="font-medium text-gray-800 dark:text-white/90">{shipment.quotation?.product_name || "Product"}</div>
                           </div>

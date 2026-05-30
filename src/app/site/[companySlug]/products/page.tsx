@@ -4,8 +4,29 @@ import { Search, Package2, Sparkles, ChevronRight, SlidersHorizontal } from 'luc
 import ProductGrid from './ProductGrid';
 import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import type { Metadata } from 'next';
+import { getTenantSeo } from '@/lib/seo-data';
+import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: { companySlug: string } }): Promise<Metadata> {
+  const t = await getTenantSeo(params.companySlug);
+  if (!t) return { title: 'Products', robots: { index: false, follow: false } };
+  const description = metaDescription(
+    undefined,
+    `Browse products from ${t.name}${t.country ? `, ${t.country.toUpperCase()}` : ''}. Wholesale supply with fast quotes.`,
+  );
+  const url = tenantUrl(t, '/products');
+  const image = absoluteImage(t.logo_url);
+  return {
+    title: 'Products',
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `Products | ${t.name}`, description, url, siteName: t.name, images: image ? [{ url: image }] : undefined },
+    twitter: { card: 'summary_large_image', title: `Products | ${t.name}`, description, images: image ? [image] : undefined },
+  };
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -5,8 +5,13 @@ import Image from 'next/image';
 import ContactSection from '../../components/ContactSection';
 import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import type { Metadata } from 'next';
+import { getTenantSeo, getProductSeo } from '@/lib/seo-data';
+import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
 
-export const dynamic = 'force-dynamic';
+// ISR: product pages are public, mostly-static content. Revalidate every 5 min
+// so edits propagate without paying full SSR on every crawler/visitor hit.
+export const revalidate = 300;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,16 +79,40 @@ async function getRelatedProducts(companyId: string, productId: string, category
   return data || [];
 }
 
-export async function generateMetadata({ params }: { params: { companySlug: string; productId: string } }) {
-  const product = await getProduct(params.productId);
-  
-  if (!product) {
-    return { title: 'Product Not Found' };
+export async function generateMetadata(
+  { params }: { params: { companySlug: string; productId: string } },
+): Promise<Metadata> {
+  const [product, t] = await Promise.all([
+    getProductSeo(params.productId),
+    getTenantSeo(params.companySlug),
+  ]);
+
+  if (!product || !t || product.company_id !== t.id) {
+    return { title: 'Product Not Found', robots: { index: false, follow: false } };
   }
 
+  const title = `${product.name} — Buy from ${t.name}`;
+  const description = metaDescription(
+    product.description,
+    `${product.name} available from ${t.name}. Request a wholesale quote with fast lead times.`,
+  );
+  const url = tenantUrl(t, `/products/${product.id}`);
+  const image = absoluteImage(product.images?.[0]) || absoluteImage(t.logo_url);
+
   return {
-    title: product.name,
-    description: product.description || `View ${product.name}`,
+    title: { absolute: title.length > 65 ? product.name : title },
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: t.name,
+      type: 'website',
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: { card: 'summary_large_image', title, description, images: image ? [image] : undefined },
+    robots: { index: true, follow: true },
   };
 }
 

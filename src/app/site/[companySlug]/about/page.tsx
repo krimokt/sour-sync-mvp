@@ -1,9 +1,31 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import StoreHeader from '../components/StoreHeader';
 import ContactSection from '../components/ContactSection';
+import { getTenantSeo } from '@/lib/seo-data';
+import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: { companySlug: string } }): Promise<Metadata> {
+  const t = await getTenantSeo(params.companySlug);
+  if (!t) return { title: 'About', robots: { index: false, follow: false } };
+  const about = t.builder?.generatedContent?.about;
+  const description = metaDescription(
+    about?.description,
+    `Learn about ${t.name}${t.country ? `, a sourcing partner in ${t.country.toUpperCase()}` : ''}.`,
+  );
+  const url = tenantUrl(t, '/about');
+  const image = absoluteImage(t.logo_url);
+  return {
+    title: `About ${t.name}`,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `About ${t.name}`, description, url, siteName: t.name, images: image ? [{ url: image }] : undefined },
+    twitter: { card: 'summary_large_image', title: `About ${t.name}`, description, images: image ? [image] : undefined },
+  };
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

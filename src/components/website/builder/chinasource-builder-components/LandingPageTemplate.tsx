@@ -15,6 +15,7 @@ import SourcingRequestForm from './SourcingRequestForm';
 import FactoryCertifications from './FactoryCertifications';
 import ProcessTimeline from './ProcessTimeline';
 import SolutionsList from './SolutionsList';
+import BrandMark from './BrandMark';
 import CaseStudyShowcase from './CaseStudyShowcase';
 import AboutHeroSection from '@/components/storefront/AboutHeroSection';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
@@ -106,21 +107,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         <div className="max-w-6xl mx-auto px-6 lg:px-10">
           <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-20'}`}>
 
-            {/* Logo — soft accent glow on hover */}
-            <a href="#" className="group flex items-center gap-2.5 flex-shrink-0">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold transition-shadow"
-                style={{
-                  background: accent.hex,
-                  boxShadow: `0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 14px -4px ${accent.hex}66`,
-                }}
-              >
-                {data.companyName.charAt(0).toUpperCase()}
-              </div>
-              <span className={`font-semibold text-[15px] tracking-tight transition-colors ${scrolled ? 'text-slate-900' : 'text-white'}`}>
-                {data.companyName}
-              </span>
-            </a>
+            {/* Logo — real logo when uploaded, else accent initial tile */}
+            <BrandMark
+              companyName={data.companyName}
+              logoUrl={data.logoUrl}
+              accentHex={accent.hex}
+              href={`/site/${slug}`}
+              onDark={!scrolled}
+            />
 
             {/* Desktop links — centered, pill hover with accent tint */}
             <div className="hidden lg:flex items-center gap-0.5">
@@ -158,14 +152,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 href={signInHref}
                 className={`group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold transition-all ${
                   scrolled
-                    ? 'text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 hover:bg-blue-50/40 shadow-[0_1px_0_rgba(15,23,42,0.04)]'
+                    ? 'text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.04)]'
                     : 'text-white bg-white/10 ring-1 ring-white/25 hover:bg-white/15 hover:ring-white/40 backdrop-blur'
                 }`}
               >
                 <span
                   className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors ${
                     scrolled
-                      ? 'bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                      ? 'bg-slate-100 text-slate-500 group-hover:text-slate-700'
                       : 'bg-white/15 text-white'
                   }`}
                 >
@@ -186,7 +180,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 aria-label="Client Portal"
                 className={`inline-flex items-center justify-center w-10 h-10 rounded-full transition ${
                   scrolled
-                    ? 'bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-blue-300 hover:text-blue-700'
+                    ? 'bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-slate-300 hover:text-slate-900'
                     : 'bg-white/10 ring-1 ring-white/25 text-white hover:bg-white/15 backdrop-blur'
                 }`}
               >
@@ -198,6 +192,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                   scrolled ? 'text-gray-600 hover:bg-gray-50' : 'text-white/80 hover:bg-white/10'
                 }`}
                 aria-label="Toggle menu"
+                aria-expanded={mobileOpen}
               >
                 {mobileOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
@@ -209,7 +204,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
       {/* Mobile menu */}
       {mobileOpen && (
         <div
-          className={`fixed ${hasTopBar ? 'top-[calc(4rem+3.5rem)]' : 'top-14'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-39 bg-white border-b border-gray-100 shadow-lg`}
+          className={`fixed ${hasTopBar ? 'top-[calc(4rem+3.5rem)]' : 'top-14'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-30 bg-white border-b border-gray-100 shadow-lg`}
         >
           <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
             {navLinks.map(label => (
@@ -225,7 +220,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             <div className="h-px bg-gray-100 my-1" />
             <a
               href={signInHref}
-              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 transition"
+              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 transition"
             >
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500">
                 <LogIn size={13} />

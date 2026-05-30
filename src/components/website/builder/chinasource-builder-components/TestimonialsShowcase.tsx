@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Quote, Star } from 'lucide-react';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
 import type { TestimonialSeo } from '@/lib/seo-data';
 
 interface TestimonialsShowcaseProps {
@@ -19,17 +20,18 @@ interface TestimonialsShowcaseProps {
 export default function TestimonialsShowcase({
   items,
   accentHex,
-  title = 'What buyers say',
-  subtitle = 'Feedback from companies we source for.',
+  title,
+  subtitle,
 }: TestimonialsShowcaseProps) {
+  const { t } = useStorefrontLocale();
   if (!items || items.length === 0) return null;
 
   return (
     <section id="testimonials" className="py-28 px-6 lg:px-8" style={{ background: 'var(--surface-soft, #f8fafc)' }}>
       <div className="max-w-6xl mx-auto">
         <div className="max-w-2xl mb-14">
-          <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">{title}</h2>
-          {subtitle && <p className="mt-3 text-lg text-gray-500 leading-relaxed">{subtitle}</p>}
+          <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">{title ?? t('section.testimonials')}</h2>
+          <p className="mt-3 text-lg text-gray-500 leading-relaxed">{subtitle ?? t('section.testimonialsSub')}</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

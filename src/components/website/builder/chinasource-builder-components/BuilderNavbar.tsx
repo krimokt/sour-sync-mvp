@@ -5,6 +5,9 @@ import { LogIn, Menu, X } from 'lucide-react';
 import type { FormData, GeneratedContent, ThemeColor } from '../chinasource-types';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 import BrandMark from './BrandMark';
+import LanguageSwitcher from '@/components/storefront/LanguageSwitcher';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
+import { NAV_LABEL_KEY } from '@/lib/i18n/storefront-dict';
 
 const themeAccent: Record<ThemeColor, { hex: string }> = {
   amber:   { hex: '#f59e0b' },
@@ -34,6 +37,7 @@ export default function BuilderNavbar({
 }: BuilderNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useStorefrontLocale();
 
   const accent = themeAccent[data.themeColor] || themeAccent.blue;
 
@@ -85,12 +89,13 @@ export default function BuilderNavbar({
                   onMouseEnter={(e) => { e.currentTarget.style.background = `${accent.hex}10`; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = ''; }}
                 >
-                  {label}
+                  {t(NAV_LABEL_KEY[label])}
                 </a>
               ))}
             </div>
 
             <div className="hidden lg:flex items-center gap-2.5">
+              <LanguageSwitcher accentHex={accent.hex} />
               <a
                 href={signInHref}
                 className="group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 transition-all shadow-[0_1px_0_rgba(15,23,42,0.04)]"
@@ -98,21 +103,22 @@ export default function BuilderNavbar({
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 group-hover:text-slate-700 transition-colors">
                   <LogIn size={12} />
                 </span>
-                Client Portal
+                {t('cta.clientPortal')}
               </a>
               <a
                 href={`${base}/contact`}
                 className="inline-flex"
               >
-                <AntiMetalButton label="Get a Quote" className="w-36" />
+                <AntiMetalButton label={t('cta.getQuote')} className="w-36" />
               </a>
             </div>
 
             <div className="flex lg:hidden items-center gap-2">
+              <LanguageSwitcher accentHex={accent.hex} />
               <a
                 href={signInHref}
                 className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-slate-300 hover:text-slate-900 transition"
-                aria-label="Client Portal"
+                aria-label={t('cta.clientPortal')}
               >
                 <LogIn size={16} />
               </a>
@@ -139,7 +145,7 @@ export default function BuilderNavbar({
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
               >
-                {label}
+                {t(NAV_LABEL_KEY[label])}
               </a>
             ))}
             <div className="h-px bg-gray-100 my-1" />
@@ -150,14 +156,14 @@ export default function BuilderNavbar({
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500">
                 <LogIn size={13} />
               </span>
-              Client Portal
+              {t('cta.clientPortal')}
             </a>
             <a
               href={`${base}/contact`}
               onClick={() => setMobileOpen(false)}
               className="mt-1 inline-flex justify-center"
             >
-              <AntiMetalButton label="Get a Quote" className="w-full" />
+              <AntiMetalButton label={t('cta.getQuote')} className="w-full" />
             </a>
           </div>
         </div>

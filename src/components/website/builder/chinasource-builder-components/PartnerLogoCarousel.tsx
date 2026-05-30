@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
 
 /**
  * "Trusted across" partner/marketplace logo wall.
@@ -29,14 +30,15 @@ interface PartnerLogoCarouselProps {
 }
 
 export default function PartnerLogoCarousel({
-  title = 'Trusted across the global sourcing supply chain',
+  title,
   logos = DEFAULT_LOGOS,
 }: PartnerLogoCarouselProps) {
+  const { t } = useStorefrontLocale();
   return (
     <section id="partners" className="py-16 lg:py-20 px-6 lg:px-8 bg-white border-y border-slate-200">
       <div className="max-w-6xl mx-auto">
         <p className="text-center text-sm font-medium text-slate-500 mb-10">
-          {title}
+          {title ?? t('section.trustedBy')}
         </p>
 
         {/* Logo wall — hairline-divided cells. Wordmarks sit in muted gray and

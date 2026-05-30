@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { MapPin } from 'lucide-react';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
 import type { CaseStudySeo } from '@/lib/seo-data';
 
 interface CaseStudyShowcaseProps {
@@ -20,17 +21,18 @@ interface CaseStudyShowcaseProps {
 export default function CaseStudyShowcase({
   items,
   accentHex,
-  title = 'Selected projects',
-  subtitle = 'A sample of work delivered for buyers around the world.',
+  title,
+  subtitle,
 }: CaseStudyShowcaseProps) {
+  const { t } = useStorefrontLocale();
   if (!items || items.length === 0) return null;
 
   return (
     <section id="projects" className="py-28 px-6 lg:px-8 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="max-w-2xl mb-14">
-          <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">{title}</h2>
-          {subtitle && <p className="mt-3 text-lg text-gray-500 leading-relaxed">{subtitle}</p>}
+          <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">{title ?? t('section.selectedProjects')}</h2>
+          <p className="mt-3 text-lg text-gray-500 leading-relaxed">{subtitle ?? t('section.selectedProjectsSub')}</p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

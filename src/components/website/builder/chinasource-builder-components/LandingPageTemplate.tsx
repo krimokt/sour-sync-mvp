@@ -20,6 +20,9 @@ import CaseStudyShowcase from './CaseStudyShowcase';
 import TestimonialsShowcase from './TestimonialsShowcase';
 import AboutHeroSection from '@/components/storefront/AboutHeroSection';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import LanguageSwitcher from '@/components/storefront/LanguageSwitcher';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
+import { NAV_LABEL_KEY } from '@/lib/i18n/storefront-dict';
 import type { CaseStudySeo, TestimonialSeo } from '@/lib/seo-data';
 
 interface LandingPageTemplateProps {
@@ -58,6 +61,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   const [templateId, setTemplateId] = useState<TemplateId>(data.templateId);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useStorefrontLocale();
 
   const accent = themeAccent[themeColor];
   // Shared CTA color — calm cyan-blue that pairs with the blue theme without
@@ -144,13 +148,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                     e.currentTarget.style.background = '';
                   }}
                 >
-                  {label}
+                  {t(NAV_LABEL_KEY[label])}
                 </a>
               ))}
             </div>
 
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center gap-2.5">
+              {readOnly && <LanguageSwitcher accentHex={accent.hex} onDark={!scrolled} />}
               <a
                 href={signInHref}
                 className={`group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold transition-all ${
@@ -168,19 +173,20 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 >
                   <LogIn size={12} />
                 </span>
-                Client Portal
+                {t('cta.clientPortal')}
               </a>
               {/* Site-wide primary CTA */}
               <a href="#contact" className="inline-flex">
-                <AntiMetalButton label="Get a Quote" className="w-36" />
+                <AntiMetalButton label={t('cta.getQuote')} className="w-36" />
               </a>
             </div>
 
-            {/* Mobile: sign in + hamburger */}
+            {/* Mobile: language + sign in + hamburger */}
             <div className="flex lg:hidden items-center gap-2">
+              {readOnly && <LanguageSwitcher accentHex={accent.hex} onDark={!scrolled} />}
               <a
                 href={signInHref}
-                aria-label="Client Portal"
+                aria-label={t('cta.clientPortal')}
                 className={`inline-flex items-center justify-center w-10 h-10 rounded-full transition ${
                   scrolled
                     ? 'bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-slate-300 hover:text-slate-900'
@@ -217,7 +223,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
               >
-                {label}
+                {t(NAV_LABEL_KEY[label])}
               </a>
             ))}
             <div className="h-px bg-gray-100 my-1" />
@@ -228,14 +234,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500">
                 <LogIn size={13} />
               </span>
-              Client Portal
+              {t('cta.clientPortal')}
             </a>
             <a
               href="#contact"
               onClick={() => setMobileOpen(false)}
               className="mt-1 inline-flex justify-center"
             >
-              <AntiMetalButton label="Get a Quote" className="w-full" />
+              <AntiMetalButton label={t('cta.getQuote')} className="w-full" />
             </a>
           </div>
         </div>
@@ -360,7 +366,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold border transition-colors hover:bg-white/10"
                 style={{ borderColor: 'var(--ink-line-soft)' }}
               >
-                See Our Services
+                {t('cta.seeServices')}
               </a>
             </div>
 
@@ -477,7 +483,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: accent.hex }}
                 >
-                  View all products
+                  {t('cta.viewAllProducts')}
                   <ArrowUpRight className="w-4 h-4" />
                 </a>
               </div>

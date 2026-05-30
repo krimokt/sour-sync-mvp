@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import StoreHeader from '../components/StoreHeader';
 import { Search, CheckCircle, Package, Truck, Shield, Headphones, Globe, DollarSign } from 'lucide-react';
+import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -158,12 +159,8 @@ export default async function ServicesPage({
             Tell us about your sourcing needs and get a free quote within 24 hours.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href={`/site/${params.companySlug}/quote`}
-              className="px-8 py-3 text-white font-medium rounded-lg transition-colors"
-              style={{ backgroundColor: themeColor }}
-            >
-              Request a Quote
+            <Link href={`/site/${params.companySlug}/quote`} className="inline-flex">
+              <AntiMetalButton label="Request a Quote" className="w-44" />
             </Link>
             <Link
               href={`/site/${params.companySlug}/products`}

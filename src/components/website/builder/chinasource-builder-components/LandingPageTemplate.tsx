@@ -16,6 +16,7 @@ import FactoryCertifications from './FactoryCertifications';
 import ProcessTimeline from './ProcessTimeline';
 import SolutionsList from './SolutionsList';
 import AboutHeroSection from '@/components/storefront/AboutHeroSection';
+import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 
 interface LandingPageTemplateProps {
   data: FormData;
@@ -144,31 +145,29 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2.5">
               <a
                 href={signInHref}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors ${
+                className={`group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold transition-all ${
                   scrolled
-                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                    ? 'text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 hover:bg-blue-50/40 shadow-[0_1px_0_rgba(15,23,42,0.04)]'
+                    : 'text-white bg-white/10 ring-1 ring-white/25 hover:bg-white/15 hover:ring-white/40 backdrop-blur'
                 }`}
               >
-                <LogIn size={14} />
+                <span
+                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors ${
+                    scrolled
+                      ? 'bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                      : 'bg-white/15 text-white'
+                  }`}
+                >
+                  <LogIn size={12} />
+                </span>
                 Client Portal
               </a>
-              {/* Site-wide primary CTA — complementary color, pops against theme */}
-              <a
-                href="#contact"
-                className="group inline-flex items-center gap-1.5 hover:gap-3 text-white px-5 py-2 rounded-lg font-semibold text-[13.5px] transition-all duration-300 ease-in-out"
-                style={{
-                  background: ctaColor.hex,
-                  boxShadow: `0 8px 18px -8px ${ctaColor.hex}99, 0 1px 0 rgba(255,255,255,0.22) inset`,
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = ctaColor.hover; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = ctaColor.hex; }}
-              >
-                Get a Quote
-                <ArrowUpRight size={14} />
+              {/* Site-wide primary CTA */}
+              <a href="#contact" className="inline-flex">
+                <AntiMetalButton label="Get a Quote" className="w-36" />
               </a>
             </div>
 
@@ -176,11 +175,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             <div className="flex lg:hidden items-center gap-2">
               <a
                 href={signInHref}
-                className={`p-2 rounded-lg text-sm font-medium transition-colors ${
-                  scrolled ? 'text-gray-600 hover:bg-gray-50' : 'text-white/80 hover:bg-white/10'
+                aria-label="Client Portal"
+                className={`inline-flex items-center justify-center w-10 h-10 rounded-full transition ${
+                  scrolled
+                    ? 'bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-blue-300 hover:text-blue-700'
+                    : 'bg-white/10 ring-1 ring-white/25 text-white hover:bg-white/15 backdrop-blur'
                 }`}
               >
-                <LogIn size={18} />
+                <LogIn size={16} />
               </a>
               <button
                 onClick={() => setMobileOpen(v => !v)}
@@ -215,20 +217,19 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             <div className="h-px bg-gray-100 my-1" />
             <a
               href={signInHref}
-              className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 transition"
             >
-              <LogIn size={15} /> Client Portal
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500">
+                <LogIn size={13} />
+              </span>
+              Client Portal
             </a>
             <a
               href="#contact"
               onClick={() => setMobileOpen(false)}
-              className="mt-1 group flex items-center justify-center gap-2 hover:gap-4 text-white px-5 py-3 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out"
-              style={{
-                background: ctaColor.hex,
-                boxShadow: `0 10px 24px -10px ${ctaColor.hex}99, 0 1px 0 rgba(255,255,255,0.22) inset`,
-              }}
+              className="mt-1 inline-flex justify-center"
             >
-              Get a Quote <ArrowUpRight size={14} />
+              <AntiMetalButton label="Get a Quote" className="w-full" />
             </a>
           </div>
         </div>

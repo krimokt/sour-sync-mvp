@@ -43,7 +43,7 @@ export function TimelineContent({
             io.disconnect();
           }
         },
-        { threshold: 0.1 },
+        { threshold: 0.08, rootMargin: '0px 0px -5% 0px' },
       );
       io.observe(self);
       return () => io.disconnect();
@@ -56,7 +56,7 @@ export function TimelineContent({
           io.disconnect();
         }
       },
-      { threshold: 0.15 },
+      { threshold: 0.08, rootMargin: '0px 0px -5% 0px' },
     );
     io.observe(el);
     return () => io.disconnect();

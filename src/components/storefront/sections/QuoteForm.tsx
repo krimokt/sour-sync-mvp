@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { QuoteFormData } from '@/types/website';
+import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 
 interface QuoteFormProps {
   data: QuoteFormData;
@@ -64,13 +65,13 @@ export default function QuoteForm({ data, themeColor }: QuoteFormProps) {
             </div>
           ))}
 
-          <button
-            type="submit"
-            className="w-full py-4 px-6 rounded-xl text-white font-medium text-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
-            style={{ backgroundColor: themeColor }}
-          >
-            {data.submitText || 'Request Quote'}
-          </button>
+          <div className="flex justify-center">
+            <AntiMetalButton
+              type="submit"
+              label={data.submitText || 'Request Quote'}
+              className="w-full max-w-xs"
+            />
+          </div>
         </form>
       </div>
     </div>

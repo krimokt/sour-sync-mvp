@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ContactSection from '../../components/ContactSection';
 import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
+import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -340,9 +341,9 @@ export default async function ProductDetailPage({
               </Link>
               <Link
                 href={`/site/${company.slug}/signin?next=${encodeURIComponent(`/site/${company.slug}/products/${product.id}?action=quote`)}`}
-                className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium text-center hover:bg-gray-50 transition-colors"
+                className="inline-flex"
               >
-                Request Quote
+                <AntiMetalButton label="Request Quote" className="w-40" />
               </Link>
               <Link
                 href={`/site/${company.slug}/products`}

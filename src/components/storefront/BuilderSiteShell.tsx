@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import BuilderNavbar from '@/components/website/builder/chinasource-builder-components/BuilderNavbar';
 import SiteFooter from '@/components/website/builder/chinasource-builder-components/SiteFooter';
+import FloatingChatButton from '@/components/storefront/FloatingChatButton';
 import type { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 
 const supabase = createClient(
@@ -44,10 +45,20 @@ export default async function BuilderSiteShell({
 }) {
   const builder = await getBuilderData(companySlug);
 
-  // No builder data? Render children alone — caller still gets a usable page.
-  if (!builder) return <>{children}</>;
+  // No builder data? Render children alone, but still expose the chat button
+  // with whatever we have (no contact channels — quote link only).
+  if (!builder) {
+    return (
+      <>
+        {children}
+        <FloatingChatButton companySlug={companySlug} />
+      </>
+    );
+  }
 
   const accentColor = themeAccentHex[builder.formData.themeColor] || '#2563eb';
+  const contactEmail = builder.generatedContent.contact?.email || builder.formData.email || null;
+  const contactWhatsapp = builder.generatedContent.contact?.whatsapp || builder.formData.whatsapp || null;
 
   return (
     <>
@@ -65,6 +76,11 @@ export default async function BuilderSiteShell({
         content={builder.generatedContent}
         accentColor={accentColor}
         companySlug={companySlug}
+      />
+      <FloatingChatButton
+        companySlug={companySlug}
+        email={contactEmail}
+        whatsapp={contactWhatsapp}
       />
     </>
   );

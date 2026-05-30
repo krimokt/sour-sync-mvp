@@ -18,21 +18,43 @@ interface ProcessTimelineProps {
  * numeral + technical eyebrow on the content side. No card grids. Rows are
  * separated by hairline rules (industrial-manual feel).
  *
- * Imagery is curated Unsplash factory/logistics photography; rotates per step
- * so each phase has its own scene.
+ * Phase 01–03 use factory / B2B sourcing photography; Phase 04+ rotates
+ * through additional manufacturing & logistics scenes.
  */
-// All factory / manufacturing imagery — verified Unsplash IDs (HTTP 200).
-// Cycle order: floor inspection → production line → industrial scale → workshop detail.
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1400&q=70',
-  'https://images.unsplash.com/photo-1565043666747-69f6646db940?auto=format&fit=crop&w=1400&q=70',
-  'https://images.unsplash.com/photo-1581094271901-8022df4466f9?auto=format&fit=crop&w=1400&q=70',
-  'https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&w=1400&q=70',
+// Warehouse B2B logistics arc — same industrial style as Phase 03, distinct scenes.
+// All URLs verified HTTP 200 (broken Unsplash IDs silently fell back to Phase 03).
+const FACTORY_B2B_PHASE_IMAGES = [
+  'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?auto=format&fit=crop&w=1400&q=70&v=2', // container yard / freight
+  'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1400&q=70&v=2', // stacked cartons / shipment prep
+  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1400&q=70&v=2', // warehouse worker & pallets
 ];
 
-// Known-good fallback if any of the above ever 404s.
-const SAFE_FALLBACK =
-  'https://images.unsplash.com/photo-1565043666747-69f6646db940?auto=format&fit=crop&w=1400&q=70';
+// Factory / logistics imagery for Phase 04+ (also verified).
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=1400&q=70',
+  'https://images.unsplash.com/photo-1581094271901-8022df4466f9?auto=format&fit=crop&w=1400&q=70',
+  'https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&w=1400&q=70',
+  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1400&q=70',
+];
+
+const ALL_VERIFIED_IMAGES = [...FACTORY_B2B_PHASE_IMAGES, ...FALLBACK_IMAGES];
+
+const SAFE_FALLBACK = FACTORY_B2B_PHASE_IMAGES[2];
+
+function resolveStepImage(idx: number): string {
+  if (idx < 3) {
+    return FACTORY_B2B_PHASE_IMAGES[idx] ?? FACTORY_B2B_PHASE_IMAGES[0];
+  }
+  return FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length];
+}
+
+function nextFallback(currentSrc: string, stepIdx: number): string {
+  const start = ALL_VERIFIED_IMAGES.indexOf(currentSrc);
+  if (start >= 0 && start < ALL_VERIFIED_IMAGES.length - 1) {
+    return ALL_VERIFIED_IMAGES[start + 1];
+  }
+  return FACTORY_B2B_PHASE_IMAGES[stepIdx % FACTORY_B2B_PHASE_IMAGES.length] ?? SAFE_FALLBACK;
+}
 
 export default function ProcessTimeline({
   steps,
@@ -53,7 +75,7 @@ export default function ProcessTimeline({
           io.disconnect();
         }
       },
-      { threshold: 0.15 },
+      { threshold: 0.08, rootMargin: '0px 0px -5% 0px' },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -70,10 +92,10 @@ export default function ProcessTimeline({
               idx > 0 ? 'border-t border-slate-200' : ''
             }`}
             style={{
-              transitionDelay: `${idx * 180}ms`,
+              transitionDelay: `${idx * 70}ms`,
               opacity: visible ? 1 : 0,
-              transform: visible ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'opacity 700ms cubic-bezier(.22,1,.36,1), transform 700ms cubic-bezier(.22,1,.36,1)',
+              transform: visible ? 'translateY(0)' : 'translateY(16px)',
+              transition: 'opacity 420ms cubic-bezier(.22,1,.36,1), transform 420ms cubic-bezier(.22,1,.36,1)',
             }}
           >
             {/* Row-wide accent gradient that fades in on hover — paints the whole strip */}
@@ -104,13 +126,15 @@ export default function ProcessTimeline({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length]}
-                  alt=""
+                  src={resolveStepImage(idx)}
+                  alt={idx < 3 ? `Phase ${idx + 1} factory B2B sourcing` : ''}
                   loading="lazy"
                   decoding="async"
                   onError={(e) => {
-                    if (e.currentTarget.src !== SAFE_FALLBACK) {
-                      e.currentTarget.src = SAFE_FALLBACK;
+                    const img = e.currentTarget;
+                    const fallback = nextFallback(img.src, idx);
+                    if (img.src !== fallback) {
+                      img.src = fallback;
                     }
                   }}
                   className="absolute inset-0 w-full h-full object-cover will-change-transform"

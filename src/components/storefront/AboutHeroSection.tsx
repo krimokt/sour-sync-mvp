@@ -65,7 +65,7 @@ export default function AboutHeroSection({
       y: 0,
       opacity: 1,
       filter: 'blur(0px)',
-      transition: { delay: i * 0.4, duration: 0.5 },
+      transition: { delay: i * 0.08, duration: 0.32, ease: [0.22, 1, 0.36, 1] },
     }),
     hidden: { filter: 'blur(10px)', y: -20, opacity: 0 },
   };
@@ -73,7 +73,7 @@ export default function AboutHeroSection({
     visible: (i: number) => ({
       opacity: 1,
       filter: 'blur(0px)',
-      transition: { delay: i * 0.4, duration: 0.5 },
+      transition: { delay: i * 0.08, duration: 0.32, ease: [0.22, 1, 0.36, 1] },
     }),
     hidden: { filter: 'blur(10px)', opacity: 0 },
   };
@@ -215,10 +215,10 @@ export default function AboutHeroSection({
             <h1 className="sm:text-4xl md:text-5xl text-2xl !leading-[110%] font-semibold text-gray-900 mb-8">
               <VerticalCutReveal
                 splitBy="words"
-                staggerDuration={0.1}
+                staggerDuration={0.04}
                 staggerFrom="first"
                 reverse
-                transition={{ type: 'spring', stiffness: 250, damping: 30, delay: 3 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 28, delay: 0.35 }}
               >
                 {tagline}
               </VerticalCutReveal>

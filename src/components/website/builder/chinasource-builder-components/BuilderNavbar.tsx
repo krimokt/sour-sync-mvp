@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ArrowUpRight, LogIn, Menu, X } from 'lucide-react';
+import { LogIn, Menu, X } from 'lucide-react';
 import type { FormData, GeneratedContent, ThemeColor } from '../chinasource-types';
+import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 
 const themeAccent: Record<ThemeColor, { hex: string }> = {
   amber:   { hex: '#f59e0b' },
@@ -35,7 +36,6 @@ export default function BuilderNavbar({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const accent = themeAccent[data.themeColor] || themeAccent.blue;
-  const ctaColor = { hex: '#2596be', hover: '#1f7fa0' };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -99,35 +99,31 @@ export default function BuilderNavbar({
               ))}
             </div>
 
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2.5">
               <a
                 href={signInHref}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13.5px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                className="group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 hover:bg-blue-50/40 transition-all shadow-[0_1px_0_rgba(15,23,42,0.04)]"
               >
-                <LogIn size={14} />
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                  <LogIn size={12} />
+                </span>
                 Client Portal
               </a>
               <a
                 href={linkToHome ? `/site/${companySlug}#contact` : '#contact'}
-                className="group inline-flex items-center gap-1.5 hover:gap-3 text-white px-5 py-2 rounded-lg font-semibold text-[13.5px] transition-all duration-300 ease-in-out"
-                style={{
-                  background: ctaColor.hex,
-                  boxShadow: `0 8px 18px -8px ${ctaColor.hex}99, 0 1px 0 rgba(255,255,255,0.22) inset`,
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = ctaColor.hover; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = ctaColor.hex; }}
+                className="inline-flex"
               >
-                Get a Quote
-                <ArrowUpRight size={14} />
+                <AntiMetalButton label="Get a Quote" className="w-36" />
               </a>
             </div>
 
             <div className="flex lg:hidden items-center gap-2">
               <a
                 href={signInHref}
-                className="p-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-blue-300 hover:text-blue-700 transition"
+                aria-label="Client Portal"
               >
-                <LogIn size={18} />
+                <LogIn size={16} />
               </a>
               <button
                 onClick={() => setMobileOpen(v => !v)}
@@ -157,20 +153,19 @@ export default function BuilderNavbar({
             <div className="h-px bg-gray-100 my-1" />
             <a
               href={signInHref}
-              className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 transition"
             >
-              <LogIn size={15} /> Client Portal
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500">
+                <LogIn size={13} />
+              </span>
+              Client Portal
             </a>
             <a
               href={linkToHome ? `/site/${companySlug}#contact` : '#contact'}
               onClick={() => setMobileOpen(false)}
-              className="mt-1 group flex items-center justify-center gap-2 hover:gap-4 text-white px-5 py-3 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out"
-              style={{
-                background: ctaColor.hex,
-                boxShadow: `0 10px 24px -10px ${ctaColor.hex}99, 0 1px 0 rgba(255,255,255,0.22) inset`,
-              }}
+              className="mt-1 inline-flex justify-center"
             >
-              Get a Quote <ArrowUpRight size={14} />
+              <AntiMetalButton label="Get a Quote" className="w-full" />
             </a>
           </div>
         </div>

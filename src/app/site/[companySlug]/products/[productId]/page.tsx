@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import ContactSection from '../../components/ContactSection';
+import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,6 +121,7 @@ export default async function ProductDetailPage({
     : 0;
 
   return (
+    <BuilderSiteShell companySlug={company.slug}>
     <div className="py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
@@ -401,6 +403,7 @@ export default async function ProductDetailPage({
       {/* Contact form — every product page has a "talk to us" CTA */}
       <ContactSection companySlug={company.slug} themeColor={themeColor} />
     </div>
+    </BuilderSiteShell>
   );
 }
 

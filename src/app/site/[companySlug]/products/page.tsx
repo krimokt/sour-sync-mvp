@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import ProductGrid from './ProductGrid';
-import StoreHeader from '../components/StoreHeader';
+import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,13 +102,8 @@ export default async function ProductsPage({
   const themeColor = settings?.primary_color || '#3B82F6';
 
   return (
+    <BuilderSiteShell companySlug={params.companySlug}>
     <div className="min-h-screen bg-gray-50">
-      <StoreHeader 
-        companyName={company.name} 
-        logoUrl={company.logo_url} 
-        themeColor={themeColor} 
-      />
-
       {/* Page Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -217,5 +212,6 @@ export default async function ProductsPage({
         </div>
       </div>
     </div>
+    </BuilderSiteShell>
   );
 }

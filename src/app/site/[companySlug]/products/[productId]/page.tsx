@@ -93,16 +93,20 @@ export async function generateMetadata(
     return { title: 'Product Not Found', robots: { index: false, follow: false } };
   }
 
-  const title = `${product.name} — Buy from ${t.name}`;
-  const description = metaDescription(
-    product.description,
-    `${product.name} available from ${t.name}. Request a wholesale quote with fast lead times.`,
-  );
+  const derivedTitle = `${product.name} — Buy from ${t.name}`;
+  const title = product.meta_title || derivedTitle;
+  const description =
+    product.meta_description ||
+    metaDescription(
+      product.description,
+      `${product.name} available from ${t.name}. Request a wholesale quote with fast lead times.`,
+    );
   const url = tenantUrl(t, `/products/${product.id}`);
-  const image = absoluteImage(product.images?.[0]) || absoluteImage(t.logo_url);
+  const image =
+    absoluteImage(product.og_image) || absoluteImage(product.images?.[0]) || absoluteImage(t.logo_url);
 
   return {
-    title: { absolute: title.length > 65 ? product.name : title },
+    title: { absolute: title.length > 65 ? (product.meta_title || product.name) : title },
     description,
     alternates: { canonical: url },
     openGraph: {

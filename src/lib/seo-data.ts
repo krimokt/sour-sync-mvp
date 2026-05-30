@@ -33,6 +33,9 @@ export interface TenantSeo {
   contact_email: string | null;
   contact_phone: string | null;
   contact_location: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image: string | null;
 }
 
 /**
@@ -46,7 +49,8 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
       id, name, slug, logo_url, country,
       settings:website_settings (
         custom_domain, custom_domain_verified, is_published, published_builder_data,
-        contact_email, contact_phone, contact_location
+        contact_email, contact_phone, contact_location,
+        meta_title, meta_description, og_image
       )
     `)
     .eq('slug', slug)
@@ -65,6 +69,9 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
           contact_email?: string | null;
           contact_phone?: string | null;
           contact_location?: string | null;
+          meta_title?: string | null;
+          meta_description?: string | null;
+          og_image?: string | null;
         }
       | null,
   );
@@ -82,6 +89,9 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
     contact_email: s?.contact_email ?? null,
     contact_phone: s?.contact_phone ?? null,
     contact_location: s?.contact_location ?? null,
+    meta_title: s?.meta_title ?? null,
+    meta_description: s?.meta_description ?? null,
+    og_image: s?.og_image ?? null,
   };
 });
 
@@ -93,12 +103,19 @@ export interface ProductSeo {
   sku: string | null;
   category: string | null;
   company_id: string;
+  slug: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  focus_keyword: string | null;
+  og_image: string | null;
 }
 
 export const getProductSeo = cache(async (productId: string): Promise<ProductSeo | null> => {
   const { data } = await supabase
     .from('products')
-    .select('id, name, description, images, sku, category, company_id')
+    .select(
+      'id, name, description, images, sku, category, company_id, slug, meta_title, meta_description, focus_keyword, og_image',
+    )
     .eq('id', productId)
     .eq('is_published', true)
     .single();

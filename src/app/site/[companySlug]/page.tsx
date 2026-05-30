@@ -21,12 +21,14 @@ export async function generateMetadata({ params }: { params: { companySlug: stri
   const t = await getTenantSeo(params.companySlug);
   if (!t) return { title: 'Store Not Found', robots: { index: false, follow: false } };
   const tagline = tenantTagline(t);
-  const title = `${t.name} — ${tagline}`;
-  const description = metaDescription(tagline, `Welcome to ${t.name}`);
+  const derivedTitle = `${t.name} — ${tagline}`;
+  // Tenant-set overrides win over derived defaults.
+  const title = t.meta_title || derivedTitle;
+  const description = t.meta_description || metaDescription(tagline, `Welcome to ${t.name}`);
   const url = tenantUrl(t, '');
-  const image = absoluteImage(t.logo_url);
+  const image = absoluteImage(t.og_image) || absoluteImage(t.logo_url);
   return {
-    title: { absolute: title.length > 60 ? `${t.name} — ${tagline}`.slice(0, 65) : title },
+    title: { absolute: title.length > 65 ? title.slice(0, 65) : title },
     description,
     alternates: { canonical: url },
     openGraph: {

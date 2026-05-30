@@ -6,6 +6,8 @@ import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 import type { Metadata } from 'next';
 import { getTenantSeo } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbLd } from '@/lib/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +56,14 @@ export default async function ServicesPage({
 }) {
   const company = await getCompany(params.companySlug);
 
+  const t = await getTenantSeo(params.companySlug);
+  const ldCrumb = t
+    ? breadcrumbLd([
+        { name: 'Home', url: tenantUrl(t, '') },
+        { name: 'Services', url: tenantUrl(t, '/services') },
+      ])
+    : null;
+
   if (!company) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -100,8 +110,10 @@ export default async function ServicesPage({
   ];
 
   return (
+    <>
+    <JsonLd data={ldCrumb} />
     <div className="min-h-screen bg-white">
-      <StoreHeader 
+      <StoreHeader
         companyName={company.name} 
         logoUrl={company.logo_url} 
         themeColor={themeColor} 
@@ -216,6 +228,7 @@ export default async function ServicesPage({
         </div>
       </footer>
     </div>
+    </>
   );
 }
 

@@ -8,7 +8,11 @@ import { Fragment } from 'react';
 export default function JsonLd({
   data,
 }: {
-  data: Record<string, unknown> | (Record<string, unknown> | null | undefined)[];
+  data:
+    | Record<string, unknown>
+    | null
+    | undefined
+    | (Record<string, unknown> | null | undefined)[];
 }) {
   const blocks = (Array.isArray(data) ? data : [data]).filter(Boolean) as Record<string, unknown>[];
   if (blocks.length === 0) return null;

@@ -5,6 +5,8 @@ import StoreHeader from '../components/StoreHeader';
 import ContactSection from '../components/ContactSection';
 import { getTenantSeo } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbLd } from '@/lib/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,6 +100,14 @@ export default async function AboutPage({ params }: { params: { companySlug: str
   const company = await getCompany(params.companySlug);
   if (!company) notFound();
 
+  const t = await getTenantSeo(params.companySlug);
+  const ldCrumb = t
+    ? breadcrumbLd([
+        { name: 'Home', url: tenantUrl(t, '') },
+        { name: 'About', url: tenantUrl(t, '/about') },
+      ])
+    : null;
+
   const settings = Array.isArray(company.website_settings)
     ? company.website_settings[0]
     : company.website_settings;
@@ -109,6 +119,8 @@ export default async function AboutPage({ params }: { params: { companySlug: str
   const certificates = builder.generatedContent?.certificates ?? [];
 
   return (
+    <>
+    <JsonLd data={ldCrumb} />
     <div className="min-h-screen bg-gray-50">
       <StoreHeader
         companyName={company.name}
@@ -200,5 +212,6 @@ export default async function AboutPage({ params }: { params: { companySlug: str
         defaultPhone={builder.formData?.phone}
       />
     </div>
+    </>
   );
 }

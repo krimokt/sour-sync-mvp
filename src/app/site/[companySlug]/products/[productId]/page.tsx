@@ -8,6 +8,8 @@ import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 import type { Metadata } from 'next';
 import { getTenantSeo, getProductSeo } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { productLd, breadcrumbLd } from '@/lib/jsonld';
 
 // ISR: product pages are public, mostly-static content. Revalidate every 5 min
 // so edits propagate without paying full SSR on every crawler/visitor hit.
@@ -150,8 +152,29 @@ export default async function ProductDetailPage({
     ? Math.round(((product.compare_price! - product.price) / product.compare_price!) * 100)
     : 0;
 
+  const t = await getTenantSeo(params.companySlug);
+  const productUrl = t ? tenantUrl(t, `/products/${product.id}`) : undefined;
+  const ldProduct = t && productUrl ? productLd({
+    name: product.name,
+    url: productUrl,
+    description: product.description ?? undefined,
+    images: (product.images ?? []).map((i) => absoluteImage(i)!).filter(Boolean),
+    sku: product.sku,
+    brandName: t.name,
+    price: product.price,
+    currency: 'USD',
+    inStock: (product.stock ?? 0) > 0,
+  }) : null;
+  const ldCrumb = t ? breadcrumbLd([
+    { name: 'Home', url: tenantUrl(t, '') },
+    { name: 'Products', url: tenantUrl(t, '/products') },
+    ...(product.category ? [{ name: product.category, url: tenantUrl(t, `/products?category=${encodeURIComponent(product.category)}`) }] : []),
+    { name: product.name, url: productUrl! },
+  ]) : null;
+
   return (
     <BuilderSiteShell companySlug={company.slug}>
+    <JsonLd data={[ldProduct, ldCrumb]} />
     <div className="py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}

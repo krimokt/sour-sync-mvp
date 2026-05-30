@@ -5,6 +5,8 @@ import PublishedBuilderSite from '@/components/storefront/PublishedBuilderSite';
 import { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 
 import type { Metadata } from 'next';
+import JsonLd from '@/components/seo/JsonLd';
+import { organizationLd, localBusinessLd } from '@/lib/jsonld';
 import { getTenantSeo, tenantTagline } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
 
@@ -71,6 +73,14 @@ export default async function SiteHomePage({
     return null;
   }
 
+  const t = await getTenantSeo(params.companySlug);
+  const orgLd = t
+    ? organizationLd({ name: t.name, url: tenantUrl(t, ''), logo: absoluteImage(t.logo_url), description: tenantTagline(t) })
+    : null;
+  const localLd = t
+    ? localBusinessLd({ name: t.name, url: tenantUrl(t, ''), logo: absoluteImage(t.logo_url), telephone: t.contact_phone, email: t.contact_email, address: t.contact_location, countryCode: t.country })
+    : null;
+
   const typedCompany = company as { settings?: unknown } | null;
   const settingsData = typedCompany?.settings;
   const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData as { 
@@ -92,11 +102,14 @@ export default async function SiteHomePage({
     const typedBuilderData = builderData as { formData: FormData; generatedContent: GeneratedContent };
     if (typedBuilderData.formData && typedBuilderData.generatedContent) {
       return (
-        <PublishedBuilderSite
-          formData={typedBuilderData.formData}
-          generatedContent={typedBuilderData.generatedContent}
-          companySlug={params.companySlug}
-        />
+        <>
+          <JsonLd data={[orgLd, localLd]} />
+          <PublishedBuilderSite
+            formData={typedBuilderData.formData}
+            generatedContent={typedBuilderData.generatedContent}
+            companySlug={params.companySlug}
+          />
+        </>
       );
     }
   }
@@ -111,13 +124,16 @@ export default async function SiteHomePage({
   }
 
   return (
-    <PreviewWrapper
-      initialLayout={layout || []}
-      themeColor={themeColor}
-      companyId={company.id}
-      companySlug={company.slug}
-      companyName={company.name}
-      isPreview={isPreview}
-    />
+    <>
+      <JsonLd data={[orgLd, localLd]} />
+      <PreviewWrapper
+        initialLayout={layout || []}
+        themeColor={themeColor}
+        companyId={company.id}
+        companySlug={company.slug}
+        companyName={company.name}
+        isPreview={isPreview}
+      />
+    </>
   );
 }

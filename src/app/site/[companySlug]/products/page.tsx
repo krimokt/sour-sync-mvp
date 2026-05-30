@@ -7,6 +7,8 @@ import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 import type { Metadata } from 'next';
 import { getTenantSeo } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbLd } from '@/lib/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,6 +114,14 @@ export default async function ProductsPage({
     searchParams.search
   );
 
+  const t = await getTenantSeo(params.companySlug);
+  const ldCrumb = t
+    ? breadcrumbLd([
+        { name: 'Home', url: tenantUrl(t, '') },
+        { name: 'Products', url: tenantUrl(t, '/products') },
+      ])
+    : null;
+
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -128,6 +138,8 @@ export default async function ProductsPage({
   const activeSearch = searchParams.search;
 
   return (
+    <>
+    <JsonLd data={ldCrumb} />
     <BuilderSiteShell companySlug={params.companySlug}>
     <div className="relative min-h-screen bg-white overflow-hidden">
       {/* Ambient brand glow — replaces flat gray bg without the cream-default reflex */}
@@ -380,5 +392,6 @@ export default async function ProductsPage({
       </div>
     </div>
     </BuilderSiteShell>
+    </>
   );
 }

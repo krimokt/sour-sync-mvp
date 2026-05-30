@@ -188,8 +188,7 @@ export default function ContactSection({
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: themeColor }}
+            className="group inline-flex items-center gap-2 hover:gap-4 bg-neutral-900 hover:bg-neutral-950 shadow-lg shadow-neutral-900/30 border border-neutral-800 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
             {submitting ? 'Sending…' : 'Send message'}

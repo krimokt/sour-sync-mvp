@@ -21,14 +21,19 @@ async function fetchTopProducts(companyId: string, companySlug: string): Promise
     .eq('is_published', true)
     .order('created_at', { ascending: false })
     .limit(6);
-  return ((data || []) as Array<{ id: string; name: string; images?: string[] | null; price?: number | null }>)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      image: p.images?.[0] || null,
-      price: p.price ?? null,
-      href: `/site/${companySlug}/products/${p.id}`,
-    }));
+  return ((data || []) as Array<{ id: string; name: string; images?: string[] | null; price?: number | string | null }>)
+    .map((p) => {
+      // Postgres numeric serializes as string through PostgREST — normalize to number.
+      const priceNum =
+        p.price == null || p.price === '' ? null : (typeof p.price === 'number' ? p.price : Number(p.price));
+      return {
+        id: p.id,
+        name: p.name,
+        image: p.images?.[0] || null,
+        price: priceNum != null && Number.isFinite(priceNum) ? priceNum : null,
+        href: `/site/${companySlug}/products/${p.id}`,
+      };
+    });
 }
 
 /** Merge a fresh products snapshot into existing builder content. */

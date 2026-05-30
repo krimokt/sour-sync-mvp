@@ -23,6 +23,7 @@ interface Product {
   category: string | null;
   variants: { name: string; value: string; price_adjustment?: number }[];
   company_id: string;
+  attributes?: Record<string, string> | null;
 }
 
 interface Company {
@@ -192,10 +193,10 @@ export default async function ProductDetailPage({
               )}
             </div>
 
-            {/* Thumbnail Gallery */}
+            {/* Thumbnail Gallery — show all uploaded images, not just 4 */}
             {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {product.images.slice(0, 4).map((image, index) => (
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                {product.images.map((image, index) => (
                   <div
                     key={index}
                     className={`relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer ${
@@ -252,6 +253,35 @@ export default async function ProductDetailPage({
                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
+              </div>
+            )}
+
+            {/* Key attributes — Alibaba-style spec table. Rendered as a
+                two-column grid (label / value) with subtle borders. Only
+                shown when the product row carries a non-empty `attributes`
+                JSON object. */}
+            {product.attributes && Object.keys(product.attributes).length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">
+                  Key Attributes
+                </h3>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <dl className="divide-y divide-gray-200">
+                    {Object.entries(product.attributes).map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="grid grid-cols-3 gap-4 px-4 py-3 odd:bg-gray-50"
+                      >
+                        <dt className="text-sm font-medium text-gray-500 col-span-1">
+                          {label}
+                        </dt>
+                        <dd className="text-sm text-gray-900 col-span-2">
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
               </div>
             )}
 

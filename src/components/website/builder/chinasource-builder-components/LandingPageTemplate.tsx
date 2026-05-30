@@ -12,6 +12,10 @@ import Sidebar from './Sidebar';
 import PartnerLogoCarousel from './PartnerLogoCarousel';
 import SiteFooter from './SiteFooter';
 import SourcingRequestForm from './SourcingRequestForm';
+import FactoryCertifications from './FactoryCertifications';
+import ProcessTimeline from './ProcessTimeline';
+import SolutionsList from './SolutionsList';
+import AboutHeroSection from '@/components/storefront/AboutHeroSection';
 
 interface LandingPageTemplateProps {
   data: FormData;
@@ -47,12 +51,16 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const accent = themeAccent[themeColor];
+  // Shared CTA color — calm cyan-blue that pairs with the blue theme without
+  // competing. Mirrors the "LET'S COLLABORATE" button on the About section.
+  const ctaColor = { hex: '#2596be', hover: '#1f7fa0' };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
 
   const updateContent = (path: string, value: unknown) => {
     setContent(prev => {
@@ -70,8 +78,8 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
     ...(content.products?.items?.length ? ['Products'] : []),
     'Solutions',
     'Process',
+    'Certifications',
     'About',
-    ...(content.certificates?.items?.length ? ['Certificates'] : []),
     'Contact',
   ];
   const slug = companySlug || data.companyName.toLowerCase().replace(/\s+/g, '-');
@@ -82,37 +90,53 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
       <nav
         className={`fixed ${hasTopBar ? 'top-16' : 'top-0'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-40 transition-all duration-300
           ${scrolled
-            ? 'bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-[0_1px_12px_rgba(0,0,0,0.06)]'
+            ? 'bg-white/85 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_0_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)]'
             : 'bg-transparent'
           }`}
       >
         <div className="max-w-6xl mx-auto px-6 lg:px-10">
           <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-20'}`}>
 
-            {/* Logo */}
-            <a href="#" className="flex items-center gap-2.5 flex-shrink-0">
+            {/* Logo — soft accent glow on hover */}
+            <a href="#" className="group flex items-center gap-2.5 flex-shrink-0">
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
-                style={{ background: accent.hex }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold transition-shadow"
+                style={{
+                  background: accent.hex,
+                  boxShadow: `0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 14px -4px ${accent.hex}66`,
+                }}
               >
                 {data.companyName.charAt(0).toUpperCase()}
               </div>
-              <span className={`font-bold text-base tracking-tight transition-colors ${scrolled ? 'text-gray-900' : 'text-white'}`}>
+              <span className={`font-semibold text-[15px] tracking-tight transition-colors ${scrolled ? 'text-slate-900' : 'text-white'}`}>
                 {data.companyName}
               </span>
             </a>
 
-            {/* Desktop links — centered */}
-            <div className="hidden lg:flex items-center gap-1">
+            {/* Desktop links — centered, pill hover with accent tint */}
+            <div className="hidden lg:flex items-center gap-0.5">
               {navLinks.map(label => (
                 <a
                   key={label}
                   href={`#${label.toLowerCase()}`}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`relative px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-200 ${
                     scrolled
-                      ? 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-white/75 hover:text-white'
                   }`}
+                  style={
+                    scrolled
+                      ? ({ ['--hover-bg' as string]: `${accent.hex}10` } as React.CSSProperties)
+                      : undefined
+                  }
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = scrolled
+                      ? `${accent.hex}10`
+                      : 'rgba(255,255,255,0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '';
+                  }}
                 >
                   {label}
                 </a>
@@ -123,19 +147,25 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             <div className="hidden lg:flex items-center gap-2">
               <a
                 href={signInHref}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors ${
                   scrolled
-                    ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <LogIn size={14} />
                 Client Portal
               </a>
+              {/* Site-wide primary CTA — complementary color, pops against theme */}
               <a
                 href="#contact"
-                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-white text-sm font-semibold shadow-sm transition-all hover:opacity-90 hover:shadow-md"
-                style={{ background: accent.hex }}
+                className="group inline-flex items-center gap-1.5 hover:gap-3 text-white px-5 py-2 rounded-lg font-semibold text-[13.5px] transition-all duration-300 ease-in-out"
+                style={{
+                  background: ctaColor.hex,
+                  boxShadow: `0 8px 18px -8px ${ctaColor.hex}99, 0 1px 0 rgba(255,255,255,0.22) inset`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = ctaColor.hover; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = ctaColor.hex; }}
               >
                 Get a Quote
                 <ArrowUpRight size={14} />
@@ -192,8 +222,11 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             <a
               href="#contact"
               onClick={() => setMobileOpen(false)}
-              className="mt-1 flex items-center justify-center gap-1.5 px-5 py-3 rounded-lg text-white text-sm font-semibold"
-              style={{ background: accent.hex }}
+              className="mt-1 group flex items-center justify-center gap-2 hover:gap-4 text-white px-5 py-3 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out"
+              style={{
+                background: ctaColor.hex,
+                boxShadow: `0 10px 24px -10px ${ctaColor.hex}99, 0 1px 0 rgba(255,255,255,0.22) inset`,
+              }}
             >
               Get a Quote <ArrowUpRight size={14} />
             </a>
@@ -210,13 +243,13 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         fontFamily: 'var(--font-jakarta, system-ui, sans-serif)',
         // Theme tokens — every hardcoded oklch in this file now resolves here.
         // Override per-tenant later by replacing these declarations.
-        ['--ink-deep' as string]: 'var(--ink-deep)',
-        ['--ink-tint' as string]: 'var(--ink-tint)',
-        ['--ink-line' as string]: 'var(--ink-line)',
-        ['--ink-line-soft' as string]: 'var(--ink-line-soft)',
-        ['--surface-soft' as string]: 'var(--surface-soft)',
-        ['--text-on-deep' as string]: 'var(--text-on-deep)',
-        ['--text-on-deep-muted' as string]: 'var(--text-on-deep-muted)',
+        ['--ink-deep' as string]: 'oklch(0.12 0.018 240)',
+        ['--ink-tint' as string]: 'oklch(0.16 0.02 230)',
+        ['--ink-line' as string]: 'oklch(0.22 0.01 240)',
+        ['--ink-line-soft' as string]: 'oklch(0.35 0.01 240)',
+        ['--surface-soft' as string]: 'oklch(0.975 0.006 238)',
+        ['--text-on-deep' as string]: 'oklch(0.82 0.01 230)',
+        ['--text-on-deep-muted' as string]: 'oklch(0.72 0.01 230)',
       }}
     >
       {!hideSidebar && (
@@ -242,33 +275,38 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
           style={{ background: 'var(--ink-deep)' }}
           onClick={() => setActiveSection('hero')}
         >
-          {/* Background image with dark overlay */}
+          {/* Background — factory image with a strong dark scrim so headline
+              copy still hits AA contrast. Falls back to a curated Unsplash
+              factory photo when the AI-generated content didn't supply one. */}
           <div className="absolute inset-0">
-            {/* Hero backdrop — 20% opacity, so dimension precision matters
-                less than file size. Render via next/image with priority so it
-                lands in the LCP path. */}
-            {content.hero.backgroundImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={content.hero.backgroundImage}
-                className="w-full h-full object-cover opacity-20"
-                alt=""
-                loading="eager"
-                decoding="async"
-              />
-            ) : null}
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, oklch(0.12 0.018 240) 50%, var(--ink-tint) 100%)' }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={
+                content.hero.backgroundImage ||
+                'https://images.unsplash.com/photo-1565043666747-69f6646db940?auto=format&fit=crop&w=2000&q=70'
+              }
+              className="w-full h-full object-cover"
+              alt=""
+              loading="eager"
+              decoding="async"
+            />
+            {/* Dark scrim — left side darker so the headline is readable, right
+                side keeps some of the image visible. */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(90deg, oklch(0.12 0.018 240 / 0.92) 0%, oklch(0.12 0.018 240 / 0.78) 45%, oklch(0.12 0.018 240 / 0.55) 100%)',
+              }}
+            />
           </div>
 
-          {/* Subtle grid */}
-          <div className="absolute inset-0 opacity-[0.04]"
-            style={{ backgroundImage: 'linear-gradient(oklch(0.9 0 0) 1px, transparent 1px), linear-gradient(90deg, oklch(0.9 0 0) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
-          />
-
           <div className="relative z-10 max-w-6xl mx-auto px-8 pt-32 pb-24 w-full">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border mb-8"
-              style={{ borderColor: `${accent.hex}40`, background: `${accent.hex}15` }}>
+            {/* Eyebrow — first in, smallest delay */}
+            <div
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border mb-8 hero-rise"
+              style={{ borderColor: `${accent.hex}40`, background: `${accent.hex}15`, animationDelay: '40ms' }}
+            >
               <ShieldCheck size={13} style={{ color: accent.hex }} />
               <span className="text-xs font-semibold tracking-wider" style={{ color: accent.hex }}>
                 <EditableText value={content.hero.tagline} onChange={v => updateContent('hero.tagline', v)} readOnly={readOnly} />
@@ -276,52 +314,94 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             </div>
 
             {/* Headline */}
-            <EditableText
-              value={content.hero.headline}
-              onChange={v => updateContent('hero.headline', v)}
-              tag="h1"
-              className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-6 max-w-4xl"
-              readOnly={readOnly}
-            />
+            <div className="hero-rise" style={{ animationDelay: '120ms' }}>
+              <EditableText
+                value={content.hero.headline}
+                onChange={v => updateContent('hero.headline', v)}
+                tag="h1"
+                className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-6 max-w-4xl"
+                readOnly={readOnly}
+              />
+            </div>
 
             {/* Subheadline */}
-            <p className="text-lg text-white/80 max-w-2xl mb-10 leading-relaxed font-normal">
+            <p
+              className="text-lg text-white/80 max-w-2xl mb-10 leading-relaxed font-normal hero-rise"
+              style={{ animationDelay: '220ms' }}
+            >
               <EditableText value={content.hero.subheadline} onChange={v => updateContent('hero.subheadline', v)} readOnly={readOnly} />
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 hero-rise" style={{ animationDelay: '320ms' }}>
+              {/* Primary CTA — complementary color, pops against theme */}
               <a
                 href="#contact"
-                className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold transition-opacity hover:opacity-95"
-                style={{ background: accent.hex }}
+                className="group inline-flex items-center gap-2 hover:gap-4 text-white px-6 py-3.5 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out"
+                style={{
+                  background: ctaColor.hex,
+                  boxShadow: `0 10px 24px -10px ${ctaColor.hex}99, 0 1px 0 rgba(255,255,255,0.22) inset`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = ctaColor.hover; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = ctaColor.hex; }}
               >
-                {content.hero.ctaPrimary.text} <ArrowUpRight size={15} />
+                {content.hero.ctaPrimary.text}
+                <ArrowUpRight size={16} />
               </a>
               <a
                 href="#solutions"
-                className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold border transition-all hover:bg-white/10"
+                className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold border transition-colors hover:bg-white/10"
                 style={{ borderColor: 'var(--ink-line-soft)' }}
               >
                 See Our Services
               </a>
             </div>
 
-            {/* Trust bar */}
-            <div className="flex flex-wrap items-center gap-6 mt-16 pt-10" style={{ borderTop: '1px solid oklch(0.22 0.01 240)' }}>
+            {/* Trust bar — each pill rises after its predecessor */}
+            <div
+              className="flex flex-wrap items-center gap-6 mt-16 pt-10 hero-rise"
+              style={{ borderTop: '1px solid oklch(0.22 0.01 240)', animationDelay: '440ms' }}
+            >
               {[
                 { icon: <CheckCircle2 size={14} />, label: 'Factory Verified Suppliers' },
                 { icon: <Globe size={14} />, label: 'Global Logistics Network' },
                 { icon: <Clock size={14} />, label: 'End-to-End Operations' },
                 { icon: <Package size={14} />, label: 'Quality Control Included' },
               ].map((t, i) => (
-                <div key={i} className="flex items-center gap-2 text-white/75 text-xs font-medium">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-white/75 text-xs font-medium transition-colors hover:text-white"
+                >
                   <span style={{ color: accent.hex }}>{t.icon}</span>
                   {t.label}
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Hero rise animation — runs once on first paint, respects
+              prefers-reduced-motion. Each element with .hero-rise + its own
+              animationDelay creates a staggered cascade. */}
+          <style jsx>{`
+            .hero-rise {
+              opacity: 0;
+              transform: translateY(14px);
+              animation: heroRise 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+            @keyframes heroRise {
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .hero-rise {
+                animation: none;
+                opacity: 1;
+                transform: none;
+              }
+            }
+          `}</style>
         </section>
 
         {/* ── PRODUCTS (top 6, populated server-side from products table) ── */}
@@ -370,11 +450,16 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-gray-900 line-clamp-2">{p.name}</h3>
-                      {p.price != null && p.price > 0 && (
-                        <p className="mt-1 text-sm font-bold" style={{ color: accent.hex }}>
-                          ${p.price.toFixed(2)}
-                        </p>
-                      )}
+                      {(() => {
+                        // Postgres numeric -> JSON serializes as string; coerce before formatting.
+                        const priceNum = typeof p.price === 'number' ? p.price : Number(p.price);
+                        if (!Number.isFinite(priceNum) || priceNum <= 0) return null;
+                        return (
+                          <p className="mt-1 text-sm font-bold" style={{ color: accent.hex }}>
+                            ${priceNum.toFixed(2)}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </a>
                 ))}
@@ -416,33 +501,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {content.solutions.items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white border border-gray-100 p-8 rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
-                    style={{ background: `${accent.hex}12` }}
-                  >
-                    <EditableIcon
-                      iconName={item.icon}
-                      themeColor={themeColor}
-                      onChange={v => updateContent(`solutions.items.${idx}.icon`, v)}
-                      className="w-6 h-6"
-                      readOnly={readOnly}
-                    />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3 tracking-tight">
-                    <EditableText value={item.title} onChange={v => updateContent(`solutions.items.${idx}.title`, v)} readOnly={readOnly} />
-                  </h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">
-                    <EditableText value={item.description} onChange={v => updateContent(`solutions.items.${idx}.description`, v)} readOnly={readOnly} />
-                  </p>
-                </div>
-              ))}
-            </div>
+            {/* Specification-manual layout — each solution is an entry in a list, not a card */}
+            <SolutionsList
+              items={content.solutions.items}
+              accentHex={accent.hex}
+              themeColor={themeColor}
+              updateContent={updateContent}
+              readOnly={readOnly}
+            />
           </div>
         </section>
 
@@ -455,86 +521,50 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               </h2>
             </div>
 
-            <div className="relative">
-              {/* Connecting line */}
-              <div
-                className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-px"
-                style={{ background: `linear-gradient(90deg, transparent, ${accent.hex}30, transparent)` }}
-              />
-
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 lg:gap-6">
-                {content.howItWorks.steps.map((step, idx) => (
-                  <div key={idx} className="flex flex-col items-center text-center group">
-                    <div
-                      className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-extrabold text-white mb-6 shadow-md transition-transform group-hover:-translate-y-1 relative z-10"
-                      style={{ background: 'var(--ink-deep)', border: `2px solid ${accent.hex}30` }}
-                    >
-                      <span style={{ color: accent.hex }}>0{idx + 1}</span>
-                    </div>
-                    <h3 className="text-base font-bold text-gray-900 mb-2 tracking-tight">
-                      <EditableText value={step.title} onChange={v => updateContent(`howItWorks.steps.${idx}.title`, v)} readOnly={readOnly} />
-                    </h3>
-                    <p className="text-gray-500 text-sm leading-relaxed max-w-[200px]">
-                      <EditableText value={step.description} onChange={v => updateContent(`howItWorks.steps.${idx}.description`, v)} readOnly={readOnly} />
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Zigzag industrial timeline with imagery — no cards */}
+            <ProcessTimeline
+              steps={content.howItWorks.steps}
+              accentHex={accent.hex}
+              updateContent={updateContent}
+              readOnly={readOnly}
+            />
           </div>
         </section>
 
-        {/* ── ABOUT / TRUST ── */}
-        <section
-          id="about"
-          className="py-28 px-8 overflow-hidden"
-          style={{ background: 'var(--ink-deep)' }}
-          onClick={() => setActiveSection('about')}
-        >
-          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-20">
-            {/* Image */}
-            <div className="lg:w-5/12 relative flex-shrink-0">
-              <div
-                className="absolute -inset-4 rounded-3xl opacity-20"
-                style={{ background: `radial-gradient(circle, ${accent.hex} 0%, transparent 70%)` }}
-              />
-              <EditableImage
-                src={content.about.image}
-                alt="Sourcing operations"
-                onChange={v => updateContent('about.image', v)}
-                className="w-full aspect-[4/5] object-cover rounded-2xl relative z-10"
-                readOnly={readOnly}
-              />
-            </div>
+        {/* ── FACTORY CERTIFICATIONS (carousel of 3 documents) ── */}
+        <FactoryCertifications
+          accentColor={accent.hex}
+          uploaded={content.certificates?.items}
+        />
 
-            {/* Text */}
-            <div className="lg:w-7/12 text-white">
-              <span className="text-xs font-bold uppercase tracking-[0.12em] mb-4 block" style={{ color: accent.hex }}>
-                About Us
-              </span>
-              <h2 className="text-4xl lg:text-5xl font-extrabold mb-6 tracking-tight leading-tight">
-                <EditableText value={content.about.title} onChange={v => updateContent('about.title', v)} readOnly={readOnly} />
-              </h2>
-              <p className="text-lg leading-relaxed mb-12" style={{ color: 'var(--text-on-deep)' }}>
-                <EditableText value={content.about.description} onChange={v => updateContent('about.description', v)} readOnly={readOnly} />
-              </p>
-
-              <div className="grid grid-cols-2 gap-8">
-                {content.about.trustMetrics.map((m, i) => (
-                  <div key={i} className="group">
-                    <div className="text-3xl font-extrabold text-white mb-1 flex items-baseline gap-0.5">
-                      {m.value}
-                      <span style={{ color: accent.hex }}>{m.suffix}</span>
-                    </div>
-                    <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-on-deep-muted)' }}>
-                      {m.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* ── ABOUT — animated timeline-revealed hero, brand-adapted ── */}
+        <div id="about" onClick={() => setActiveSection('about')}>
+          <AboutHeroSection
+            companyName={data.companyName}
+            accentColor={accent.hex}
+            heroImage={content.about.image}
+            tagline={content.about.title}
+            description1={content.about.description}
+            stats={(() => {
+              const m = content.about.trustMetrics || [];
+              const pick = (i: number) =>
+                m[i] ? { value: `${m[i].value || ''}${m[i].suffix || ''}`, label: m[i].label || '' } : undefined;
+              return {
+                years: pick(0),
+                orders: pick(1),
+                brands: pick(2),
+                growth: pick(3),
+              };
+            })()}
+            socials={{
+              facebook: data.facebook,
+              instagram: data.instagram,
+              linkedin: data.linkedin,
+              youtube: undefined,
+            }}
+            ctaHref="#contact"
+          />
+        </div>
 
         {/* ── CERTIFICATES (upload-managed via builder) ── */}
         {content.certificates?.items && content.certificates.items.length > 0 && (

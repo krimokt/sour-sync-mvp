@@ -172,8 +172,7 @@ export default function SourcingRequestForm({ companySlug, accentColor }: Sourci
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-3.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 transition-opacity hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed"
-          style={{ background: accentColor }}
+          className="group w-full inline-flex items-center justify-center gap-2 hover:gap-4 bg-neutral-900 hover:bg-neutral-950 shadow-lg shadow-neutral-900/30 border border-neutral-800 text-white px-5 py-3.5 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {submitting ? 'Sending…' : 'Send sourcing request'}
           {!submitting && <ArrowUpRight size={15} />}

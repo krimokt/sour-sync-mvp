@@ -3,8 +3,11 @@
 import React from 'react';
 
 /**
- * "Trusted on" / partner logos belt — auto-scrolls.
- * Pure CSS marquee, no JS, no external lib.
+ * "Trusted across" partner/marketplace logo wall.
+ *
+ * A static, bordered grid of wordmarks (or image logos when a `url` is
+ * supplied) — reads as a credibility wall rather than a scrolling belt.
+ * Pure CSS, no JS, no external lib.
  */
 const DEFAULT_LOGOS = [
   { name: 'Alibaba',  text: 'Alibaba' },
@@ -26,60 +29,41 @@ interface PartnerLogoCarouselProps {
 }
 
 export default function PartnerLogoCarousel({
-  accentColor,
   title = 'Trusted across the global sourcing supply chain',
   logos = DEFAULT_LOGOS,
 }: PartnerLogoCarouselProps) {
-  // Double the list so the marquee loop is seamless
-  const loop = [...logos, ...logos];
-
   return (
-    <section
-      id="partners"
-      className="py-16 px-8 bg-white border-y border-gray-100 overflow-hidden"
-    >
+    <section id="partners" className="py-16 lg:py-20 px-6 lg:px-8 bg-white border-y border-slate-200">
       <div className="max-w-6xl mx-auto">
-        <p
-          className="text-center text-xs font-bold uppercase tracking-[0.18em] mb-8"
-          style={{ color: accentColor }}
-        >
+        <p className="text-center text-sm font-medium text-slate-500 mb-10">
           {title}
         </p>
 
-        <div className="relative">
-          <div className="flex gap-12 animate-marquee whitespace-nowrap will-change-transform">
-            {loop.map((logo, i) => (
-              <div
-                key={`${logo.name}-${i}`}
-                className="flex items-center justify-center px-6 py-3 text-2xl font-semibold text-gray-400 hover:text-gray-700 transition-colors"
-                style={{ minWidth: 160 }}
-              >
-                {logo.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo.url} alt={logo.name} className="h-8 w-auto object-contain grayscale opacity-70 hover:opacity-100 transition-opacity" />
-                ) : (
-                  <span>{logo.text || logo.name}</span>
-                )}
-              </div>
-            ))}
-          </div>
+        {/* Logo wall — hairline-divided cells. Wordmarks sit in muted gray and
+            sharpen to ink on hover; image logos go grayscale until hover. */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-t border-l border-slate-200 rounded-xl overflow-hidden">
+          {logos.map((logo) => (
+            <div
+              key={logo.name}
+              className="group flex items-center justify-center h-24 px-6 border-r border-b border-slate-200 bg-white transition-colors hover:bg-slate-50"
+            >
+              {logo.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logo.url}
+                  alt={logo.name}
+                  loading="lazy"
+                  className="max-h-9 w-auto object-contain grayscale opacity-60 transition-all duration-200 group-hover:grayscale-0 group-hover:opacity-100"
+                />
+              ) : (
+                <span className="text-xl lg:text-2xl font-semibold text-slate-400 transition-colors duration-200 group-hover:text-slate-800">
+                  {logo.text || logo.name}
+                </span>
+              )}
+            </div>
+          ))}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          animation: marquee 35s linear infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .animate-marquee {
-            animation: none;
-          }
-        }
-      `}</style>
     </section>
   );
 }

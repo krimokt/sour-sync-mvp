@@ -191,6 +191,32 @@ export const getPostBySlug = cache(
   },
 );
 
+export interface CaseStudySeo {
+  id: string;
+  slug: string;
+  title: string;
+  client_name: string | null;
+  summary: string | null;
+  scope: string | null;
+  location: string | null;
+  year: string | null;
+  cover_image: string | null;
+  metric_label: string | null;
+  metric_value: string | null;
+}
+
+/** Published case studies / projects for a tenant (manual sort, newest first). */
+export const getPublishedCaseStudies = cache(async (companyId: string): Promise<CaseStudySeo[]> => {
+  const { data } = await supabase
+    .from('case_studies')
+    .select('id, slug, title, client_name, summary, scope, location, year, cover_image, metric_label, metric_value')
+    .eq('company_id', companyId)
+    .eq('status', 'published')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+  return (data as CaseStudySeo[]) ?? [];
+});
+
 /** Best available marketing tagline for a tenant. */
 export function tenantTagline(t: TenantSeo): string {
   const hero = t.builder?.generatedContent?.hero;

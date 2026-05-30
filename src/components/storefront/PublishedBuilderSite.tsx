@@ -3,14 +3,16 @@
 import React from 'react';
 import { LandingPageTemplate } from '@/components/website/builder/chinasource-builder-components/LandingPageTemplate';
 import { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
+import type { CaseStudySeo } from '@/lib/seo-data';
 
 interface PublishedBuilderSiteProps {
   formData: FormData;
   generatedContent: GeneratedContent;
   companySlug?: string;
+  caseStudies?: CaseStudySeo[];
 }
 
-export default function PublishedBuilderSite({ formData, generatedContent, companySlug }: PublishedBuilderSiteProps) {
+export default function PublishedBuilderSite({ formData, generatedContent, companySlug, caseStudies }: PublishedBuilderSiteProps) {
   // Disable edit functionality for published site
   const handleEdit = () => {
     // No-op for published site
@@ -25,6 +27,7 @@ export default function PublishedBuilderSite({ formData, generatedContent, compa
         hideSidebar={true}
         readOnly={true}
         companySlug={companySlug}
+        caseStudies={caseStudies}
       />
     </div>
   );

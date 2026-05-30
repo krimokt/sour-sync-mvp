@@ -7,7 +7,7 @@ import {
   ShieldCheck, Instagram, Linkedin, MessageCircle,
   CheckCircle2, Globe, Clock, Package, Menu, X,
 } from 'lucide-react';
-import { EditableText, EditableIcon, EditableImage } from './EditorComponents';
+import { EditableText } from './EditorComponents';
 import Sidebar from './Sidebar';
 import PartnerLogoCarousel from './PartnerLogoCarousel';
 import SiteFooter from './SiteFooter';
@@ -15,8 +15,10 @@ import SourcingRequestForm from './SourcingRequestForm';
 import FactoryCertifications from './FactoryCertifications';
 import ProcessTimeline from './ProcessTimeline';
 import SolutionsList from './SolutionsList';
+import CaseStudyShowcase from './CaseStudyShowcase';
 import AboutHeroSection from '@/components/storefront/AboutHeroSection';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import type { CaseStudySeo } from '@/lib/seo-data';
 
 interface LandingPageTemplateProps {
   data: FormData;
@@ -26,6 +28,8 @@ interface LandingPageTemplateProps {
   hasTopBar?: boolean;
   readOnly?: boolean;
   companySlug?: string;
+  /** Published case studies — fetched server-side, threaded in for the live site. */
+  caseStudies?: CaseStudySeo[];
 }
 
 const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string }> = {
@@ -38,7 +42,7 @@ const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string
 };
 
 export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
-  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false, companySlug,
+  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false, companySlug, caseStudies,
 }) => {
   const normalized = {
     ...initialContent,
@@ -79,6 +83,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
     ...(content.products?.items?.length ? ['Products'] : []),
     'Solutions',
     'Process',
+    ...(caseStudies?.length ? ['Projects'] : []),
     'Certifications',
     'About',
     'Blog',
@@ -534,6 +539,11 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             />
           </div>
         </section>
+
+        {/* ── CASE STUDIES / PROJECTS (published from the dashboard) ── */}
+        {caseStudies && caseStudies.length > 0 && (
+          <CaseStudyShowcase items={caseStudies} accentHex={accent.hex} />
+        )}
 
         {/* ── FACTORY CERTIFICATIONS (carousel of 3 documents) ── */}
         <FactoryCertifications

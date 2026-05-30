@@ -5,8 +5,15 @@ import Image from 'next/image';
 import ContactSection from '../../components/ContactSection';
 import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import type { Metadata } from 'next';
+import { getTenantSeo, getProductSeo } from '@/lib/seo-data';
+import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { productLd, breadcrumbLd } from '@/lib/jsonld';
 
-export const dynamic = 'force-dynamic';
+// ISR: product pages are public, mostly-static content. Revalidate every 5 min
+// so edits propagate without paying full SSR on every crawler/visitor hit.
+export const revalidate = 300;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,16 +81,44 @@ async function getRelatedProducts(companyId: string, productId: string, category
   return data || [];
 }
 
-export async function generateMetadata({ params }: { params: { companySlug: string; productId: string } }) {
-  const product = await getProduct(params.productId);
-  
-  if (!product) {
-    return { title: 'Product Not Found' };
+export async function generateMetadata(
+  { params }: { params: { companySlug: string; productId: string } },
+): Promise<Metadata> {
+  const [product, t] = await Promise.all([
+    getProductSeo(params.productId),
+    getTenantSeo(params.companySlug),
+  ]);
+
+  if (!product || !t || product.company_id !== t.id) {
+    return { title: 'Product Not Found', robots: { index: false, follow: false } };
   }
 
+  const derivedTitle = `${product.name} — Buy from ${t.name}`;
+  const title = product.meta_title || derivedTitle;
+  const description =
+    product.meta_description ||
+    metaDescription(
+      product.description,
+      `${product.name} available from ${t.name}. Request a wholesale quote with fast lead times.`,
+    );
+  const url = tenantUrl(t, `/products/${product.id}`);
+  const image =
+    absoluteImage(product.og_image) || absoluteImage(product.images?.[0]) || absoluteImage(t.logo_url);
+
   return {
-    title: product.name,
-    description: product.description || `View ${product.name}`,
+    title: { absolute: title.length > 65 ? (product.meta_title || product.name) : title },
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: t.name,
+      type: 'website',
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: { card: 'summary_large_image', title, description, images: image ? [image] : undefined },
+    robots: { index: true, follow: true },
   };
 }
 
@@ -121,8 +156,29 @@ export default async function ProductDetailPage({
     ? Math.round(((product.compare_price! - product.price) / product.compare_price!) * 100)
     : 0;
 
+  const t = await getTenantSeo(params.companySlug);
+  const productUrl = t ? tenantUrl(t, `/products/${product.id}`) : undefined;
+  const ldProduct = t && productUrl ? productLd({
+    name: product.name,
+    url: productUrl,
+    description: product.description ?? undefined,
+    images: (product.images ?? []).map((i) => absoluteImage(i)!).filter(Boolean),
+    sku: product.sku,
+    brandName: t.name,
+    price: product.price,
+    currency: 'USD',
+    inStock: (product.stock ?? 0) > 0,
+  }) : null;
+  const ldCrumb = t ? breadcrumbLd([
+    { name: 'Home', url: tenantUrl(t, '') },
+    { name: 'Products', url: tenantUrl(t, '/products') },
+    ...(product.category ? [{ name: product.category, url: tenantUrl(t, `/products?category=${encodeURIComponent(product.category)}`) }] : []),
+    { name: product.name, url: productUrl! },
+  ]) : null;
+
   return (
     <BuilderSiteShell companySlug={company.slug}>
+    <JsonLd data={[ldProduct, ldCrumb]} />
     <div className="py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}

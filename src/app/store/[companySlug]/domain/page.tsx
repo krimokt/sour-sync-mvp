@@ -277,22 +277,20 @@ export default function DomainSettingsPage() {
 
     setIsSaving(true);
     try {
-      await (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        supabase.from('website_settings') as any
-      )
-        .update({
-          custom_domain: null,
-          custom_domain_verified: false,
-          ssl_status: 'pending',
-          dns_status: 'pending',
-          netlify_dns_records: [],
-          netlify_domain_id: null,
-          domain_registered_at: null,
-          dns_verified_at: null,
-          ssl_provisioned_at: null,
-        })
-        .eq('company_id', company.id);
+      // Detach the alias from Netlify AND clear the DB mapping server-side
+      // (service role) so the domain is not orphaned in Netlify.
+      const res = await fetch('/api/netlify/remove-domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          domain: settings?.custom_domain ?? customDomain,
+          companyId: company.id,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to remove domain');
+      }
 
       setCustomDomain('');
       setSettings(prev => prev ? { 

@@ -28,6 +28,8 @@ const alwaysPublicPatterns = [
   /^\/_next\//,
   /^\/images\//,
   /^\/favicon\.ico$/,
+  /^\/robots\.txt$/, // SEO: Next metadata route, must reach crawlers unauthenticated
+  /^\/sitemap\.xml$/, // SEO: Next metadata route, must reach crawlers unauthenticated
   /^\/payment-info/, // Public payment info page
   /^\/payment-details/, // Public payment details page
   /^\/site\//, // Public company websites

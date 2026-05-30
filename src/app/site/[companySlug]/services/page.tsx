@@ -3,8 +3,32 @@ import Link from 'next/link';
 import StoreHeader from '../components/StoreHeader';
 import { Search, CheckCircle, Package, Truck, Shield, Headphones, Globe, DollarSign } from 'lucide-react';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import type { Metadata } from 'next';
+import { getTenantSeo } from '@/lib/seo-data';
+import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbLd } from '@/lib/jsonld';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: { companySlug: string } }): Promise<Metadata> {
+  const t = await getTenantSeo(params.companySlug);
+  if (!t) return { title: 'Services', robots: { index: false, follow: false } };
+  const services = t.builder?.formData?.services;
+  const description = metaDescription(
+    services ? `Services from ${t.name}: ${services}.` : undefined,
+    `Sourcing and supply services from ${t.name}. Request a quote today.`,
+  );
+  const url = tenantUrl(t, '/services');
+  const image = absoluteImage(t.logo_url);
+  return {
+    title: 'Services',
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `Services | ${t.name}`, description, url, siteName: t.name, images: image ? [{ url: image }] : undefined },
+    twitter: { card: 'summary_large_image', title: `Services | ${t.name}`, description, images: image ? [image] : undefined },
+  };
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,6 +55,14 @@ export default async function ServicesPage({
   params: { companySlug: string };
 }) {
   const company = await getCompany(params.companySlug);
+
+  const t = await getTenantSeo(params.companySlug);
+  const ldCrumb = t
+    ? breadcrumbLd([
+        { name: 'Home', url: tenantUrl(t, '') },
+        { name: 'Services', url: tenantUrl(t, '/services') },
+      ])
+    : null;
 
   if (!company) {
     return (
@@ -78,8 +110,10 @@ export default async function ServicesPage({
   ];
 
   return (
+    <>
+    <JsonLd data={ldCrumb} />
     <div className="min-h-screen bg-white">
-      <StoreHeader 
+      <StoreHeader
         companyName={company.name} 
         logoUrl={company.logo_url} 
         themeColor={themeColor} 
@@ -194,6 +228,7 @@ export default async function ServicesPage({
         </div>
       </footer>
     </div>
+    </>
   );
 }
 

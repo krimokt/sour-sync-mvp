@@ -44,17 +44,28 @@ const getCompany = cache(async (slug: string) => {
 });
 
 export async function generateMetadata({ params }: { params: { companySlug: string } }) {
-  const company = await getCompany(params.companySlug);
-  
-  if (!company) {
-    return {
-      title: 'Store Not Found',
-    };
+  const { getTenantSeo, tenantTagline } = await import('@/lib/seo-data');
+  const { tenantUrl, metaDescription, absoluteImage } = await import('@/lib/seo');
+  const t = await getTenantSeo(params.companySlug);
+
+  if (!t) {
+    return { title: 'Store Not Found', robots: { index: false, follow: false } };
   }
 
+  const tagline = tenantTagline(t);
   return {
-    title: company.name,
-    description: `Welcome to ${company.name}`,
+    // Child routes set a short title (e.g. "About") -> "About | {Company}".
+    // Pages that set `title.absolute` bypass this template.
+    title: {
+      template: `%s | ${t.name}`,
+      default: `${t.name} — ${tagline}`,
+    },
+    description: metaDescription(tagline, `Welcome to ${t.name}`),
+    openGraph: {
+      siteName: t.name,
+      url: tenantUrl(t, ''),
+      images: absoluteImage(t.logo_url) ? [{ url: absoluteImage(t.logo_url)! }] : undefined,
+    },
   };
 }
 

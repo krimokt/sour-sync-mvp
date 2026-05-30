@@ -4,8 +4,31 @@ import { Search, Package2, Sparkles, ChevronRight, SlidersHorizontal } from 'luc
 import ProductGrid from './ProductGrid';
 import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import type { Metadata } from 'next';
+import { getTenantSeo } from '@/lib/seo-data';
+import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbLd } from '@/lib/jsonld';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: { companySlug: string } }): Promise<Metadata> {
+  const t = await getTenantSeo(params.companySlug);
+  if (!t) return { title: 'Products', robots: { index: false, follow: false } };
+  const description = metaDescription(
+    undefined,
+    `Browse products from ${t.name}${t.country ? `, ${t.country.toUpperCase()}` : ''}. Wholesale supply with fast quotes.`,
+  );
+  const url = tenantUrl(t, '/products');
+  const image = absoluteImage(t.logo_url);
+  return {
+    title: 'Products',
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `Products | ${t.name}`, description, url, siteName: t.name, images: image ? [{ url: image }] : undefined },
+    twitter: { card: 'summary_large_image', title: `Products | ${t.name}`, description, images: image ? [image] : undefined },
+  };
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,6 +114,14 @@ export default async function ProductsPage({
     searchParams.search
   );
 
+  const t = await getTenantSeo(params.companySlug);
+  const ldCrumb = t
+    ? breadcrumbLd([
+        { name: 'Home', url: tenantUrl(t, '') },
+        { name: 'Products', url: tenantUrl(t, '/products') },
+      ])
+    : null;
+
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -107,6 +138,8 @@ export default async function ProductsPage({
   const activeSearch = searchParams.search;
 
   return (
+    <>
+    <JsonLd data={ldCrumb} />
     <BuilderSiteShell companySlug={params.companySlug}>
     <div className="relative min-h-screen bg-white overflow-hidden">
       {/* Ambient brand glow — replaces flat gray bg without the cream-default reflex */}
@@ -359,5 +392,6 @@ export default async function ProductsPage({
       </div>
     </div>
     </BuilderSiteShell>
+    </>
   );
 }

@@ -4,12 +4,45 @@ import PreviewWrapper from '@/components/storefront/PreviewWrapper';
 import PublishedBuilderSite from '@/components/storefront/PublishedBuilderSite';
 import { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 
+import type { Metadata } from 'next';
+import JsonLd from '@/components/seo/JsonLd';
+import { organizationLd, localBusinessLd } from '@/lib/jsonld';
+import { getTenantSeo, tenantTagline } from '@/lib/seo-data';
+import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+
 export const dynamic = 'force-dynamic';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+export async function generateMetadata({ params }: { params: { companySlug: string } }): Promise<Metadata> {
+  const t = await getTenantSeo(params.companySlug);
+  if (!t) return { title: 'Store Not Found', robots: { index: false, follow: false } };
+  const tagline = tenantTagline(t);
+  const derivedTitle = `${t.name} — ${tagline}`;
+  // Tenant-set overrides win over derived defaults.
+  const title = t.meta_title || derivedTitle;
+  const description = t.meta_description || metaDescription(tagline, `Welcome to ${t.name}`);
+  const url = tenantUrl(t, '');
+  const image = absoluteImage(t.og_image) || absoluteImage(t.logo_url);
+  return {
+    title: { absolute: title.length > 65 ? title.slice(0, 65) : title },
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: t.name,
+      type: 'website',
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: { card: 'summary_large_image', title, description, images: image ? [image] : undefined },
+    robots: { index: true, follow: true },
+  };
+}
 
 async function getCompanyWithSettings(slug: string) {
   const { data } = await supabase
@@ -42,6 +75,14 @@ export default async function SiteHomePage({
     return null;
   }
 
+  const t = await getTenantSeo(params.companySlug);
+  const orgLd = t
+    ? organizationLd({ name: t.name, url: tenantUrl(t, ''), logo: absoluteImage(t.logo_url), description: tenantTagline(t) })
+    : null;
+  const localLd = t
+    ? localBusinessLd({ name: t.name, url: tenantUrl(t, ''), logo: absoluteImage(t.logo_url), telephone: t.contact_phone, email: t.contact_email, address: t.contact_location, countryCode: t.country })
+    : null;
+
   const typedCompany = company as { settings?: unknown } | null;
   const settingsData = typedCompany?.settings;
   const settings = Array.isArray(settingsData) ? settingsData[0] : settingsData as { 
@@ -63,11 +104,14 @@ export default async function SiteHomePage({
     const typedBuilderData = builderData as { formData: FormData; generatedContent: GeneratedContent };
     if (typedBuilderData.formData && typedBuilderData.generatedContent) {
       return (
-        <PublishedBuilderSite
-          formData={typedBuilderData.formData}
-          generatedContent={typedBuilderData.generatedContent}
-          companySlug={params.companySlug}
-        />
+        <>
+          <JsonLd data={[orgLd, localLd]} />
+          <PublishedBuilderSite
+            formData={typedBuilderData.formData}
+            generatedContent={typedBuilderData.generatedContent}
+            companySlug={params.companySlug}
+          />
+        </>
       );
     }
   }
@@ -82,13 +126,16 @@ export default async function SiteHomePage({
   }
 
   return (
-    <PreviewWrapper
-      initialLayout={layout || []}
-      themeColor={themeColor}
-      companyId={company.id}
-      companySlug={company.slug}
-      companyName={company.name}
-      isPreview={isPreview}
-    />
+    <>
+      <JsonLd data={[orgLd, localLd]} />
+      <PreviewWrapper
+        initialLayout={layout || []}
+        themeColor={themeColor}
+        companyId={company.id}
+        companySlug={company.slug}
+        companyName={company.name}
+        isPreview={isPreview}
+      />
+    </>
   );
 }

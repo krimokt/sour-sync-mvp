@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Mail, MapPin, Phone, Instagram, Linkedin, MessageCircle } from 'lucide-react';
 import type { FormData, GeneratedContent } from '../chinasource-types';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
 
 interface SiteFooterProps {
   data: FormData;
@@ -12,19 +13,21 @@ interface SiteFooterProps {
 }
 
 export default function SiteFooter({ data, content, accentColor, companySlug }: SiteFooterProps) {
+  const { t } = useStorefrontLocale();
+
   const links = [
-    { label: 'Home', href: `/site/${companySlug}` },
-    { label: 'Products', href: `/site/${companySlug}/products` },
-    { label: 'About', href: `/site/${companySlug}/about` },
-    { label: 'Services', href: `/site/${companySlug}/services` },
-    { label: 'Track Order', href: `/site/${companySlug}/track` },
-    { label: 'Sign In', href: `/site/${companySlug}/signin` },
+    { label: t('footer.home'), href: `/site/${companySlug}` },
+    { label: t('nav.products'), href: `/site/${companySlug}/products` },
+    { label: t('nav.about'), href: `/site/${companySlug}/about` },
+    { label: t('footer.services'), href: `/site/${companySlug}/services` },
+    { label: t('footer.trackOrder'), href: `/site/${companySlug}/track` },
+    { label: t('footer.signIn'), href: `/site/${companySlug}/signin` },
   ];
 
   const support = [
-    { label: 'Request Quote', href: `/site/${companySlug}/products` },
-    { label: 'Track Shipment', href: `/site/${companySlug}/track` },
-    { label: 'Contact', href: `/site/${companySlug}/about#contact` },
+    { label: t('footer.requestQuote'), href: `/site/${companySlug}/products` },
+    { label: t('footer.trackShipment'), href: `/site/${companySlug}/track` },
+    { label: t('nav.contact'), href: `/site/${companySlug}/about#contact` },
   ];
 
   return (
@@ -48,8 +51,7 @@ export default function SiteFooter({ data, content, accentColor, companySlug }: 
               <span className="text-lg font-bold">{data.companyName}</span>
             </Link>
             <p className="text-sm text-white/60 leading-relaxed max-w-sm mb-6">
-              {content.hero?.subheadline ||
-                'Trusted sourcing and end-to-end logistics from China to the world.'}
+              {content.hero?.subheadline || t('footer.tagline')}
             </p>
             <div className="space-y-2 text-sm text-white/70">
               {content.contact?.email && (
@@ -75,7 +77,7 @@ export default function SiteFooter({ data, content, accentColor, companySlug }: 
 
           {/* Browse */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-[0.18em] mb-4 text-white/90">Browse</h4>
+            <h4 className="text-xs font-bold uppercase tracking-[0.18em] mb-4 text-white/90">{t('footer.browse')}</h4>
             <ul className="space-y-2.5 text-sm">
               {links.map((l) => (
                 <li key={l.href}>
@@ -89,7 +91,7 @@ export default function SiteFooter({ data, content, accentColor, companySlug }: 
 
           {/* Support */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-[0.18em] mb-4 text-white/90">Support</h4>
+            <h4 className="text-xs font-bold uppercase tracking-[0.18em] mb-4 text-white/90">{t('footer.support')}</h4>
             <ul className="space-y-2.5 text-sm">
               {support.map((l) => (
                 <li key={l.href}>
@@ -125,9 +127,9 @@ export default function SiteFooter({ data, content, accentColor, companySlug }: 
         </div>
 
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40">
-          <p>© {new Date().getFullYear()} {data.companyName}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {data.companyName}. {t('footer.rights')}</p>
           <p>
-            Powered by{' '}
+            {t('footer.poweredBy')}{' '}
             <a href="https://soursync.com" className="text-white/60 hover:text-white transition-colors">
               SourSync
             </a>

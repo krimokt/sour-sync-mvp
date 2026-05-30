@@ -50,6 +50,9 @@ export type StorefrontStringKey =
   | 'form.title' | 'form.firstName' | 'form.lastName' | 'form.email'
   | 'form.company' | 'form.messagePlaceholder' | 'form.submit' | 'form.sending'
   | 'form.sent' | 'form.respond' | 'form.errRequired' | 'form.errEmail' | 'form.errSend'
+  | 'footer.browse' | 'footer.support' | 'footer.home' | 'footer.services'
+  | 'footer.trackOrder' | 'footer.signIn' | 'footer.requestQuote' | 'footer.trackShipment'
+  | 'footer.rights' | 'footer.poweredBy' | 'footer.tagline'
   | 'lang.label';
 
 type Dict = Record<StorefrontStringKey, string>;
@@ -87,6 +90,17 @@ const en: Dict = {
   'form.errRequired': 'Please fill in the required fields.',
   'form.errEmail': 'That email doesn’t look right.',
   'form.errSend': 'Could not send right now. Please try again or email us directly.',
+  'footer.browse': 'Browse',
+  'footer.support': 'Support',
+  'footer.home': 'Home',
+  'footer.services': 'Services',
+  'footer.trackOrder': 'Track Order',
+  'footer.signIn': 'Sign In',
+  'footer.requestQuote': 'Request Quote',
+  'footer.trackShipment': 'Track Shipment',
+  'footer.rights': 'All rights reserved.',
+  'footer.poweredBy': 'Powered by',
+  'footer.tagline': 'Trusted sourcing and end-to-end logistics from China to the world.',
   'lang.label': 'Language',
 };
 
@@ -123,6 +137,17 @@ const zh: Dict = {
   'form.errRequired': '请填写必填项。',
   'form.errEmail': '邮箱格式不正确。',
   'form.errSend': '暂时无法发送，请重试或直接邮件联系我们。',
+  'footer.browse': '浏览',
+  'footer.support': '支持',
+  'footer.home': '首页',
+  'footer.services': '服务',
+  'footer.trackOrder': '订单追踪',
+  'footer.signIn': '登录',
+  'footer.requestQuote': '索取报价',
+  'footer.trackShipment': '货运追踪',
+  'footer.rights': '版权所有。',
+  'footer.poweredBy': '技术支持：',
+  'footer.tagline': '值得信赖的采购与端到端物流，从中国到全球。',
   'lang.label': '语言',
 };
 
@@ -159,6 +184,17 @@ const ar: Dict = {
   'form.errRequired': 'يرجى ملء الحقول المطلوبة.',
   'form.errEmail': 'البريد الإلكتروني غير صحيح.',
   'form.errSend': 'تعذّر الإرسال الآن. حاول مرة أخرى أو راسلنا مباشرة.',
+  'footer.browse': 'تصفّح',
+  'footer.support': 'الدعم',
+  'footer.home': 'الرئيسية',
+  'footer.services': 'الخدمات',
+  'footer.trackOrder': 'تتبّع الطلب',
+  'footer.signIn': 'تسجيل الدخول',
+  'footer.requestQuote': 'طلب عرض سعر',
+  'footer.trackShipment': 'تتبّع الشحنة',
+  'footer.rights': 'جميع الحقوق محفوظة.',
+  'footer.poweredBy': 'مشغّل بواسطة',
+  'footer.tagline': 'توريد موثوق وخدمات لوجستية متكاملة من الصين إلى العالم.',
   'lang.label': 'اللغة',
 };
 
@@ -195,6 +231,17 @@ const ru: Dict = {
   'form.errRequired': 'Пожалуйста, заполните обязательные поля.',
   'form.errEmail': 'Похоже, адрес почты неверный.',
   'form.errSend': 'Не удалось отправить. Попробуйте снова или напишите нам напрямую.',
+  'footer.browse': 'Навигация',
+  'footer.support': 'Поддержка',
+  'footer.home': 'Главная',
+  'footer.services': 'Услуги',
+  'footer.trackOrder': 'Отслеживание заказа',
+  'footer.signIn': 'Войти',
+  'footer.requestQuote': 'Запросить расчёт',
+  'footer.trackShipment': 'Отслеживание отгрузки',
+  'footer.rights': 'Все права защищены.',
+  'footer.poweredBy': 'Работает на',
+  'footer.tagline': 'Надёжный поиск поставщиков и логистика полного цикла из Китая по всему миру.',
   'lang.label': 'Язык',
 };
 

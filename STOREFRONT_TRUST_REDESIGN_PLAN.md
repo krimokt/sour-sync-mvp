@@ -28,8 +28,8 @@ Branch: `feat/storefront-trust-redesign` · stacks on `feat/seo-pages-and-blog`.
 | 2 | Logo wall | ✅ Done | Marquee → static "trusted by" grid. Verified live. |
 | 3 | Case-study / project portfolio | ✅ Done | DB + admin + homepage section. See verification note. |
 | H | Header audit + unify | ✅ Done | Shared `BrandMark`, real-logo support, accent-safe hover, `z-39` bug fix, a11y. |
-| 4 | Testimonials | ⏳ Not started | New table + admin + homepage section (mirrors case studies). |
-| 5 | Multi-language (EN / 中文 / العربية / Русский / +1) | ⏳ Not started | Platform feature: i18n + RTL + `hreflang`. 5th language TBC. |
+| 4 | Testimonials | ✅ Done | DB + admin + homepage section (before contact). |
+| 5 | Multi-language (EN / 中文 / العربية / Русский) | ✅ Done (UI chrome + RTL) | Switcher + dict + RTL for Arabic. Tenant content = Phase 5b. No 5th language. |
 
 ### Audit summary (impeccable `audit`)
 
@@ -103,16 +103,28 @@ Mirror the case-study pattern.
 4. Homepage testimonials section (quote cards), themed per accent; render only
    when data exists.
 
-### Phase 5 — Multi-language (~large, its own project)
-Languages: English, Chinese (中文), Arabic (العربية, **RTL**), Russian
-(Русский), + 1 to confirm (French or Spanish).
-1. i18n framework (e.g. `next-intl`) + locale routing (`/[locale]/site/...`).
-2. UI string catalogs per locale.
-3. Per-tenant translated content (builder copy, case studies, blog) — needs a
-   translation storage strategy (columns or a translations table).
-4. **RTL** layout support for Arabic (`dir="rtl"`, logical CSS properties).
-5. SEO: `hreflang` alternates + `lang`/`dir` on `<html>` + localized metadata.
-6. Language switcher in the navbar/footer.
+### Phase 5 — Multi-language — ✅ DONE (UI chrome + RTL)
+Languages shipped: English, 中文, العربية (**RTL**), Русский. No 5th language.
+
+Delivered:
+- `src/lib/i18n/storefront-dict.ts` — typed keys + EN/ZH/AR/RU translations,
+  RTL set, dir helper, native labels, `NAV_LABEL_KEY`.
+- `LocaleProvider` (cookie-persisted client context; sets `<html lang/dir>`;
+  English default so the builder editor still works; reads cookie on mount to
+  keep ISR intact).
+- `LanguageSwitcher` in both navbars (light + over-hero variants).
+- Translated chrome: nav, CTAs, hero buttons, logo wall, Selected projects,
+  What buyers say, the sourcing form, and the footer.
+
+### Phase 5b — Per-locale tenant content (still open)
+The biggest remaining piece. Tenant-authored copy (hero, solutions, about,
+case studies, posts) currently shows in the language it was written in,
+regardless of the selected UI language.
+1. Translation storage (columns or a `*_translations` table) per locale.
+2. Builder UI to edit each language.
+3. URL-based locales (`/[locale]/...` or `?lang=`) so `hreflang` alternates
+   are real for SEO (today's switch is cookie/client-side, so crawlers see
+   the default language only).
 
 ---
 

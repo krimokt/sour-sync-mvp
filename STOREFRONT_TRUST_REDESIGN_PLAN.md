@@ -27,8 +27,19 @@ Branch: `feat/storefront-trust-redesign` · stacks on `feat/seo-pages-and-blog`.
 | 1 | Light hero + stats band | ❌ Reverted | Client preferred the original dark hero. |
 | 2 | Logo wall | ✅ Done | Marquee → static "trusted by" grid. Verified live. |
 | 3 | Case-study / project portfolio | ✅ Done | DB + admin + homepage section. See verification note. |
+| H | Header audit + unify | ✅ Done | Shared `BrandMark`, real-logo support, accent-safe hover, `z-39` bug fix, a11y. |
 | 4 | Testimonials | ⏳ Not started | New table + admin + homepage section (mirrors case studies). |
 | 5 | Multi-language (EN / 中文 / العربية / Русский / +1) | ⏳ Not started | Platform feature: i18n + RTL + `hreflang`. 5th language TBC. |
+
+### Audit summary (impeccable `audit`)
+
+Storefront scored solid; no AI-slop tells. Header was the weak spot and is now fixed:
+
+- **[P1] fixed** — mobile menu `z-39` (invalid Tailwind class → no z-index) → `z-30`.
+- **[P1] fixed** — Client Portal hover hardcoded blue in both navbars → neutral slate (on-brand for every accent).
+- **[P2] fixed** — both navbars now render the tenant's real logo (shared `BrandMark`), with a proper home link + `aria-label`; was a bare initial.
+- **[P2] fixed** — two navbars deduplicated via `BrandMark`, so they can't drift.
+- **Still open (lower priority):** homepage `Navbar` is a nested component (works, but ideally hoisted); no current-page active state on sub-page nav.
 
 ---
 

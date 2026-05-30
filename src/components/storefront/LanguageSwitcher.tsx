@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Globe, Check, ChevronDown } from 'lucide-react';
 import { useStorefrontLocale } from './LocaleProvider';
 import {
   STOREFRONT_LOCALES,
   LOCALE_LABELS,
   LOCALE_SHORT,
+  DEFAULT_LOCALE,
   type StorefrontLocale,
 } from '@/lib/i18n/storefront-dict';
 
@@ -23,6 +25,8 @@ export default function LanguageSwitcher({
   onDark?: boolean;
 }) {
   const { locale, setLocale, t } = useStorefrontLocale();
+  const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,8 +45,11 @@ export default function LanguageSwitcher({
   }, [open]);
 
   const pick = (l: StorefrontLocale) => {
-    setLocale(l);
+    setLocale(l); // instant chrome + cookie
     setOpen(false);
+    // Navigate so the server re-renders tenant content in the new language.
+    const base = pathname || '/';
+    router.push(l === DEFAULT_LOCALE ? base : `${base}?lang=${l}`);
   };
 
   const triggerCls = onDark

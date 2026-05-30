@@ -251,6 +251,17 @@ export function translate(locale: StorefrontLocale, key: StorefrontStringKey): s
   return STOREFRONT_DICT[locale]?.[key] ?? en[key];
 }
 
+/** hreflang alternates for a page: default (English) + ?lang= variants. */
+export function localeAlternates(baseUrl: string): Record<string, string> {
+  // Strip any existing query so we always append a single ?lang=.
+  const base = baseUrl.split('?')[0];
+  const out: Record<string, string> = { 'x-default': base, en: base };
+  for (const l of STOREFRONT_LOCALES) {
+    if (l !== DEFAULT_LOCALE) out[l] = `${base}?lang=${l}`;
+  }
+  return out;
+}
+
 /** Nav label (English, also used to build the href) → translation key. */
 export const NAV_LABEL_KEY: Record<string, StorefrontStringKey> = {
   Products: 'nav.products',

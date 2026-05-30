@@ -6,6 +6,8 @@ import { breadcrumbLd } from '@/lib/jsonld';
 import { ContactStandalone } from '@/components/storefront/StandaloneSections';
 import { getTenantSeo, getTenantBuilder } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage, accentHex } from '@/lib/seo';
+import { isStorefrontLocale, dirFor, localeAlternates, DEFAULT_LOCALE } from '@/lib/i18n/storefront-dict';
+import { translateBuilderContent } from '@/lib/i18n/translate-content';
 
 export const revalidate = 300;
 
@@ -21,19 +23,31 @@ export async function generateMetadata({ params }: { params: { companySlug: stri
   return {
     title: 'Contact',
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: localeAlternates(url) },
     openGraph: { title: `Contact | ${t.name}`, description, url, siteName: t.name, images: image ? [{ url: image }] : undefined },
     twitter: { card: 'summary_large_image', title: `Contact | ${t.name}`, description, images: image ? [image] : undefined },
   };
 }
 
-export default async function ContactPage({ params }: { params: { companySlug: string } }) {
+export default async function ContactPage({
+  params,
+  searchParams,
+}: {
+  params: { companySlug: string };
+  searchParams: { lang?: string };
+}) {
   const t = await getTenantSeo(params.companySlug);
   if (!t) notFound();
   const builder = await getTenantBuilder(params.companySlug);
   if (!builder) notFound();
 
-  const contact = builder.generatedContent.contact;
+  const locale = isStorefrontLocale(searchParams.lang) ? searchParams.lang : DEFAULT_LOCALE;
+  const gc =
+    locale === DEFAULT_LOCALE
+      ? builder.generatedContent
+      : await translateBuilderContent(t.id, builder.generatedContent, locale);
+
+  const contact = gc.contact;
   const url = tenantUrl(t, '/contact');
   const ldCrumb = breadcrumbLd([
     { name: 'Home', url: tenantUrl(t, '') },
@@ -60,11 +74,13 @@ export default async function ContactPage({ params }: { params: { companySlug: s
   return (
     <BuilderSiteShell companySlug={params.companySlug}>
       <JsonLd data={[ldContact, ldCrumb]} />
-      <ContactStandalone
-        contact={contact}
-        companySlug={params.companySlug}
-        accentHex={accentHex(builder.formData.themeColor)}
-      />
+      <div lang={locale} dir={dirFor(locale)}>
+        <ContactStandalone
+          contact={contact}
+          companySlug={params.companySlug}
+          accentHex={accentHex(builder.formData.themeColor)}
+        />
+      </div>
     </BuilderSiteShell>
   );
 }

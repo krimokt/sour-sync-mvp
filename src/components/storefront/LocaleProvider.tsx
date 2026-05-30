@@ -52,14 +52,15 @@ export default function LocaleProvider({
     }
   }, []);
 
-  // On mount, adopt the persisted choice from the cookie. We start from the
-  // server-rendered default (English) to avoid a hydration mismatch, then
-  // switch here — this keeps ISR/static rendering intact for sub-pages.
+  // On mount, resolve the active locale. The URL ?lang= wins (the server used
+  // it to render translated content), then the saved cookie. We start from the
+  // server default (English) to avoid a hydration mismatch, then switch here.
   useEffect(() => {
+    const urlLang = new URLSearchParams(window.location.search).get('lang');
     const match = document.cookie.match(new RegExp(`(?:^|; )${STOREFRONT_LOCALE_COOKIE}=([^;]+)`));
-    const saved = match?.[1];
-    if (saved && isStorefrontLocale(saved) && saved !== locale) {
-      setLocaleState(saved);
+    const resolved = isStorefrontLocale(urlLang) ? urlLang : (match?.[1] ?? '');
+    if (isStorefrontLocale(resolved) && resolved !== locale) {
+      setLocaleState(resolved);
     }
     // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps

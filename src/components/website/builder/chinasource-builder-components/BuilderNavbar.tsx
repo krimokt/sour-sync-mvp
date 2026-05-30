@@ -37,7 +37,9 @@ export default function BuilderNavbar({
 }: BuilderNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { t } = useStorefrontLocale();
+  const { t, locale } = useStorefrontLocale();
+  // Carry the active language across page navigations.
+  const langQs = locale !== 'en' ? `?lang=${locale}` : '';
 
   const accent = themeAccent[data.themeColor] || themeAccent.blue;
 
@@ -60,7 +62,9 @@ export default function BuilderNavbar({
   const base = `/site/${companySlug}`;
   const signInHref = `${base}/signin`;
   // Each nav item routes to its dedicated, indexable page (good for SEO + UX).
-  const anchorHref = (label: string) => `${base}/${label.toLowerCase()}`;
+  const anchorHref = (label: string) => `${base}/${label.toLowerCase()}${langQs}`;
+  const homeHref = `${base}${langQs}`;
+  const contactHref = `${base}/contact${langQs}`;
 
   return (
     <>
@@ -77,7 +81,7 @@ export default function BuilderNavbar({
               companyName={data.companyName}
               logoUrl={data.logoUrl}
               accentHex={accent.hex}
-              href={`/site/${companySlug}`}
+              href={homeHref}
             />
 
             <div className="hidden lg:flex items-center gap-0.5">
@@ -106,7 +110,7 @@ export default function BuilderNavbar({
                 {t('cta.clientPortal')}
               </a>
               <a
-                href={`${base}/contact`}
+                href={contactHref}
                 className="inline-flex"
               >
                 <AntiMetalButton label={t('cta.getQuote')} className="w-36" />
@@ -159,7 +163,7 @@ export default function BuilderNavbar({
               {t('cta.clientPortal')}
             </a>
             <a
-              href={`${base}/contact`}
+              href={contactHref}
               onClick={() => setMobileOpen(false)}
               className="mt-1 inline-flex justify-center"
             >

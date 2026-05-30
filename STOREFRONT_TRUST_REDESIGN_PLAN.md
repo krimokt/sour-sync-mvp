@@ -116,15 +116,40 @@ Delivered:
 - Translated chrome: nav, CTAs, hero buttons, logo wall, Selected projects,
   What buyers say, the sourcing form, and the footer.
 
-### Phase 5b — Per-locale tenant content (still open)
-The biggest remaining piece. Tenant-authored copy (hero, solutions, about,
-case studies, posts) currently shows in the language it was written in,
-regardless of the selected UI language.
-1. Translation storage (columns or a `*_translations` table) per locale.
-2. Builder UI to edit each language.
-3. URL-based locales (`/[locale]/...` or `?lang=`) so `hreflang` alternates
-   are real for SEO (today's switch is cookie/client-side, so crawlers see
-   the default language only).
+### Phase 5b — Per-locale tenant content — ✅ DONE (auto-translate)
+Tenant content (hero, solutions, process, about, contact, case studies,
+testimonials) is now machine-translated per locale and cached server-side.
+
+Delivered:
+- `tenant_content_i18n` cache table (company_id, locale, kind, source_hash,
+  content). Public read; writes via service role.
+- `src/lib/i18n/translate-content.ts` — Gemini-backed translation with a
+  hash-keyed cache (re-translates only when the source changes). Deep-walks
+  the builder content (skipping urls/icons/handles/numbers); field-list
+  translation for case studies + testimonials. Falls back to source text on
+  any error so the page never breaks.
+- `?lang=` URL strategy: homepage (force-dynamic) + the standalone sub-pages
+  (solutions / process / certifications / contact) read `?lang=`, translate
+  their content, and wrap output in `<div lang dir>` (RTL for Arabic).
+- `LocaleProvider` resolves `?lang=` → cookie → default; `LanguageSwitcher`
+  navigates to `?lang=` so the server renders translated content; navbars
+  carry `?lang=` across links.
+- `localeAlternates()` adds `hreflang` alternates to page metadata.
+
+**Verify in production / open-network env:**
+1. **Live translation needs egress to `generativelanguage.googleapis.com`.**
+   This sandbox (and possibly the local network) can't reach it, so `?lang=ar`
+   currently falls back to English here. Confirm from the deploy: open
+   `/site/<slug>?lang=ar` and check the content is Arabic + RTL.
+2. **hreflang query param**: Next's metadata normalizes `alternates.languages`
+   and drops the `?lang=` query, so the emitted hreflang links collapse to the
+   origin. Functionality is unaffected; revisit for SEO (e.g. inject links
+   manually or move to `/[locale]` paths) if hreflang precision is needed.
+
+### Phase 5c — Optional follow-ups
+- Tenant manual override of machine translations (edit per language).
+- Translate blog posts (long free-text; higher cost — excluded from 5b).
+- Pre-warm the translation cache on publish (avoid first-visit latency).
 
 ---
 

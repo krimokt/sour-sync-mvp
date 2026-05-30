@@ -61,7 +61,8 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   const [templateId, setTemplateId] = useState<TemplateId>(data.templateId);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { t } = useStorefrontLocale();
+  const { t, locale } = useStorefrontLocale();
+  const langQs = locale !== 'en' ? `?lang=${locale}` : '';
 
   const accent = themeAccent[themeColor];
   // Shared CTA color — calm cyan-blue that pairs with the blue theme without
@@ -100,7 +101,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   const slug = companySlug || data.companyName.toLowerCase().replace(/\s+/g, '-');
   const signInHref = `/site/${slug}/signin`;
   // Blog has no homepage section — route to its page; others smooth-scroll.
-  const navHref = (label: string) => (label === 'Blog' ? `/site/${slug}/blog` : `#${label.toLowerCase()}`);
+  const navHref = (label: string) => (label === 'Blog' ? `/site/${slug}/blog${langQs}` : `#${label.toLowerCase()}`);
 
   const Navbar = () => (
     <>
@@ -119,7 +120,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               companyName={data.companyName}
               logoUrl={data.logoUrl}
               accentHex={accent.hex}
-              href={`/site/${slug}`}
+              href={`/site/${slug}${langQs}`}
               onDark={!scrolled}
             />
 

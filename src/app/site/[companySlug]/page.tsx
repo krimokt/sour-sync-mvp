@@ -9,6 +9,8 @@ import JsonLd from '@/components/seo/JsonLd';
 import { organizationLd, localBusinessLd } from '@/lib/jsonld';
 import { getTenantSeo, tenantTagline, getPublishedCaseStudies, getPublishedTestimonials } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import { isStorefrontLocale, dirFor, localeAlternates, DEFAULT_LOCALE } from '@/lib/i18n/storefront-dict';
+import { translateBuilderContent, translateCaseStudies, translateTestimonials } from '@/lib/i18n/translate-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +32,7 @@ export async function generateMetadata({ params }: { params: { companySlug: stri
   return {
     title: { absolute: title.length > 65 ? title.slice(0, 65) : title },
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: localeAlternates(url) },
     openGraph: {
       title,
       description,
@@ -67,8 +69,9 @@ export default async function SiteHomePage({
   searchParams,
 }: {
   params: { companySlug: string };
-  searchParams: { preview?: string };
+  searchParams: { preview?: string; lang?: string };
 }) {
+  const locale = isStorefrontLocale(searchParams.lang) ? searchParams.lang : DEFAULT_LOCALE;
   const company = await getCompanyWithSettings(params.companySlug);
   
   if (!company) {
@@ -104,21 +107,32 @@ export default async function SiteHomePage({
     const typedBuilderData = builderData as { formData: FormData; generatedContent: GeneratedContent };
     if (typedBuilderData.formData && typedBuilderData.generatedContent) {
       // Published case-study portfolio + testimonials for this tenant's homepage.
-      const [caseStudies, testimonials] = await Promise.all([
+      const [caseStudiesRaw, testimonialsRaw] = await Promise.all([
         getPublishedCaseStudies(company.id),
         getPublishedTestimonials(company.id),
       ]);
+
+      // Auto-translate tenant content for non-default locales (cached server-side).
+      const [generatedContent, caseStudies, testimonials] =
+        locale === DEFAULT_LOCALE
+          ? [typedBuilderData.generatedContent, caseStudiesRaw, testimonialsRaw]
+          : await Promise.all([
+              translateBuilderContent(company.id, typedBuilderData.generatedContent, locale),
+              translateCaseStudies(company.id, caseStudiesRaw, locale),
+              translateTestimonials(company.id, testimonialsRaw, locale),
+            ]);
+
       return (
-        <>
+        <div lang={locale} dir={dirFor(locale)}>
           <JsonLd data={[orgLd, localLd]} />
           <PublishedBuilderSite
             formData={typedBuilderData.formData}
-            generatedContent={typedBuilderData.generatedContent}
+            generatedContent={generatedContent}
             companySlug={params.companySlug}
             caseStudies={caseStudies}
             testimonials={testimonials}
           />
-        </>
+        </div>
       );
     }
   }

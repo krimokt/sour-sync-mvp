@@ -5,7 +5,7 @@ import { useStore } from '@/context/StoreContext';
 import { supabase } from '@/lib/supabase';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { toast } from 'sonner';
-import { Check, X, Search, ChevronDown, Save, Globe } from 'lucide-react';
+import { Check, X, Search, ChevronDown, Save, Globe, ShieldCheck } from 'lucide-react';
 
 interface HomeSeo {
   meta_title: string;
@@ -132,6 +132,8 @@ export default function SeoPage() {
   const [loading, setLoading] = useState(true);
   const [savingHome, setSavingHome] = useState(false);
   const [home, setHome] = useState<HomeSeo>({ meta_title: '', meta_description: '', og_image: '' });
+  const [verification, setVerification] = useState({ google: '', bing: '' });
+  const [savingVerification, setSavingVerification] = useState(false);
   const [products, setProducts] = useState<ProductSeoRow[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -144,7 +146,7 @@ export default function SeoPage() {
       const [{ data: ws }, { data: prods }] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase.from('website_settings') as any)
-          .select('meta_title, meta_description, og_image')
+          .select('meta_title, meta_description, og_image, google_site_verification, bing_site_verification')
           .eq('company_id', companyId)
           .single(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -159,6 +161,10 @@ export default function SeoPage() {
           meta_title: ws.meta_title ?? '',
           meta_description: ws.meta_description ?? '',
           og_image: ws.og_image ?? '',
+        });
+        setVerification({
+          google: ws.google_site_verification ?? '',
+          bing: ws.bing_site_verification ?? '',
         });
       }
       setProducts((prods ?? []) as ProductSeoRow[]);
@@ -186,6 +192,33 @@ export default function SeoPage() {
       return;
     }
     toast.success('Homepage SEO saved');
+  };
+
+  // Accept either the raw token or a pasted <meta ... content="TOKEN"> tag.
+  const extractToken = (input: string): string => {
+    const m = input.match(/content=["']([^"']+)["']/i);
+    return (m ? m[1] : input).trim();
+  };
+
+  const saveVerification = async () => {
+    if (!companyId) return;
+    setSavingVerification(true);
+    const google = extractToken(verification.google);
+    const bing = extractToken(verification.bing);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('website_settings') as any)
+      .update({
+        google_site_verification: google || null,
+        bing_site_verification: bing || null,
+      })
+      .eq('company_id', companyId);
+    setSavingVerification(false);
+    if (error) {
+      toast.error('Could not save verification tokens');
+      return;
+    }
+    setVerification({ google, bing });
+    toast.success('Verification tokens saved');
   };
 
   const updateProductField = (id: string, field: keyof ProductSeoRow, value: string) => {
@@ -297,6 +330,53 @@ export default function SeoPage() {
             <CheckList checks={homeChecks} />
           </div>
         </div>
+      </section>
+
+      {/* Search-engine verification */}
+      <section className="mb-8 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 md:p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldCheck className="w-5 h-5 text-cyan-600" />
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Search engine verification</h2>
+        </div>
+        <p className="mb-4 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
+          Prove you own this site so you can use Google Search Console and Bing Webmaster Tools.
+          Choose the <strong>HTML tag</strong> method, then paste the token (or the whole meta tag) below — we add it to
+          every storefront page. Verify on the custom domain if you have one connected.
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-2 max-w-3xl">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Google Search Console
+            </label>
+            <input
+              className={inputCls}
+              value={verification.google}
+              onChange={(e) => setVerification((v) => ({ ...v, google: e.target.value }))}
+              placeholder='token or <meta name="google-site-verification" …>'
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Bing Webmaster Tools
+            </label>
+            <input
+              className={inputCls}
+              value={verification.bing}
+              onChange={(e) => setVerification((v) => ({ ...v, bing: e.target.value }))}
+              placeholder='token or <meta name="msvalidate.01" …>'
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={saveVerification}
+          disabled={savingVerification}
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {savingVerification ? 'Saving…' : 'Save verification'}
+        </button>
       </section>
 
       {/* Products SEO */}

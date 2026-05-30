@@ -53,6 +53,12 @@ export async function generateMetadata({ params }: { params: { companySlug: stri
   }
 
   const tagline = tenantTagline(t);
+
+  // Search-engine ownership verification (site-wide so every storefront page carries it).
+  const verification: { google?: string; other?: Record<string, string> } = {};
+  if (t.google_site_verification) verification.google = t.google_site_verification;
+  if (t.bing_site_verification) verification.other = { 'msvalidate.01': t.bing_site_verification };
+
   return {
     // Child routes set a short title (e.g. "About") -> "About | {Company}".
     // Pages that set `title.absolute` bypass this template.
@@ -66,6 +72,7 @@ export async function generateMetadata({ params }: { params: { companySlug: stri
       url: tenantUrl(t, ''),
       images: absoluteImage(t.logo_url) ? [{ url: absoluteImage(t.logo_url)! }] : undefined,
     },
+    ...(verification.google || verification.other ? { verification } : {}),
   };
 }
 

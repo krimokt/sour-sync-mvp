@@ -36,6 +36,8 @@ export interface TenantSeo {
   meta_title: string | null;
   meta_description: string | null;
   og_image: string | null;
+  google_site_verification: string | null;
+  bing_site_verification: string | null;
 }
 
 /**
@@ -50,7 +52,8 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
       settings:website_settings (
         custom_domain, custom_domain_verified, is_published, published_builder_data,
         contact_email, contact_phone, contact_location,
-        meta_title, meta_description, og_image
+        meta_title, meta_description, og_image,
+        google_site_verification, bing_site_verification
       )
     `)
     .eq('slug', slug)
@@ -72,6 +75,8 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
           meta_title?: string | null;
           meta_description?: string | null;
           og_image?: string | null;
+          google_site_verification?: string | null;
+          bing_site_verification?: string | null;
         }
       | null,
   );
@@ -92,6 +97,8 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
     meta_title: s?.meta_title ?? null,
     meta_description: s?.meta_description ?? null,
     og_image: s?.og_image ?? null,
+    google_site_verification: s?.google_site_verification ?? null,
+    bing_site_verification: s?.bing_site_verification ?? null,
   };
 });
 

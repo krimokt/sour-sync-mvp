@@ -17,9 +17,10 @@ import ProcessTimeline from './ProcessTimeline';
 import SolutionsList from './SolutionsList';
 import BrandMark from './BrandMark';
 import CaseStudyShowcase from './CaseStudyShowcase';
+import TestimonialsShowcase from './TestimonialsShowcase';
 import AboutHeroSection from '@/components/storefront/AboutHeroSection';
 import { AntiMetalButton } from '@/components/ui/anti-metal-button';
-import type { CaseStudySeo } from '@/lib/seo-data';
+import type { CaseStudySeo, TestimonialSeo } from '@/lib/seo-data';
 
 interface LandingPageTemplateProps {
   data: FormData;
@@ -31,6 +32,8 @@ interface LandingPageTemplateProps {
   companySlug?: string;
   /** Published case studies — fetched server-side, threaded in for the live site. */
   caseStudies?: CaseStudySeo[];
+  /** Published testimonials — fetched server-side, threaded in for the live site. */
+  testimonials?: TestimonialSeo[];
 }
 
 const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string }> = {
@@ -43,7 +46,7 @@ const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string
 };
 
 export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
-  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false, companySlug, caseStudies,
+  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false, companySlug, caseStudies, testimonials,
 }) => {
   const normalized = {
     ...initialContent,
@@ -617,6 +620,11 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               </div>
             </div>
           </section>
+        )}
+
+        {/* ── TESTIMONIALS (published from the dashboard) ── */}
+        {testimonials && testimonials.length > 0 && (
+          <TestimonialsShowcase items={testimonials} accentHex={accent.hex} />
         )}
 
         {/* ── CONTACT ── */}

@@ -7,7 +7,7 @@ import { FormData, GeneratedContent } from '@/components/website/builder/chinaso
 import type { Metadata } from 'next';
 import JsonLd from '@/components/seo/JsonLd';
 import { organizationLd, localBusinessLd } from '@/lib/jsonld';
-import { getTenantSeo, tenantTagline, getPublishedCaseStudies } from '@/lib/seo-data';
+import { getTenantSeo, tenantTagline, getPublishedCaseStudies, getPublishedTestimonials } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
@@ -103,8 +103,11 @@ export default async function SiteHomePage({
   if (builderData && typeof builderData === 'object' && 'formData' in builderData && 'generatedContent' in builderData) {
     const typedBuilderData = builderData as { formData: FormData; generatedContent: GeneratedContent };
     if (typedBuilderData.formData && typedBuilderData.generatedContent) {
-      // Published case-study portfolio for this tenant (homepage "Selected projects").
-      const caseStudies = await getPublishedCaseStudies(company.id);
+      // Published case-study portfolio + testimonials for this tenant's homepage.
+      const [caseStudies, testimonials] = await Promise.all([
+        getPublishedCaseStudies(company.id),
+        getPublishedTestimonials(company.id),
+      ]);
       return (
         <>
           <JsonLd data={[orgLd, localLd]} />
@@ -113,6 +116,7 @@ export default async function SiteHomePage({
             generatedContent={typedBuilderData.generatedContent}
             companySlug={params.companySlug}
             caseStudies={caseStudies}
+            testimonials={testimonials}
           />
         </>
       );

@@ -9,7 +9,7 @@ import { useStore } from '@/context/StoreContext';
 import {
   LayoutDashboard, Package, Send, Truck,
   BadgeDollarSign, Globe, Link2, Settings,
-  MoreHorizontal, Users, Wallet, Search, FileText, Building2,
+  MoreHorizontal, Users, Wallet, Search, FileText, Building2, MessageSquareQuote,
 } from 'lucide-react';
 
 type SubItem = { name: string; path: string };
@@ -62,6 +62,7 @@ const StoreSidebar: React.FC<StoreSidebarProps> = ({ companySlug }) => {
       items: [
         { icon: <Globe  className="w-[22px] h-[22px]" />, name: 'Website Builder', path: `${bp}/website` },
         { icon: <Building2 className="w-[22px] h-[22px]" />, name: 'Case Studies',  path: `${bp}/case-studies` },
+        { icon: <MessageSquareQuote className="w-[22px] h-[22px]" />, name: 'Testimonials', path: `${bp}/testimonials` },
         { icon: <FileText className="w-[22px] h-[22px]" />, name: 'Blog',           path: `${bp}/blog` },
         { icon: <Search className="w-[22px] h-[22px]" />, name: 'SEO',             path: `${bp}/seo` },
         { icon: <Link2  className="w-[22px] h-[22px]" />, name: 'Domain',          path: `${bp}/domain` },

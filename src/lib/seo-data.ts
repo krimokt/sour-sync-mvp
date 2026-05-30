@@ -217,6 +217,28 @@ export const getPublishedCaseStudies = cache(async (companyId: string): Promise<
   return (data as CaseStudySeo[]) ?? [];
 });
 
+export interface TestimonialSeo {
+  id: string;
+  quote: string;
+  author_name: string;
+  author_title: string | null;
+  author_company: string | null;
+  avatar_image: string | null;
+  rating: number | null;
+}
+
+/** Published testimonials for a tenant (manual sort, newest first). */
+export const getPublishedTestimonials = cache(async (companyId: string): Promise<TestimonialSeo[]> => {
+  const { data } = await supabase
+    .from('testimonials')
+    .select('id, quote, author_name, author_title, author_company, avatar_image, rating')
+    .eq('company_id', companyId)
+    .eq('status', 'published')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+  return (data as TestimonialSeo[]) ?? [];
+});
+
 /** Best available marketing tagline for a tenant. */
 export function tenantTagline(t: TenantSeo): string {
   const hero = t.builder?.generatedContent?.hero;

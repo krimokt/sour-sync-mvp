@@ -9,6 +9,19 @@ import type { Metadata } from 'next';
  * subdomain, and custom-domain copies of a page onto a single canonical URL.
  */
 
+/** Theme-color token → hex, mirroring the builder's accent palette. */
+const THEME_ACCENT_HEX: Record<string, string> = {
+  amber: '#f59e0b',
+  blue: '#2563eb',
+  red: '#dc2626',
+  emerald: '#059669',
+  indigo: '#4f46e5',
+  zinc: '#18181b',
+};
+export function accentHex(themeColor: string | null | undefined): string {
+  return (themeColor && THEME_ACCENT_HEX[themeColor]) || '#2563eb';
+}
+
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||

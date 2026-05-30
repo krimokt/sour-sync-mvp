@@ -81,10 +81,13 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
     'Process',
     'Certifications',
     'About',
+    'Blog',
     'Contact',
   ];
   const slug = companySlug || data.companyName.toLowerCase().replace(/\s+/g, '-');
   const signInHref = `/site/${slug}/signin`;
+  // Blog has no homepage section — route to its page; others smooth-scroll.
+  const navHref = (label: string) => (label === 'Blog' ? `/site/${slug}/blog` : `#${label.toLowerCase()}`);
 
   const Navbar = () => (
     <>
@@ -119,7 +122,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               {navLinks.map(label => (
                 <a
                   key={label}
-                  href={`#${label.toLowerCase()}`}
+                  href={navHref(label)}
                   className={`relative px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-200 ${
                     scrolled
                       ? 'text-slate-600 hover:text-slate-900'
@@ -207,7 +210,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             {navLinks.map(label => (
               <a
                 key={label}
-                href={`#${label.toLowerCase()}`}
+                href={navHref(label)}
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
               >

@@ -104,6 +104,30 @@ export function productLd(opts: {
   });
 }
 
+export function articleLd(opts: {
+  headline: string;
+  url: string;
+  description?: string;
+  image?: string;
+  datePublished?: string | null;
+  dateModified?: string | null;
+  authorName: string;
+}): Json {
+  return clean({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: opts.headline,
+    description: opts.description,
+    image: opts.image,
+    url: opts.url,
+    datePublished: opts.datePublished || undefined,
+    dateModified: opts.dateModified || opts.datePublished || undefined,
+    author: clean({ '@type': 'Organization', name: opts.authorName }),
+    publisher: clean({ '@type': 'Organization', name: opts.authorName }),
+    mainEntityOfPage: opts.url,
+  });
+}
+
 export function breadcrumbLd(items: { name: string; url: string }[]): Json {
   return {
     '@context': 'https://schema.org',

@@ -49,15 +49,14 @@ export default function BuilderNavbar({
     'Process',
     'Certifications',
     'About',
+    'Blog',
     'Contact',
   ];
 
-  const homeBase = linkToHome ? `/site/${companySlug}` : '';
-  const signInHref = `/site/${companySlug}/signin`;
-  const anchorHref = (label: string) => {
-    if (label === 'Products') return `/site/${companySlug}/products`;
-    return `${homeBase}#${label.toLowerCase()}`;
-  };
+  const base = `/site/${companySlug}`;
+  const signInHref = `${base}/signin`;
+  // Each nav item routes to its dedicated, indexable page (good for SEO + UX).
+  const anchorHref = (label: string) => `${base}/${label.toLowerCase()}`;
 
   return (
     <>
@@ -110,7 +109,7 @@ export default function BuilderNavbar({
                 Client Portal
               </a>
               <a
-                href={linkToHome ? `/site/${companySlug}#contact` : '#contact'}
+                href={`${base}/contact`}
                 className="inline-flex"
               >
                 <AntiMetalButton label="Get a Quote" className="w-36" />
@@ -161,7 +160,7 @@ export default function BuilderNavbar({
               Client Portal
             </a>
             <a
-              href={linkToHome ? `/site/${companySlug}#contact` : '#contact'}
+              href={`${base}/contact`}
               onClick={() => setMobileOpen(false)}
               className="mt-1 inline-flex justify-center"
             >

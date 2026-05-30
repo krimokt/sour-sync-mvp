@@ -59,14 +59,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     productsByCompany.set(p.company_id, list);
   }
 
+  // Published blog posts per company.
+  const { data: postRows } = await supabase
+    .from('blog_posts')
+    .select('slug, company_id, updated_at')
+    .in('company_id', companyIds)
+    .eq('status', 'published');
+
+  const postsByCompany = new Map<string, { slug: string; updatedAt?: Date }[]>();
+  for (const p of (postRows as { slug: string; company_id: string; updated_at: string | null }[] | null) ?? []) {
+    const list = postsByCompany.get(p.company_id) ?? [];
+    list.push({ slug: p.slug, updatedAt: p.updated_at ? new Date(p.updated_at) : undefined });
+    postsByCompany.set(p.company_id, list);
+  }
+
   const entries: MetadataRoute.Sitemap = [];
 
   for (const c of companies) {
     entries.push(
       { url: tenantUrl(c.src, ''), lastModified: c.updatedAt, changeFrequency: 'weekly', priority: 1 },
       { url: tenantUrl(c.src, '/products'), changeFrequency: 'daily', priority: 0.8 },
+      { url: tenantUrl(c.src, '/solutions'), changeFrequency: 'monthly', priority: 0.6 },
+      { url: tenantUrl(c.src, '/process'), changeFrequency: 'monthly', priority: 0.5 },
+      { url: tenantUrl(c.src, '/certifications'), changeFrequency: 'monthly', priority: 0.5 },
       { url: tenantUrl(c.src, '/about'), changeFrequency: 'monthly', priority: 0.5 },
       { url: tenantUrl(c.src, '/services'), changeFrequency: 'monthly', priority: 0.5 },
+      { url: tenantUrl(c.src, '/contact'), changeFrequency: 'yearly', priority: 0.5 },
+      { url: tenantUrl(c.src, '/blog'), changeFrequency: 'weekly', priority: 0.6 },
     );
     for (const p of productsByCompany.get(c.id) ?? []) {
       entries.push({
@@ -74,6 +93,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: p.updatedAt,
         changeFrequency: 'weekly',
         priority: 0.7,
+      });
+    }
+    for (const post of postsByCompany.get(c.id) ?? []) {
+      entries.push({
+        url: tenantUrl(c.src, `/blog/${post.slug}`),
+        lastModified: post.updatedAt,
+        changeFrequency: 'monthly',
+        priority: 0.6,
       });
     }
   }

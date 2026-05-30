@@ -30,6 +30,9 @@ export interface TenantSeo {
   custom_domain_verified: boolean | null;
   is_published: boolean;
   builder: BuilderData | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_location: string | null;
 }
 
 /**
@@ -42,7 +45,8 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
     .select(`
       id, name, slug, logo_url, country,
       settings:website_settings (
-        custom_domain, custom_domain_verified, is_published, published_builder_data
+        custom_domain, custom_domain_verified, is_published, published_builder_data,
+        contact_email, contact_phone, contact_location
       )
     `)
     .eq('slug', slug)
@@ -58,6 +62,9 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
           custom_domain_verified?: boolean | null;
           is_published?: boolean | null;
           published_builder_data?: BuilderData | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          contact_location?: string | null;
         }
       | null,
   );
@@ -72,6 +79,9 @@ export const getTenantSeo = cache(async (slug: string): Promise<TenantSeo | null
     custom_domain_verified: s?.custom_domain_verified ?? null,
     is_published: s?.is_published ?? false,
     builder: s?.published_builder_data ?? null,
+    contact_email: s?.contact_email ?? null,
+    contact_phone: s?.contact_phone ?? null,
+    contact_location: s?.contact_location ?? null,
   };
 });
 

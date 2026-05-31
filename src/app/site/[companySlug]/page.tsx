@@ -73,13 +73,17 @@ export default async function SiteHomePage({
   searchParams: { preview?: string; lang?: string };
 }) {
   const locale = isStorefrontLocale(searchParams.lang) ? searchParams.lang : DEFAULT_LOCALE;
-  const company = await getCompanyWithSettings(params.companySlug);
-  
+
+  // Run the two independent fetches in parallel instead of sequentially.
+  const [company, t] = await Promise.all([
+    getCompanyWithSettings(params.companySlug),
+    getTenantSeo(params.companySlug),
+  ]);
+
   if (!company) {
     return null;
   }
 
-  const t = await getTenantSeo(params.companySlug);
   const orgLd = t
     ? organizationLd({ name: t.name, url: tenantUrl(t, ''), logo: absoluteImage(t.logo_url), description: tenantTagline(t) })
     : null;

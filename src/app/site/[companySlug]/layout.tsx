@@ -2,6 +2,12 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { cache } from 'react';
 import LocaleProvider from '@/components/storefront/LocaleProvider';
+import { Sora, Inter, JetBrains_Mono } from 'next/font/google';
+
+// Self-hosted via next/font — zero extra network roundtrip vs <link rel="stylesheet">.
+const sora = Sora({ subsets: ['latin'], weight: ['500', '600', '700', '800'], variable: '--font-sora', display: 'swap' });
+const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-inter', display: 'swap' });
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['600'], variable: '--font-mono', display: 'swap' });
 
 // Create a public Supabase client for fetching company data
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -102,7 +108,7 @@ export default async function SiteLayout({
   return (
     <LocaleProvider>
       <div
-        className="min-h-screen flex flex-col bg-white"
+        className={`min-h-screen flex flex-col bg-white ${sora.variable} ${inter.variable} ${jetbrainsMono.variable}`}
         style={{ '--theme-color': themeColor } as React.CSSProperties}
       >
         {children}

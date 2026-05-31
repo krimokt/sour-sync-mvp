@@ -201,13 +201,13 @@ export default function WhiteSourcingHome({
     <a href={base} className="flex items-center gap-2.5 flex-shrink-0">
       <span
         className="inline-flex items-center justify-center h-8 w-8 rounded-[3px] text-white text-sm font-bold"
-        style={{ background: NAVY, fontFamily: "'Sora', sans-serif" }}
+        style={{ background: NAVY, fontFamily: "var(--font-sora), sans-serif" }}
       >
         {formData.companyName.charAt(0).toUpperCase()}
       </span>
       <span
         className={`text-lg font-bold tracking-tight ${onDark ? 'text-white' : 'text-[#0F1115]'}`}
-        style={{ fontFamily: "'Sora', sans-serif" }}
+        style={{ fontFamily: "var(--font-sora), sans-serif" }}
       >
         {formData.companyName}
       </span>
@@ -215,17 +215,9 @@ export default function WhiteSourcingHome({
   );
 
   return (
-    <div className="bg-white text-[#0F1115]" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-      {/* Preconnect to the font + image CDNs so they resolve/handshake early. */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+    <div className="bg-white text-[#0F1115]" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
+      {/* Preconnect to the image CDN so asset handshakes start early. */}
       <link rel="preconnect" href="https://lh3.googleusercontent.com" />
-      {/* Load the design's fonts (browser-side; falls back to system if offline) */}
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@600&display=swap"
-        rel="stylesheet"
-      />
 
       {/* ── Nav ── */}
       <nav
@@ -323,7 +315,7 @@ export default function WhiteSourcingHome({
           <Reveal className="flex w-full flex-col justify-center text-white md:w-1/2">
             <h1
               className="mb-6 font-bold leading-[1.1] tracking-tight text-[clamp(2.25rem,5vw,3rem)]"
-              style={{ fontFamily: "'Sora', sans-serif", letterSpacing: '-0.02em' }}
+              style={{ fontFamily: "var(--font-sora), sans-serif", letterSpacing: '-0.02em' }}
             >
               {gc.hero?.headline || 'Precision Valve Systems & Control'}
             </h1>
@@ -411,7 +403,7 @@ export default function WhiteSourcingHome({
                 <CountUp
                   value={s.value}
                   className="block text-4xl font-bold tabular-nums"
-                  style={{ fontFamily: "'Sora', sans-serif" }}
+                  style={{ fontFamily: "var(--font-sora), sans-serif" }}
                 />
                 <dt className="mt-2 text-xs font-semibold uppercase tracking-wider text-blue-200">{s.label}</dt>
               </div>
@@ -425,7 +417,7 @@ export default function WhiteSourcingHome({
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
           <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end ws-reveal">
             <div className="max-w-2xl">
-              <h2 className="mb-4 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
+              <h2 className="mb-4 text-4xl font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>
                 Product Catalog
               </h2>
               <p className="text-gray-600">
@@ -476,8 +468,8 @@ export default function WhiteSourcingHome({
                   />
                 </div>
                 <div className="border-t border-gray-100 p-6">
-                  <div className="mb-1 text-sm text-gray-500" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{p.pn}</div>
-                  <h3 className="mb-2 text-lg font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{p.name}</h3>
+                  <div className="mb-1 text-sm text-gray-500" style={{ fontFamily: "var(--font-mono), monospace" }}>{p.pn}</div>
+                  <h3 className="mb-2 text-lg font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>{p.name}</h3>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold group-hover:underline" style={{ color: NAVY }}>
                     View Specifications <ArrowRight size={14} />
                   </span>
@@ -518,7 +510,7 @@ export default function WhiteSourcingHome({
               <span className="mb-4 block text-sm font-semibold uppercase tracking-widest" style={{ color: NAVY, letterSpacing: '0.12em' }}>
                 {t(NAV_LABEL_KEY.About)}
               </span>
-              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
+              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>
                 {gc.about?.title || 'Manufacturing Excellence at Scale.'}
               </h2>
               <p className="mb-10 text-lg leading-relaxed text-gray-600">{gc.about?.description || ''}</p>
@@ -531,7 +523,7 @@ export default function WhiteSourcingHome({
                         <Icon size={22} strokeWidth={2} />
                       </div>
                       <div>
-                        <h3 className="mb-2 text-xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{pillar.title}</h3>
+                        <h3 className="mb-2 text-xl font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>{pillar.title}</h3>
                         <p className="text-gray-600">{pillar.description}</p>
                       </div>
                     </div>
@@ -547,7 +539,7 @@ export default function WhiteSourcingHome({
       {caseStudies.length > 0 && (
         <section id="projects" className="py-24" style={{ background: STEEL }}>
           <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
+            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>
               {t('section.selectedProjects')}
             </h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ws-reveal">
@@ -563,9 +555,9 @@ export default function WhiteSourcingHome({
                     {cs.client_name && (
                       <div className="mb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: NAVY }}>{cs.client_name}</div>
                     )}
-                    <h3 className="text-lg font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{cs.title}</h3>
+                    <h3 className="text-lg font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>{cs.title}</h3>
                     {cs.metric_value && (
-                      <div className="mt-3 text-2xl font-bold tabular-nums" style={{ fontFamily: "'Sora', sans-serif" }}>
+                      <div className="mt-3 text-2xl font-bold tabular-nums" style={{ fontFamily: "var(--font-sora), sans-serif" }}>
                         {cs.metric_value} <span className="text-sm font-normal text-gray-500">{cs.metric_label}</span>
                       </div>
                     )}
@@ -582,7 +574,7 @@ export default function WhiteSourcingHome({
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
           <div className="flex flex-col gap-16 md:flex-row ws-reveal">
             <div className="w-full md:w-1/3">
-              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>Global Network</h2>
+              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>Global Network</h2>
               <p className="mb-8 text-lg text-blue-100">
                 Delivering reliable supply chains to partners worldwide, with quality control at every step.
               </p>
@@ -617,7 +609,7 @@ export default function WhiteSourcingHome({
       {testimonials.length > 0 && (
         <section id="testimonials" className="py-24 bg-white">
           <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
+            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>
               {t('section.testimonials')}
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 ws-reveal">
@@ -625,7 +617,7 @@ export default function WhiteSourcingHome({
                 <figure key={tm.id} className="rounded-[3px] border border-gray-200 bg-white p-6">
                   <blockquote className="text-[15px] leading-relaxed text-gray-700">&ldquo;{tm.quote}&rdquo;</blockquote>
                   <figcaption className="mt-5 text-sm">
-                    <span className="font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{tm.author_name}</span>
+                    <span className="font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>{tm.author_name}</span>
                     {(tm.author_title || tm.author_company) && (
                       <span className="block text-gray-500">{[tm.author_title, tm.author_company].filter(Boolean).join(', ')}</span>
                     )}
@@ -640,7 +632,7 @@ export default function WhiteSourcingHome({
       {/* ── Quote CTA ── */}
       <section className="border-b border-white/10 py-24 text-center text-white" style={{ background: INK }}>
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-          <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
+          <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "var(--font-sora), sans-serif" }}>
             {gc.contact?.title || 'Need help with a project?'}
           </h2>
           <p className="mb-12 text-lg text-gray-400">
@@ -664,7 +656,7 @@ export default function WhiteSourcingHome({
             <p className="text-sm leading-relaxed">{gc.hero?.subheadline || ''}</p>
           </div>
           <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'Sora', sans-serif" }}>Contact</h4>
+            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "var(--font-sora), sans-serif" }}>Contact</h4>
             <ul className="space-y-4 text-sm">
               {contact?.email && (
                 <li className="flex items-start gap-3"><Mail size={18} className="text-gray-500 shrink-0" /><a href={`mailto:${contact.email}`} className="hover:text-white">{contact.email}</a></li>
@@ -678,7 +670,7 @@ export default function WhiteSourcingHome({
             </ul>
           </div>
           <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'Sora', sans-serif" }}>Quick Links</h4>
+            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "var(--font-sora), sans-serif" }}>Quick Links</h4>
             <ul className="space-y-3 text-sm">
               {navItems.map((item) => (
                 <li key={item.href}><a href={item.href} className="hover:text-white transition-colors">{item.label}</a></li>
@@ -686,7 +678,7 @@ export default function WhiteSourcingHome({
             </ul>
           </div>
           <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'Sora', sans-serif" }}>{t('section.testimonials')}</h4>
+            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "var(--font-sora), sans-serif" }}>{t('section.testimonials')}</h4>
             <div className="flex items-center gap-3">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-[3px]" style={{ background: NAVY }}><Boxes size={18} className="text-white" /></span>
               <a href={`${base}/contact`} className="text-sm font-semibold text-white hover:underline">{t('cta.getQuote')}</a>

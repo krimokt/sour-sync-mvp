@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { LogIn, Menu, X } from 'lucide-react';
+import { LogIn, Menu, X, ArrowUpRight } from 'lucide-react';
 import type { FormData, GeneratedContent, ThemeColor } from '../chinasource-types';
-import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 import BrandMark from './BrandMark';
 import LanguageSwitcher from '@/components/storefront/LanguageSwitcher';
 import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
@@ -75,7 +74,7 @@ export default function BuilderNavbar({
         <div
           className={`mx-auto px-4 lg:px-6 transition-all duration-300 ease-out ${
             scrolled
-              ? 'max-w-4xl rounded-2xl border border-slate-200 bg-white/85 backdrop-blur-xl backdrop-saturate-150 shadow-[0_12px_34px_-14px_rgba(15,23,42,0.28)]'
+              ? 'max-w-6xl rounded-2xl border border-slate-200 bg-white/85 backdrop-blur-xl backdrop-saturate-150 shadow-[0_12px_34px_-14px_rgba(15,23,42,0.28)]'
               : 'max-w-6xl border-b border-slate-200/70 bg-white/95 backdrop-blur'
           }`}
         >
@@ -87,12 +86,12 @@ export default function BuilderNavbar({
               href={homeHref}
             />
 
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden lg:flex items-center gap-0.5 min-w-0">
               {navLinks.map(label => (
                 <a
                   key={label}
                   href={anchorHref(label)}
-                  className="relative px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-200 text-slate-600 hover:text-slate-900"
+                  className="relative px-3 py-2 rounded-lg text-[13.5px] font-medium whitespace-nowrap transition-all duration-200 text-slate-600 hover:text-slate-900"
                   onMouseEnter={(e) => { e.currentTarget.style.background = `${accent.hex}10`; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = ''; }}
                 >
@@ -101,22 +100,25 @@ export default function BuilderNavbar({
               ))}
             </div>
 
-            <div className="hidden lg:flex items-center gap-2.5">
+            <div className="hidden lg:flex items-center gap-2 shrink-0">
               <LanguageSwitcher accentHex={accent.hex} />
               <a
                 href={signInHref}
-                className="group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 transition-all shadow-[0_1px_0_rgba(15,23,42,0.04)]"
+                className="group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold whitespace-nowrap shrink-0 text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 transition-all shadow-[0_1px_0_rgba(15,23,42,0.04)]"
               >
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 group-hover:text-slate-700 transition-colors">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 group-hover:text-slate-700 transition-colors shrink-0">
                   <LogIn size={12} />
                 </span>
                 {t('cta.clientPortal')}
               </a>
               <a
                 href={contactHref}
-                className="inline-flex"
+                className="inline-flex items-center gap-2 h-10 pl-2 pr-4 rounded-xl bg-neutral-900 text-white text-[13px] font-semibold whitespace-nowrap shrink-0 hover:bg-neutral-800 transition-colors shadow-sm"
               >
-                <AntiMetalButton label={t('cta.getQuote')} className="w-36" />
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                  <ArrowUpRight size={13} className="text-white" />
+                </span>
+                {t('cta.getQuote')}
               </a>
             </div>
 
@@ -168,9 +170,12 @@ export default function BuilderNavbar({
             <a
               href={contactHref}
               onClick={() => setMobileOpen(false)}
-              className="mt-1 inline-flex justify-center"
+              className="mt-1 inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-neutral-900 text-white text-sm font-semibold whitespace-nowrap hover:bg-neutral-800 transition-colors"
             >
-              <AntiMetalButton label={t('cta.getQuote')} className="w-full" />
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                <ArrowUpRight size={14} className="text-white" />
+              </span>
+              {t('cta.getQuote')}
             </a>
           </div>
         </div>

@@ -19,7 +19,6 @@ import BrandMark from './BrandMark';
 import CaseStudyShowcase from './CaseStudyShowcase';
 import TestimonialsShowcase from './TestimonialsShowcase';
 import AboutHeroSection from '@/components/storefront/AboutHeroSection';
-import { AntiMetalButton } from '@/components/ui/anti-metal-button';
 import LanguageSwitcher from '@/components/storefront/LanguageSwitcher';
 import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
 import { NAV_LABEL_KEY } from '@/lib/i18n/storefront-dict';
@@ -128,12 +127,12 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             />
 
             {/* Desktop links — centered, pill hover with accent tint */}
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden lg:flex items-center gap-0.5 min-w-0">
               {navLinks.map(label => (
                 <a
                   key={label}
                   href={navHref(label)}
-                  className={`relative px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-200 ${
+                  className={`relative px-3 py-2 rounded-lg text-[13.5px] font-medium whitespace-nowrap transition-all duration-200 ${
                     scrolled
                       ? 'text-slate-600 hover:text-slate-900'
                       : 'text-white/75 hover:text-white'
@@ -158,11 +157,11 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center gap-2.5">
+            <div className="hidden lg:flex items-center gap-2 shrink-0">
               {readOnly && <LanguageSwitcher accentHex={accent.hex} onDark={!scrolled} />}
               <a
                 href={signInHref}
-                className={`group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold transition-all ${
+                className={`group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all ${
                   scrolled
                     ? 'text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.04)]'
                     : 'text-white bg-white/10 ring-1 ring-white/25 hover:bg-white/15 hover:ring-white/40 backdrop-blur'
@@ -180,8 +179,14 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 {t('cta.clientPortal')}
               </a>
               {/* Site-wide primary CTA */}
-              <a href="#contact" className="inline-flex">
-                <AntiMetalButton label={t('cta.getQuote')} className="w-36" />
+              <a
+                href="#contact"
+                className="inline-flex items-center gap-2 h-10 pl-2 pr-4 rounded-xl bg-neutral-900 text-white text-[13px] font-semibold whitespace-nowrap shrink-0 hover:bg-neutral-800 transition-colors shadow-sm"
+              >
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                  <ArrowUpRight size={13} className="text-white" />
+                </span>
+                {t('cta.getQuote')}
               </a>
             </div>
 
@@ -243,9 +248,12 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             <a
               href="#contact"
               onClick={() => setMobileOpen(false)}
-              className="mt-1 inline-flex justify-center"
+              className="mt-1 inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-neutral-900 text-white text-sm font-semibold whitespace-nowrap hover:bg-neutral-800 transition-colors"
             >
-              <AntiMetalButton label={t('cta.getQuote')} className="w-full" />
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                <ArrowUpRight size={14} className="text-white" />
+              </span>
+              {t('cta.getQuote')}
             </a>
           </div>
         </div>

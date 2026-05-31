@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { WebsiteSection } from '@/types/website';
 import PreviewWrapper from '@/components/storefront/PreviewWrapper';
 import PublishedBuilderSite from '@/components/storefront/PublishedBuilderSite';
+import WhiteSourcingHome from '@/components/storefront/whitesourcing/WhiteSourcingHome';
 import { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 
 import type { Metadata } from 'next';
@@ -121,6 +122,23 @@ export default async function SiteHomePage({
               translateCaseStudies(company.id, caseStudiesRaw, locale),
               translateTestimonials(company.id, testimonialsRaw, locale),
             ]);
+
+      // whitesourcing uses the bespoke "Industrial Precision" homepage; every
+      // other tenant keeps the standard builder template.
+      if (params.companySlug === 'whitesourcing') {
+        return (
+          <div lang={locale} dir={dirFor(locale)}>
+            <JsonLd data={[orgLd, localLd]} />
+            <WhiteSourcingHome
+              companySlug={params.companySlug}
+              formData={typedBuilderData.formData}
+              generatedContent={generatedContent}
+              caseStudies={caseStudies}
+              testimonials={testimonials}
+            />
+          </div>
+        );
+      }
 
       return (
         <div lang={locale} dir={dirFor(locale)}>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TDB Valve | Industrial Excellence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "tdb-blue": "#1352A2",
+              "tdb-white": "#FFFFFF",
+              "tdb-gray": "#F4F6FA",
+              "tdb-black": "#0F1115",
+              "inverse-on-surface": "#f3f0ef",
+              "on-secondary": "#ffffff",
+              "primary": "#1352A2",
+              "surface-dim": "#dcd9d9",
+              "surface-container-lowest": "#ffffff",
+              "primary-fixed-dim": "#b1c5ff",
+              "error-container": "#ffdad6",
+              "on-tertiary-fixed": "#001b3c",
+              "surface-tint": "#3d5ca3",
+              "tertiary": "#002b58",
+              "tertiary-container": "#00417f",
+              "surface-variant": "#e5e2e1",
+              "on-surface-variant": "#444651",
+              "inverse-primary": "#b1c5ff",
+              "on-secondary-fixed": "#410000",
+              "on-error-container": "#93000a",
+              "on-secondary-container": "#fffbff",
+              "on-primary-container": "#8eacf9",
+              "signal-red": "#E2231A",
+              "tertiary-fixed-dim": "#a7c8ff",
+              "tertiary-fixed": "#d5e3ff",
+              "outline": "#747782",
+              "on-tertiary-fixed-variant": "#004689",
+              "secondary-container": "#e3241a",
+              "surface-container-high": "#eae7e7",
+              "surface-container-highest": "#e5e2e1",
+              "on-primary": "#ffffff",
+              "on-surface": "#1c1b1b",
+              "secondary-fixed-dim": "#ffb4a9",
+              "inverse-surface": "#0F1115",
+              "surface-bright": "#fcf9f8",
+              "on-error": "#ffffff",
+              "steel-gray": "#F4F6FA",
+              "on-primary-fixed": "#001946",
+              "primary-container": "#1b3e84",
+              "background": "#FFFFFF",
+              "deep-navy": "#1B3E84",
+              "error": "#ba1a1a",
+              "outline-variant": "#c4c6d2",
+              "on-secondary-fixed-variant": "#930003",
+              "primary-fixed": "#dae2ff",
+              "surface": "#FFFFFF",
+              "secondary-fixed": "#ffdad5",
+              "secondary": "#1352A2",
+              "on-tertiary-container": "#7daffb",
+              "surface-container-low": "#f6f3f2",
+              "on-background": "#1c1b1b",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed-variant": "#22448a",
+              "iron-gray": "#4A4A4A",
+              "surface-container": "#f0eded"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "margin-desktop": "64px",
+                    "max-width": "1280px",
+                    "gutter": "24px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["IBM Plex Sans"],
+                    "headline-lg": ["IBM Plex Sans"],
+                    "headline-md": ["IBM Plex Sans"],
+                    "label-bold": ["IBM Plex Sans"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["IBM Plex Sans"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased selection:bg-tdb-blue selection:text-white">
+<!-- TopNavBar -->
+<nav class="bg-white/80 dark:bg-tdb-black/80 backdrop-blur-md docked full-width top-0 sticky z-50 border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-300">
+<div class="flex justify-between items-center w-full px-margin-desktop py-4 max-w-max-width mx-auto">
+<div class="text-headline-md font-headline-md font-bold tracking-tighter text-tdb-blue dark:text-white flex items-center gap-2">
+<span class="bg-tdb-blue text-white px-2 py-1 rounded-sm text-sm">TDB</span>
+                TDB Valve
+            </div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-tdb-blue dark:text-white font-label-bold text-label-bold" href="#">HOME</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-tdb-blue dark:hover:text-white transition-colors duration-200 font-label-bold text-label-bold" href="#">PRODUCT</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-tdb-blue dark:hover:text-white transition-colors duration-200 font-label-bold text-label-bold" href="#">ABOUT</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-tdb-blue dark:hover:text-white transition-colors duration-200 font-label-bold text-label-bold" href="#">FAQ</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-tdb-blue dark:hover:text-white transition-colors duration-200 font-label-bold text-label-bold" href="#">NEWS</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-tdb-blue dark:hover:text-white transition-colors duration-200 font-label-bold text-label-bold" href="#">CONTACT</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-gray-600 dark:text-gray-400">
+<span class="material-symbols-outlined cursor-pointer hover:text-tdb-blue dark:hover:text-white transition-colors">language</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-tdb-blue dark:hover:text-white transition-colors">search</span>
+</div>
+<button class="bg-tdb-blue text-white px-6 py-2 rounded-sm font-label-bold hover:bg-blue-800 transition-colors shadow-md">Get a Quote</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<section class="relative min-h-[600px] flex overflow-hidden bg-tdb-black">
+<div class="absolute inset-0 z-0 bg-grid opacity-20"></div>
+<div class="absolute inset-0 z-0 bg-gradient-to-r from-tdb-black via-tdb-black/90 to-transparent"></div>
+<div class="relative z-10 flex w-full max-w-max-width mx-auto px-margin-desktop py-24">
+<div class="w-full md:w-1/2 flex flex-col justify-center text-white">
+<h1 class="font-display-lg text-display-lg mb-6 leading-tight font-bold tracking-tight">Precision Valve Systems &amp; Control</h1>
+<p class="text-body-lg text-gray-300 mb-10 max-w-xl">29 years of engineering excellence. Delivering high-performance brass and bronze fluid control solutions for global industrial applications.</p>
+<div class="flex gap-4">
+<button class="bg-tdb-blue text-white px-8 py-4 rounded-sm font-label-bold flex items-center gap-2 hover:bg-blue-800 transition-colors shadow-lg">
+                    Explore Catalog <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="border border-white/30 text-white px-8 py-4 rounded-sm font-label-bold hover:bg-white/10 transition-colors">
+                    Company Profile
+                </button>
+</div>
+</div>
+<div class="hidden md:flex w-1/2 items-center justify-center relative">
+<img class="max-h-[500px] drop-shadow-[0_20px_50px_rgba(19,82,162,0.3)] z-20 object-contain hover:scale-105 transition-transform duration-700" data-alt="A macro studio photograph of a premium solid brass ball valve with a brilliant golden finish. The lighting is cinematic, highlighting the intricate engineering threads and polished surface of the heavy industrial component. It is presented against a clean architectural bathroom background, emphasizing both its utility and high-end manufacturing quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKrydcCqqAtrJKgrEJfLnITuzDkVPr8fYD86UWs7FnVsCqUOJjbHsl07VVq4D83I6uEtGGcgcsXCIe0pq-GX3JhFsTFc7_hMRuSUPYVlmsJYaPq2AaH7pneRiHiowfYl1vV6RjiWis-aZKndjGAxpFUsDFLMQi2kbB2oVAB1LRNyJnD_VJ3KTZmKD9GNV7Vmw3EV691Am2-5OpIs4R0ta6CHqyw2Fz3uIInfZphv9CKrLkg9CxWdytrt3ry1vdzzxv-nwgn8afDjrc"/>
+</div>
+</div>
+</section>
+<!-- Stats Bar -->
+<div class="bg-tdb-blue text-white py-12 relative z-20 shadow-xl border-y border-blue-800">
+<div class="max-w-max-width mx-auto px-margin-desktop">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-white/20">
+<div class="text-center px-4">
+<span class="block text-4xl font-bold font-display-lg mb-2">29+</span>
+<span class="text-sm font-label-bold uppercase tracking-wider text-blue-200">Years Experience</span>
+</div>
+<div class="text-center px-4">
+<span class="block text-4xl font-bold font-display-lg mb-2">280</span>
+<span class="text-sm font-label-bold uppercase tracking-wider text-blue-200">Expert Staff</span>
+</div>
+<div class="text-center px-4">
+<span class="block text-4xl font-bold font-display-lg mb-2">25</span>
+<span class="text-sm font-label-bold uppercase tracking-wider text-blue-200">Product Lines</span>
+</div>
+<div class="text-center px-4">
+<span class="block text-4xl font-bold font-display-lg mb-2">20k</span>
+<span class="text-sm font-label-bold uppercase tracking-wider text-blue-200">Units/Month</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Product Catalog -->
+<section class="py-24 bg-tdb-gray">
+<div class="max-w-max-width mx-auto px-margin-desktop">
+<div class="flex flex-col md:flex-row justify-between items-end mb-12">
+<div>
+<h2 class="font-display-lg text-4xl font-bold mb-4 text-tdb-black">Product Catalog</h2>
+<p class="text-body-md text-gray-600 max-w-2xl">
+                    Engineered for reliability. Explore our comprehensive range of high-performance fluid control components.
+                </p>
+</div>
+<div class="flex gap-2 mt-6 md:mt-0 overflow-x-auto pb-2">
+<button class="px-6 py-2 rounded-full bg-tdb-blue text-white font-label-bold text-sm whitespace-nowrap">All</button>
+<button class="px-6 py-2 rounded-full bg-white text-gray-600 border border-gray-200 hover:border-tdb-blue hover:text-tdb-blue font-label-bold text-sm whitespace-nowrap transition-colors">Valves</button>
+<button class="px-6 py-2 rounded-full bg-white text-gray-600 border border-gray-200 hover:border-tdb-blue hover:text-tdb-blue font-label-bold text-sm whitespace-nowrap transition-colors">Fittings</button>
+<button class="px-6 py-2 rounded-full bg-white text-gray-600 border border-gray-200 hover:border-tdb-blue hover:text-tdb-blue font-label-bold text-sm whitespace-nowrap transition-colors">Lead-Free</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- New Product Highlight -->
+<div class="group relative bg-white border-2 border-tdb-blue overflow-hidden hover:shadow-xl transition-all rounded-sm col-span-1 md:col-span-1">
+<div class="absolute top-4 left-4 bg-tdb-blue text-white px-3 py-1 text-xs font-label-bold rounded-sm z-10">NEW 2026</div>
+<div class="p-8 h-64 flex items-center justify-center bg-gray-50 group-hover:bg-blue-50/50 transition-colors">
+<img class="max-h-full transition-transform duration-500 group-hover:scale-110 drop-shadow-md" data-alt="A professional studio product shot of a industrial blue-handle ball valve. The valve is meticulously lit against a black background, emphasizing the reflective metal surfaces and the vibrant blue of the control handle. The focus is sharp on the engineering details and threads." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9XrthpI2aPACCzLBRLj9u8iNWx2R9K06inCKsxkg3Vti9UoNnCYgZ3q2--f4-hkMlOawwQ2oYdO5e5mbJYPaaGNqx_8fj8I0J5H3xff_rhgMFvwekowTuWmgXpnFiu6PS3IyXIoT7m9KUjOvAD4a46sQn4NsAtvPLgR19bm8j3ekYu5gIYyUgGmlErtejf2fZXTYpneAhjdjptiKuzjBZhDFZUye9RbcLNILzjg0Df3sO_iTy4xvwEC2zpw7Q2fFqGehgroRj8m4J"/>
+</div>
+<div class="p-6 border-t border-gray-100">
+<div class="text-sm text-gray-500 mb-1 font-mono">PN25-BV-BLUE</div>
+<h3 class="font-headline-md text-lg font-bold text-tdb-black mb-2">High-Pressure Ball Valve</h3>
+<a class="text-tdb-blue font-label-bold text-sm hover:underline flex items-center gap-1" href="#">View Specifications <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group relative bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all rounded-sm">
+<div class="p-8 h-64 flex items-center justify-center bg-white">
+<img class="max-h-full transition-transform duration-500 group-hover:scale-110 drop-shadow-sm" data-alt="A heavy-duty industrial valve with a bright orange handle, positioned on a pure white background. The metal has a brushed steel finish, showing excellent structural integrity and engineering precision. The lighting is bright and even, perfect for a professional product catalog." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-O40EMK12y7mh6UgX6rCCnYJ8E6-tg7EDQDFqstJWS8BLOXOVUin8ILNHishvkdNN4HG0cXuD4kMUbPZ-3rDXzagfiTYkkcKcTIsmRrrIk991WbWMrHp74Kr22a8mlXZgca9LTKEQO456_qOiVrdTYWikD7tVbfUHKwAhigQXJO38nXK594HwzpAOKOSZj-na-IItb1l1UpOAu0_yWNMCx4rIvKrfbirF7LnGrclmPJFT4hpBbrPcVOLBNVJ_Rbz-Z-CgmKPbH548"/>
+</div>
+<div class="p-6 border-t border-gray-100">
+<div class="text-sm text-gray-500 mb-1 font-mono">PN16-GV-ORG</div>
+<h3 class="font-headline-md text-lg font-bold text-tdb-black mb-2">Industrial Gate Valve</h3>
+<a class="text-tdb-blue font-label-bold text-sm hover:underline flex items-center gap-1" href="#">View Specifications <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group relative bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all rounded-sm">
+<div class="p-8 h-64 flex items-center justify-center bg-white">
+<img class="max-h-full transition-transform duration-500 group-hover:scale-110 drop-shadow-sm" data-alt="Solid brass industrial pipe fittings with deep threads and a rich golden patina. The components are displayed in a clean studio setting with a soft circular shadow. The image emphasizes the durability and high-quality material of the manufacturing plumbing equipment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwpcCK_YEcy_bQw2JfWb4V241UMlBcEjoogt79xF2wNxNKQdLpkWR8lohgQnauhg5a0FyhL-rIMu8PQ-h_EnGCQVoKmiTZWCudBwYgbcWKJOZ1rZq-EuwvTizwZTRDaPDvfdIowXe6lhvs5KPzLIYZ4R_8ni854kH11Jxk6Gf8lLQvHttq-VXPyRu21Dd5ESrVuV4MkNmlzQwWHrp-0WQvivyKqyeCRT9deuQgTJHoOUo-RWGv8cVrSbnV1L0k3VOpxux1RR2Ifnez"/>
+</div>
+<div class="p-6 border-t border-gray-100">
+<div class="text-sm text-gray-500 mb-1 font-mono">BF-T-3WAY</div>
+<h3 class="font-headline-md text-lg font-bold text-tdb-black mb-2">Brass T-Fittings</h3>
+<a class="text-tdb-blue font-label-bold text-sm hover:underline flex items-center gap-1" href="#">View Specifications <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group relative bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all rounded-sm">
+<div class="p-8 h-64 flex items-center justify-center bg-white">
+<img class="max-h-full transition-transform duration-500 group-hover:scale-110 drop-shadow-sm" data-alt="Specialized lead-free plumbing fittings made from high-grade brass. The image showcases complex elbow joints and connectors, highlighting the engineering safety standards and environmental compliance of the product line. High-contrast studio lighting emphasizes the metal textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_0SCrOdWrVvwihE4OLjiNgvHot5k4-8P-WsSNefPDNjz5Wi4IP2j9iRFC-tHmkelG8ZYNJMktiCPbjYWHw4o3KkEgn6c-IgAfbPFlu8cMDWrstaZ_NusvE6GDeW9j0tkEyiiUQtHnJGNbk6-SJwcVSnbhfufCBNplGuLeKOO3r5Blx0--bod5zIruieQ-SxRQTvDOMU4geVNm-i7ujYlbwKrj6oMU0WWPMb2vQFkEi2RFIM-bUuncBQFyt6vJd-tZ_UVOQH2j9mND"/>
+</div>
+<div class="p-6 border-t border-gray-100">
+<div class="text-sm text-gray-500 mb-1 font-mono">LF-ELB-90</div>
+<h3 class="font-headline-md text-lg font-bold text-tdb-black mb-2">Lead-Free Elbows</h3>
+<a class="text-tdb-blue font-label-bold text-sm hover:underline flex items-center gap-1" href="#">View Specifications <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+</div>
+</div>
+<div class="mt-12 text-center">
+<button class="border-2 border-tdb-black text-tdb-black px-8 py-3 rounded-sm font-label-bold hover:bg-tdb-black hover:text-white transition-colors">
+                    Download Full Catalog (PDF)
+                </button>
+</div>
+</div>
+</section>
+<!-- About Section -->
+<section class="py-24 bg-white">
+<div class="max-w-max-width mx-auto px-margin-desktop">
+<div class="flex flex-col lg:flex-row gap-16 items-center">
+<div class="w-full lg:w-1/2 relative">
+<div class="absolute -top-4 -left-4 w-24 h-24 bg-tdb-gray z-0 rounded-sm"></div>
+<img class="w-full h-[500px] object-cover rounded-sm shadow-xl relative z-10 grayscale hover:grayscale-0 transition-all duration-700" data-alt="A wide-angle professional photograph of a modern, massive industrial factory headquarters. The building features sleek glass facades and organized logistics bays, surrounded by manicured greenery. The lighting is bright morning sun, symbolizing growth, transparency, and corporate stability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfOL1ZKv-68j4xxLHugOdAM5hWC5Livd3gCzGPZW2nuOjRHkXyzUsvSdVnvWPNONcNjd9y6JSx6oSjUFuUsLgHsrG1VXhbUaKIdaImF3wlNAAV3xyBjVYV1Nf9NHOpwGLM4N5Y57xc-4x9ZjxJ8WGtSKeo3k03GNcmZxYbGn_hkwRZ4ZFVeiP2zXrvYbCcl99c0H26I0iu5f6fuVbJKcFukcb99o2bYmzSjp72XpAxl0nCJmqyFFvH_60ypdtDtsY-37D6EYZINLLz"/>
+<div class="absolute -bottom-6 -right-6 bg-tdb-blue text-white p-6 shadow-lg z-20 rounded-sm hidden md:block">
+<div class="text-3xl font-bold font-display-lg mb-1">1993</div>
+<div class="text-sm font-label-bold uppercase">Est. Year</div>
+</div>
+</div>
+<div class="w-full lg:w-1/2">
+<span class="text-tdb-blue font-label-bold uppercase tracking-widest text-sm mb-4 block">Corporate Profile</span>
+<h2 class="text-4xl font-display-lg font-bold text-tdb-black mb-6">Manufacturing Excellence at Scale.</h2>
+<p class="text-body-lg text-gray-600 mb-10 leading-relaxed">
+                    Taizhou Dabao Plumbing Equipment Co., Ltd. is a premier manufacturer of high-grade brass and bronze valves. With nearly three decades of engineering expertise, we deliver precision fluid control solutions to industrial, commercial, and residential sectors worldwide.
+                </p>
+<div class="space-y-8">
+<!-- Pillar 1 -->
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-12 h-12 bg-tdb-gray rounded-full flex items-center justify-center text-tdb-blue">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</div>
+<div>
+<h3 class="font-headline-md text-xl font-bold text-tdb-black mb-2">One-Stop Solution</h3>
+<p class="text-gray-600">End-to-end manufacturing capabilities from R&amp;D and custom molding to final assembly and quality assurance.</p>
+</div>
+</div>
+<!-- Pillar 2 -->
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-12 h-12 bg-tdb-gray rounded-full flex items-center justify-center text-tdb-blue">
+<span class="material-symbols-outlined">support_agent</span>
+</div>
+<div>
+<h3 class="font-headline-md text-xl font-bold text-tdb-black mb-2">24/7 Client Support</h3>
+<p class="text-gray-600">Dedicated technical teams providing rapid response, detailed documentation, and lifecycle support for all product lines.</p>
+</div>
+</div>
+<!-- Pillar 3 -->
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-12 h-12 bg-tdb-gray rounded-full flex items-center justify-center text-tdb-blue">
+<span class="material-symbols-outlined">local_shipping</span>
+</div>
+<div>
+<h3 class="font-headline-md text-xl font-bold text-tdb-black mb-2">Global Distribution</h3>
+<p class="text-gray-600">Robust supply chain ensuring 98% on-time delivery across continents, backed by extensive inventory capacity.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Global Sales Network -->
+<section class="py-24 bg-tdb-blue text-white relative overflow-hidden">
+<div class="absolute inset-0 z-0 opacity-10">
+<img class="w-full h-full object-cover filter brightness-125 mix-blend-overlay" data-alt="A stylized high-tech world map with glowing connection nodes and lines. The map is presented in a deep electric blue palette, with China highlighted in a vibrant signal-red to show global distribution origins. The aesthetic is clean and corporate, suggesting a vast international logistics network." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLq9ezxsTUZQL3g5URloCslYSm8EpYkH_TYTwCXOtrI1Ea-HErESmloX29kHF85ME3J437V0ilrp-yulg4A_Vq-n2N5iAyutkK8t_tisRNSPn6zynsPFlcs8lr15FKXUqSjOQJCzd7tKSlXjPpLuOoW0TdD0wDLzWDmEk7CbFJpWyTsEpaFeRdukakjqIvLTv4QR6WqWv70RSUuSCoJFCvfg8IBsHD1l1kvXAh4PLRy-HPKBT3gcAMNp7BFPU_jJl6IMtK6EeVSRF-"/>
+</div>
+<div class="max-w-max-width mx-auto px-margin-desktop relative z-10">
+<div class="flex flex-col md:flex-row gap-16">
+<div class="w-full md:w-1/3">
+<h2 class="font-display-lg text-4xl font-bold mb-6">Global Network</h2>
+<p class="text-blue-100 mb-8 text-lg">Delivering industrial-grade quality to partners worldwide. Our robust distribution network ensures reliable supply chains across continents.</p>
+<div class="grid grid-cols-2 gap-6 mb-8">
+<div>
+<div class="text-4xl font-bold font-display-lg mb-1">80+</div>
+<div class="text-sm font-label-bold uppercase text-blue-200">Countries Served</div>
+</div>
+<div>
+<div class="text-4xl font-bold font-display-lg mb-1">500+</div>
+<div class="text-sm font-label-bold uppercase text-blue-200">Distributors</div>
+</div>
+</div>
+<button class="bg-white text-tdb-blue px-6 py-3 rounded-sm font-label-bold hover:bg-gray-100 transition-colors inline-flex items-center gap-2">
+                    Become a Partner <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="w-full md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6">
+<!-- Region Card 1 -->
+<div class="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-sm hover:bg-white/20 transition-colors">
+<h3 class="text-xl font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-blue-300">public</span> Europe</h3>
+<p class="text-blue-100 text-sm">Germany, Poland, UK, Italy, Spain, France, Russia, Ukraine</p>
+</div>
+<!-- Region Card 2 -->
+<div class="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-sm hover:bg-white/20 transition-colors">
+<h3 class="text-xl font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-blue-300">public</span> Middle East &amp; Africa</h3>
+<p class="text-blue-100 text-sm">UAE, Saudi Arabia, Egypt, Syria, Yemen, Algeria, Nigeria</p>
+</div>
+<!-- Region Card 3 -->
+<div class="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-sm hover:bg-white/20 transition-colors">
+<h3 class="text-xl font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-blue-300">public</span> Americas</h3>
+<p class="text-blue-100 text-sm">USA, Canada, Brazil, Mexico, Argentina, Chile</p>
+</div>
+<!-- Region Card 4 -->
+<div class="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-sm hover:bg-white/20 transition-colors">
+<h3 class="text-xl font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-blue-300">public</span> Asia Pacific</h3>
+<p class="text-blue-100 text-sm">Malaysia, Kazakhstan, Vietnam, Indonesia, Australia</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quote CTA -->
+<section class="py-24 bg-tdb-black text-white relative border-b border-white/10">
+<div class="max-w-max-width mx-auto px-margin-desktop text-center">
+<h2 class="font-display-lg text-4xl font-bold mb-6">Need Help With A Project?</h2>
+<p class="text-body-lg mb-12 text-gray-400">Our engineering team is ready to assist with specifications, custom requirements, and bulk ordering.</p>
+<button class="bg-tdb-blue text-white px-10 py-4 rounded-sm font-label-bold text-lg hover:bg-blue-800 transition-colors shadow-lg">
+                Request a Quote Today
+            </button>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-tdb-black text-gray-400 pt-16 pb-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop pb-12 max-w-max-width mx-auto">
+<div>
+<div class="text-headline-md font-headline-md font-bold text-white mb-6 flex items-center gap-2">
+<span class="bg-tdb-blue text-white px-2 py-1 rounded-sm text-sm">TDB</span>
+                    TDB Valve
+                </div>
+<p class="text-body-md mb-6">Leading the industry with nearly 30 years of excellence in precision brass and bronze valve manufacturing.</p>
+<img class="w-24 bg-white p-1 rounded-sm" data-alt="A crisp, clean QR code displayed on a professional white background. The QR code represents a direct link to the corporate contact and product catalog, following a modern digital integration aesthetic for industrial companies." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZgRDuhTWrwIJy5JINXNykT-EUFRYc52aeID_FLCy-4_ND4Yx64BgjST28rwTOgMox_JR55_0PuodoHR1tfBlZnCnThIBPqzgCbi_FncnoJUqX5LY73wCaELcslFRk3RDewp5xXgv0Lb9qR2bl4ayMB8p7RtVIUYdgjY7mVih0x5Z99rdx_9KJk9ysCE8n6D-B6m-cwkjHhzep2-JJPWK1aRnTWSvBIpqkQwtAr-wvLRdJyWhDBf87vzJpe33OZLHOq7Lck4cEJEiI"/>
+</div>
+<div>
+<h4 class="font-headline-md text-lg font-bold text-white mb-6">Contact Info</h4>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-gray-500">mail</span>
+<span class="text-body-md">tdb@tdbvalve.com</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-gray-500">call</span>
+<span class="text-body-md">+86-576-89902377</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-gray-500">location_on</span>
+<span class="text-body-md">Chumen LongWang Industrial Zone, Yuhuan City, Zhejiang, China, 317605</span>
+</li>
+</ul>
+</div>
+<div>
+<h4 class="font-headline-md text-lg font-bold text-white mb-6">Quick Links</h4>
+<ul class="space-y-3">
+<li><a class="hover:text-white transition-colors" href="#">Products</a></li>
+<li><a class="hover:text-white transition-colors" href="#">About Us</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Certifications</a></li>
+<li><a class="hover:text-white transition-colors" href="#">News &amp; Media</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Privacy Policy</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-headline-md text-lg font-bold text-white mb-6">Newsletter</h4>
+<p class="text-body-md mb-4">Subscribe for technical updates and new product releases.</p>
+<div class="flex">
+<input class="bg-white/5 border border-white/10 text-white px-4 py-2 w-full focus:outline-none focus:border-tdb-blue rounded-l-sm" placeholder="Your Email" type="email"/>
+<button class="bg-tdb-blue text-white px-6 font-bold hover:bg-blue-800 transition-colors rounded-r-sm">Join</button>
+</div>
+<div class="flex gap-4 mt-6">
+<a class="text-gray-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">share</span></a>
+<a class="text-gray-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">business</span></a>
+</div>
+</div>
+</div>
+<div class="border-t border-white/10 pt-8 mt-8 text-center px-margin-desktop max-w-max-width mx-auto">
+<p class="text-xs text-gray-600 uppercase tracking-widest">
+                Copyright © Taizhou Dabao Plumbing Equipment Co., Ltd. All Rights Reserved.
+            </p>
+</div>
+</footer>
+<!-- FAB for Chat -->
+<div class="fixed bottom-8 right-8 z-[100] group">
+<button class="bg-tdb-blue text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">chat</span>
+</button>
+</div>
+<script>
+        // Micro-interactions and effects
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Sticky nav style changes on scroll
+        const nav = document.querySelector('nav');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.add('shadow-md');
+                nav.classList.remove('bg-white/80', 'dark:bg-tdb-black/80');
+                nav.classList.add('bg-white', 'dark:bg-tdb-black');
+            } else {
+                nav.classList.remove('shadow-md');
+                nav.classList.add('bg-white/80', 'dark:bg-tdb-black/80');
+                nav.classList.remove('bg-white', 'dark:bg-tdb-black');
+            }
+        });
+    </script>
+</body></html>

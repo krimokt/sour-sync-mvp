@@ -69,14 +69,17 @@ export default function BuilderNavbar({
   return (
     <>
       <nav
-        className={`fixed ${hasTopBar ? 'top-16' : 'top-0'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-40 transition-all duration-300
-          ${scrolled
-            ? 'bg-white/85 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_0_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)]'
-            : 'bg-white/95 backdrop-blur-xl shadow-[0_1px_0_rgba(15,23,42,0.06)]'
-          }`}
+        className={`fixed ${hasTopBar ? 'top-16' : 'top-0'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-40 transition-all duration-300 ease-out ${scrolled ? 'px-3 pt-3' : 'px-0 pt-0'}`}
       >
-        <div className="max-w-6xl mx-auto px-6 lg:px-10">
-          <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-20'}`}>
+        {/* On scroll the bar contracts into a centered floating pill. */}
+        <div
+          className={`mx-auto px-4 lg:px-6 transition-all duration-300 ease-out ${
+            scrolled
+              ? 'max-w-4xl rounded-2xl border border-slate-200 bg-white/85 backdrop-blur-xl backdrop-saturate-150 shadow-[0_12px_34px_-14px_rgba(15,23,42,0.28)]'
+              : 'max-w-6xl border-b border-slate-200/70 bg-white/95 backdrop-blur'
+          }`}
+        >
+          <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-16'}`}>
             <BrandMark
               companyName={data.companyName}
               logoUrl={data.logoUrl}

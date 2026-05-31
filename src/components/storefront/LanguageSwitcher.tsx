@@ -2,8 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Globe, Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useStorefrontLocale } from './LocaleProvider';
+import FlagIcon from './FlagIcon';
 import {
   STOREFRONT_LOCALES,
   LOCALE_LABELS,
@@ -66,7 +67,7 @@ export default function LanguageSwitcher({
         aria-label={t('lang.label')}
         className={`inline-flex items-center gap-1.5 h-10 px-3 rounded-full text-[13px] font-semibold transition-colors ${triggerCls}`}
       >
-        <Globe size={15} />
+        <FlagIcon locale={locale} />
         <span className="min-w-[1.5rem] text-center">{LOCALE_SHORT[locale]}</span>
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -88,7 +89,10 @@ export default function LanguageSwitcher({
                   onClick={() => pick(l)}
                   className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                 >
-                  <span className={active ? 'font-semibold' : ''}>{LOCALE_LABELS[l]}</span>
+                  <span className="flex items-center gap-2.5">
+                    <FlagIcon locale={l} />
+                    <span className={active ? 'font-semibold' : ''}>{LOCALE_LABELS[l]}</span>
+                  </span>
                   {active && <Check size={15} style={{ color: accentHex }} />}
                 </button>
               </li>

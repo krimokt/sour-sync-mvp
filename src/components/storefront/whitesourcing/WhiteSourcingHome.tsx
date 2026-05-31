@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   ArrowRight, Factory, Headset, Truck, Globe, Mail, Phone, MapPin,
-  MessageCircle, ShieldCheck, Boxes, Wrench,
+  MessageCircle, ShieldCheck, Boxes,
 } from 'lucide-react';
 import type { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 import type { CaseStudySeo, TestimonialSeo } from '@/lib/seo-data';
@@ -48,6 +48,27 @@ const STATS: { value: string; label: string }[] = [
   { value: '20k', label: 'Units/Month' },
 ];
 
+// Catalog content + images, copied from the supplied design.
+const CATALOG_FILTERS = ['All', 'Valves', 'Fittings', 'Lead-Free'] as const;
+const CATALOG: { pn: string; name: string; category: string; isNew?: boolean; img: string }[] = [
+  {
+    pn: 'PN25-BV-BLUE', name: 'High-Pressure Ball Valve', category: 'Valves', isNew: true,
+    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC9XrthpI2aPACCzLBRLj9u8iNWx2R9K06inCKsxkg3Vti9UoNnCYgZ3q2--f4-hkMlOawwQ2oYdO5e5mbJYPaaGNqx_8fj8I0J5H3xff_rhgMFvwekowTuWmgXpnFiu6PS3IyXIoT7m9KUjOvAD4a46sQn4NsAtvPLgR19bm8j3ekYu5gIYyUgGmlErtejf2fZXTYpneAhjdjptiKuzjBZhDFZUye9RbcLNILzjg0Df3sO_iTy4xvwEC2zpw7Q2fFqGehgroRj8m4J',
+  },
+  {
+    pn: 'PN16-GV-ORG', name: 'Industrial Gate Valve', category: 'Valves',
+    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC-O40EMK12y7mh6UgX6rCCnYJ8E6-tg7EDQDFqstJWS8BLOXOVUin8ILNHishvkdNN4HG0cXuD4kMUbPZ-3rDXzagfiTYkkcKcTIsmRrrIk991WbWMrHp74Kr22a8mlXZgca9LTKEQO456_qOiVrdTYWikD7tVbfUHKwAhigQXJO38nXK594HwzpAOKOSZj-na-IItb1l1UpOAu0_yWNMCx4rIvKrfbirF7LnGrclmPJFT4hpBbrPcVOLBNVJ_Rbz-Z-CgmKPbH548',
+  },
+  {
+    pn: 'BF-T-3WAY', name: 'Brass T-Fittings', category: 'Fittings',
+    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwpcCK_YEcy_bQw2JfWb4V241UMlBcEjoogt79xF2wNxNKQdLpkWR8lohgQnauhg5a0FyhL-rIMu8PQ-h_EnGCQVoKmiTZWCudBwYgbcWKJOZ1rZq-EuwvTizwZTRDaPDvfdIowXe6lhvs5KPzLIYZ4R_8ni854kH11Jxk6Gf8lLQvHttq-VXPyRu21Dd5ESrVuV4MkNmlzQwWHrp-0WQvivyKqyeCRT9deuQgTJHoOUo-RWGv8cVrSbnV1L0k3VOpxux1RR2Ifnez',
+  },
+  {
+    pn: 'LF-ELB-90', name: 'Lead-Free Elbows', category: 'Lead-Free',
+    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC_0SCrOdWrVvwihE4OLjiNgvHot5k4-8P-WsSNefPDNjz5Wi4IP2j9iRFC-tHmkelG8ZYNJMktiCPbjYWHw4o3KkEgn6c-IgAfbPFlu8cMDWrstaZ_NusvE6GDeW9j0tkEyiiUQtHnJGNbk6-SJwcVSnbhfufCBNplGuLeKOO3r5Blx0--bod5zIruieQ-SxRQTvDOMU4geVNm-i7ujYlbwKrj6oMU0WWPMb2vQFkEi2RFIM-bUuncBQFyt6vJd-tZ_UVOQH2j9mND',
+  },
+];
+
 interface Props {
   companySlug: string;
   formData: FormData;
@@ -66,9 +87,10 @@ export default function WhiteSourcingHome({
   const { t } = useStorefrontLocale();
   const scrolled = useScroll(50);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [catFilter, setCatFilter] = useState<string>('All');
 
   const base = `/site/${companySlug}`;
-  const products = gc.products?.items ?? [];
+  const shownProducts = catFilter === 'All' ? CATALOG : CATALOG.filter((c) => c.category === catFilter);
   const pillars = (gc.solutions?.items ?? []).slice(0, 3);
   const contact = gc.contact;
 
@@ -256,63 +278,81 @@ export default function WhiteSourcingHome({
         </div>
       </div>
 
-      {/* ── Product Catalog ── */}
+      {/* ── Product Catalog (content copied from the supplied design) ── */}
       <section id="products" className="py-24" style={{ background: STEEL }}>
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-          <div className="mb-12 max-w-2xl">
-            <h2 className="mb-4 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
-              {gc.products?.title || 'Product Catalog'}
-            </h2>
-            <p className="text-gray-600">
-              {gc.products?.subtitle || 'Engineered for reliability. Explore our range of high-performance components.'}
-            </p>
+          <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+            <div className="max-w-2xl">
+              <h2 className="mb-4 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+                Product Catalog
+              </h2>
+              <p className="text-gray-600">
+                Engineered for reliability. Explore our comprehensive range of high-performance fluid control components.
+              </p>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {CATALOG_FILTERS.map((f) => {
+                const active = catFilter === f;
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setCatFilter(f)}
+                    className={`whitespace-nowrap rounded-full px-6 py-2 text-sm font-semibold transition-colors ${
+                      active ? 'text-white' : 'border border-gray-200 bg-white text-gray-600 hover:text-[#1B3E84]'
+                    }`}
+                    style={active ? { background: NAVY } : undefined}
+                  >
+                    {f}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(products.length > 0 ? products : Array.from({ length: 4 })).map((p, i) => {
-              const item = products.length > 0 ? (p as (typeof products)[number]) : null;
-              return (
-                <a
-                  key={item?.id ?? i}
-                  href={item?.href || `${base}/products`}
-                  className="group relative block overflow-hidden rounded-[3px] border border-gray-200 bg-white transition-all hover:shadow-xl hover:border-gray-300"
-                >
-                  <div className="flex h-56 items-center justify-center bg-gray-50 p-8 transition-colors group-hover:bg-blue-50/40">
-                    {item?.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.image} alt={item.name} loading="lazy" className="max-h-full object-contain transition-transform duration-500 group-hover:scale-110" />
-                    ) : (
-                      <Wrench size={48} className="text-gray-300" strokeWidth={1.5} />
-                    )}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {shownProducts.map((p) => (
+              <a
+                key={p.pn}
+                href={`${base}/products`}
+                className={`group relative block overflow-hidden rounded-[3px] bg-white transition-all hover:shadow-xl ${
+                  p.isNew ? 'border-2' : 'border border-gray-200 hover:border-gray-300'
+                }`}
+                style={p.isNew ? { borderColor: NAVY } : undefined}
+              >
+                {p.isNew && (
+                  <div className="absolute left-4 top-4 z-10 rounded-[3px] px-3 py-1 text-xs font-semibold text-white" style={{ background: NAVY }}>
+                    NEW 2026
                   </div>
-                  <div className="border-t border-gray-100 p-6">
-                    {item && (
-                      <div className="mb-1 text-sm text-gray-500" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                        {/* sku not in tile type; show a short code from id */}
-                        {`PN-${String(item.id).slice(0, 6).toUpperCase()}`}
-                      </div>
-                    )}
-                    <h3 className="mb-2 text-lg font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
-                      {item?.name || 'Industrial Component'}
-                    </h3>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold group-hover:underline" style={{ color: NAVY }}>
-                      {t('cta.readMore')} <ArrowRight size={14} />
-                    </span>
-                  </div>
-                </a>
-              );
-            })}
+                )}
+                <div className={`flex h-64 items-center justify-center p-8 transition-colors ${p.isNew ? 'bg-gray-50 group-hover:bg-blue-50/50' : 'bg-white'}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.img}
+                    alt={p.name}
+                    loading="lazy"
+                    className="max-h-full object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-110"
+                  />
+                </div>
+                <div className="border-t border-gray-100 p-6">
+                  <div className="mb-1 text-sm text-gray-500" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{p.pn}</div>
+                  <h3 className="mb-2 text-lg font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>{p.name}</h3>
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold group-hover:underline" style={{ color: NAVY }}>
+                    View Specifications <ArrowRight size={14} />
+                  </span>
+                </div>
+              </a>
+            ))}
           </div>
 
           <div className="mt-12 text-center">
             <a
               href={`${base}/products`}
-              className="inline-flex items-center gap-2 rounded-[3px] border-2 px-8 py-3 text-[13px] font-semibold uppercase tracking-wide transition-colors hover:text-white"
+              className="inline-flex items-center gap-2 rounded-[3px] border-2 px-8 py-3 text-[13px] font-semibold uppercase tracking-wide transition-colors"
               style={{ borderColor: INK, color: INK, letterSpacing: '0.04em' }}
               onMouseEnter={(e) => { e.currentTarget.style.background = INK; e.currentTarget.style.color = '#fff'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = INK; }}
             >
-              {t('cta.viewAllProducts')}
+              Download Full Catalog (PDF)
             </a>
           </div>
         </div>

@@ -2,15 +2,18 @@ import { createClient } from '@supabase/supabase-js';
 import { WebsiteSection } from '@/types/website';
 import PreviewWrapper from '@/components/storefront/PreviewWrapper';
 import PublishedBuilderSite from '@/components/storefront/PublishedBuilderSite';
+import WhiteSourcingHome from '@/components/storefront/whitesourcing/WhiteSourcingHome';
 import { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 
 import type { Metadata } from 'next';
 import JsonLd from '@/components/seo/JsonLd';
 import { organizationLd, localBusinessLd } from '@/lib/jsonld';
-import { getTenantSeo, tenantTagline } from '@/lib/seo-data';
+import { getTenantSeo, tenantTagline, getPublishedCaseStudies, getPublishedTestimonials } from '@/lib/seo-data';
 import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
+import { isStorefrontLocale, dirFor, localeAlternates, DEFAULT_LOCALE } from '@/lib/i18n/storefront-dict';
+import { translateBuilderContent, translateCaseStudies, translateTestimonials } from '@/lib/i18n/translate-content';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // ISR: re-fetch from Supabase at most once per hour
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,7 +33,7 @@ export async function generateMetadata({ params }: { params: { companySlug: stri
   return {
     title: { absolute: title.length > 65 ? title.slice(0, 65) : title },
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: localeAlternates(url) },
     openGraph: {
       title,
       description,
@@ -67,15 +70,20 @@ export default async function SiteHomePage({
   searchParams,
 }: {
   params: { companySlug: string };
-  searchParams: { preview?: string };
+  searchParams: { preview?: string; lang?: string };
 }) {
-  const company = await getCompanyWithSettings(params.companySlug);
-  
+  const locale = isStorefrontLocale(searchParams.lang) ? searchParams.lang : DEFAULT_LOCALE;
+
+  // Run the two independent fetches in parallel instead of sequentially.
+  const [company, t] = await Promise.all([
+    getCompanyWithSettings(params.companySlug),
+    getTenantSeo(params.companySlug),
+  ]);
+
   if (!company) {
     return null;
   }
 
-  const t = await getTenantSeo(params.companySlug);
   const orgLd = t
     ? organizationLd({ name: t.name, url: tenantUrl(t, ''), logo: absoluteImage(t.logo_url), description: tenantTagline(t) })
     : null;
@@ -103,15 +111,50 @@ export default async function SiteHomePage({
   if (builderData && typeof builderData === 'object' && 'formData' in builderData && 'generatedContent' in builderData) {
     const typedBuilderData = builderData as { formData: FormData; generatedContent: GeneratedContent };
     if (typedBuilderData.formData && typedBuilderData.generatedContent) {
+      // Published case-study portfolio + testimonials for this tenant's homepage.
+      const [caseStudiesRaw, testimonialsRaw] = await Promise.all([
+        getPublishedCaseStudies(company.id),
+        getPublishedTestimonials(company.id),
+      ]);
+
+      // Auto-translate tenant content for non-default locales (cached server-side).
+      const [generatedContent, caseStudies, testimonials] =
+        locale === DEFAULT_LOCALE
+          ? [typedBuilderData.generatedContent, caseStudiesRaw, testimonialsRaw]
+          : await Promise.all([
+              translateBuilderContent(company.id, typedBuilderData.generatedContent, locale),
+              translateCaseStudies(company.id, caseStudiesRaw, locale),
+              translateTestimonials(company.id, testimonialsRaw, locale),
+            ]);
+
+      // whitesourcing uses the bespoke "Industrial Precision" homepage; every
+      // other tenant keeps the standard builder template.
+      if (params.companySlug === 'whitesourcing') {
+        return (
+          <div lang={locale} dir={dirFor(locale)}>
+            <JsonLd data={[orgLd, localLd]} />
+            <WhiteSourcingHome
+              companySlug={params.companySlug}
+              formData={typedBuilderData.formData}
+              generatedContent={generatedContent}
+              caseStudies={caseStudies}
+              testimonials={testimonials}
+            />
+          </div>
+        );
+      }
+
       return (
-        <>
+        <div lang={locale} dir={dirFor(locale)}>
           <JsonLd data={[orgLd, localLd]} />
           <PublishedBuilderSite
             formData={typedBuilderData.formData}
-            generatedContent={typedBuilderData.generatedContent}
+            generatedContent={generatedContent}
             companySlug={params.companySlug}
+            caseStudies={caseStudies}
+            testimonials={testimonials}
           />
-        </>
+        </div>
       );
     }
   }

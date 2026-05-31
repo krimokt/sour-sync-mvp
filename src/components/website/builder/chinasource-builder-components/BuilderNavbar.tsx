@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { LogIn, Menu, X } from 'lucide-react';
+import { LogIn, Menu, X, ArrowUpRight } from 'lucide-react';
 import type { FormData, GeneratedContent, ThemeColor } from '../chinasource-types';
-import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import BrandMark from './BrandMark';
+import LanguageSwitcher from '@/components/storefront/LanguageSwitcher';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
+import { NAV_LABEL_KEY } from '@/lib/i18n/storefront-dict';
 
 const themeAccent: Record<ThemeColor, { hex: string }> = {
   amber:   { hex: '#f59e0b' },
@@ -20,7 +23,7 @@ interface BuilderNavbarProps {
   companySlug: string;
   hideSidebar?: boolean;
   hasTopBar?: boolean;
-  // When true (on sub-pages), in-page anchors route back to the home page
+  /** @deprecated each nav item now routes to its own page; kept for caller compatibility. */
   linkToHome?: boolean;
 }
 
@@ -30,10 +33,12 @@ export default function BuilderNavbar({
   companySlug,
   hideSidebar = true,
   hasTopBar = false,
-  linkToHome = false,
 }: BuilderNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t, locale } = useStorefrontLocale();
+  // Carry the active language across page navigations.
+  const langQs = locale !== 'en' ? `?lang=${locale}` : '';
 
   const accent = themeAccent[data.themeColor] || themeAccent.blue;
 
@@ -49,15 +54,16 @@ export default function BuilderNavbar({
     'Process',
     'Certifications',
     'About',
+    'Blog',
     'Contact',
   ];
 
-  const homeBase = linkToHome ? `/site/${companySlug}` : '';
-  const signInHref = `/site/${companySlug}/signin`;
-  const anchorHref = (label: string) => {
-    if (label === 'Products') return `/site/${companySlug}/products`;
-    return `${homeBase}#${label.toLowerCase()}`;
-  };
+  const base = `/site/${companySlug}`;
+  const signInHref = `${base}/signin`;
+  // Each nav item routes to its dedicated, indexable page (good for SEO + UX).
+  const anchorHref = (label: string) => `${base}/${label.toLowerCase()}${langQs}`;
+  const homeHref = `${base}${langQs}`;
+  const contactHref = `${base}/contact${langQs}`;
 
   return (
     <>
@@ -70,58 +76,55 @@ export default function BuilderNavbar({
       >
         <div className="max-w-6xl mx-auto px-6 lg:px-10">
           <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-20'}`}>
-            <a href={`/site/${companySlug}`} className="group flex items-center gap-2.5 flex-shrink-0">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold transition-shadow"
-                style={{
-                  background: accent.hex,
-                  boxShadow: `0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 14px -4px ${accent.hex}66`,
-                }}
-              >
-                {data.companyName.charAt(0).toUpperCase()}
-              </div>
-              <span className="font-semibold text-[15px] tracking-tight text-slate-900">
-                {data.companyName}
-              </span>
-            </a>
+            <BrandMark
+              companyName={data.companyName}
+              logoUrl={data.logoUrl}
+              accentHex={accent.hex}
+              href={homeHref}
+            />
 
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden lg:flex items-center gap-0.5 min-w-0">
               {navLinks.map(label => (
                 <a
                   key={label}
                   href={anchorHref(label)}
-                  className="relative px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-200 text-slate-600 hover:text-slate-900"
+                  className="relative px-3 py-2 rounded-lg text-[13.5px] font-medium whitespace-nowrap transition-all duration-200 text-slate-600 hover:text-slate-900"
                   onMouseEnter={(e) => { e.currentTarget.style.background = `${accent.hex}10`; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = ''; }}
                 >
-                  {label}
+                  {t(NAV_LABEL_KEY[label])}
                 </a>
               ))}
             </div>
 
-            <div className="hidden lg:flex items-center gap-2.5">
+            <div className="hidden lg:flex items-center gap-2 shrink-0">
+              <LanguageSwitcher accentHex={accent.hex} />
               <a
                 href={signInHref}
-                className="group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 hover:bg-blue-50/40 transition-all shadow-[0_1px_0_rgba(15,23,42,0.04)]"
+                className="group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold whitespace-nowrap shrink-0 text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 transition-all shadow-[0_1px_0_rgba(15,23,42,0.04)]"
               >
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 group-hover:text-slate-700 transition-colors shrink-0">
                   <LogIn size={12} />
                 </span>
-                Client Portal
+                {t('cta.clientPortal')}
               </a>
               <a
-                href={linkToHome ? `/site/${companySlug}#contact` : '#contact'}
-                className="inline-flex"
+                href={contactHref}
+                className="inline-flex items-center gap-2 h-10 pl-2 pr-4 rounded-xl bg-neutral-900 text-white text-[13px] font-semibold whitespace-nowrap shrink-0 hover:bg-neutral-800 transition-colors shadow-sm"
               >
-                <AntiMetalButton label="Get a Quote" className="w-36" />
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                  <ArrowUpRight size={13} className="text-white" />
+                </span>
+                {t('cta.getQuote')}
               </a>
             </div>
 
             <div className="flex lg:hidden items-center gap-2">
+              <LanguageSwitcher accentHex={accent.hex} />
               <a
                 href={signInHref}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-blue-300 hover:text-blue-700 transition"
-                aria-label="Client Portal"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-slate-300 hover:text-slate-900 transition"
+                aria-label={t('cta.clientPortal')}
               >
                 <LogIn size={16} />
               </a>
@@ -129,6 +132,7 @@ export default function BuilderNavbar({
                 onClick={() => setMobileOpen(v => !v)}
                 className="p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
                 aria-label="Toggle menu"
+                aria-expanded={mobileOpen}
               >
                 {mobileOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
@@ -138,7 +142,7 @@ export default function BuilderNavbar({
       </nav>
 
       {mobileOpen && (
-        <div className={`fixed ${hasTopBar ? 'top-[calc(4rem+3.5rem)]' : 'top-14'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-39 bg-white border-b border-gray-100 shadow-lg`}>
+        <div className={`fixed ${hasTopBar ? 'top-[calc(4rem+3.5rem)]' : 'top-14'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-30 bg-white border-b border-gray-100 shadow-lg`}>
           <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
             {navLinks.map(label => (
               <a
@@ -147,25 +151,28 @@ export default function BuilderNavbar({
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
               >
-                {label}
+                {t(NAV_LABEL_KEY[label])}
               </a>
             ))}
             <div className="h-px bg-gray-100 my-1" />
             <a
               href={signInHref}
-              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 transition"
+              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 transition"
             >
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500">
                 <LogIn size={13} />
               </span>
-              Client Portal
+              {t('cta.clientPortal')}
             </a>
             <a
-              href={linkToHome ? `/site/${companySlug}#contact` : '#contact'}
+              href={contactHref}
               onClick={() => setMobileOpen(false)}
-              className="mt-1 inline-flex justify-center"
+              className="mt-1 inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-neutral-900 text-white text-sm font-semibold whitespace-nowrap hover:bg-neutral-800 transition-colors"
             >
-              <AntiMetalButton label="Get a Quote" className="w-full" />
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                <ArrowUpRight size={14} className="text-white" />
+              </span>
+              {t('cta.getQuote')}
             </a>
           </div>
         </div>

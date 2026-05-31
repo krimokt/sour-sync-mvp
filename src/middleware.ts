@@ -35,6 +35,7 @@ const alwaysPublicPatterns = [
   /^\/site\//, // Public company websites
   /^\/dashboard-client$/, // Client dashboard (handled by page)
   /^\/c\//, // Magic link client portal (token validation in layout)
+  /^\/header-demo$/, // Public preview of the header-2 component
 ];
 
 

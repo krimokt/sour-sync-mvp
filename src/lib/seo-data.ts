@@ -129,6 +129,116 @@ export const getProductSeo = cache(async (productId: string): Promise<ProductSeo
   return (data as ProductSeo) ?? null;
 });
 
+import type { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
+
+/** Full published builder payload for a tenant (for standalone section pages). */
+export const getTenantBuilder = cache(
+  async (slug: string): Promise<{ formData: FormData; generatedContent: GeneratedContent } | null> => {
+    const { data } = await supabase
+      .from('companies')
+      .select('id, name, slug, settings:website_settings (published_builder_data)')
+      .eq('slug', slug)
+      .eq('status', 'active')
+      .single();
+    if (!data) return null;
+    const s = pickSettings(
+      (data as { settings?: unknown }).settings as
+        | { published_builder_data?: { formData?: FormData; generatedContent?: GeneratedContent } | null }
+        | null,
+    );
+    const builder = s?.published_builder_data;
+    if (!builder?.formData || !builder?.generatedContent) return null;
+    return { formData: builder.formData, generatedContent: builder.generatedContent };
+  },
+);
+
+export interface BlogPostSeo {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string | null;
+  cover_image: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image: string | null;
+  published_at: string | null;
+  updated_at: string | null;
+}
+
+/** Published blog posts for a tenant (newest first). */
+export const getPublishedPosts = cache(async (companyId: string): Promise<BlogPostSeo[]> => {
+  const { data } = await supabase
+    .from('blog_posts')
+    .select('id, slug, title, excerpt, content, cover_image, meta_title, meta_description, og_image, published_at, updated_at')
+    .eq('company_id', companyId)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+  return (data as BlogPostSeo[]) ?? [];
+});
+
+/** A single published post by slug, scoped to a company. */
+export const getPostBySlug = cache(
+  async (companyId: string, slug: string): Promise<BlogPostSeo | null> => {
+    const { data } = await supabase
+      .from('blog_posts')
+      .select('id, slug, title, excerpt, content, cover_image, meta_title, meta_description, og_image, published_at, updated_at')
+      .eq('company_id', companyId)
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single();
+    return (data as BlogPostSeo) ?? null;
+  },
+);
+
+export interface CaseStudySeo {
+  id: string;
+  slug: string;
+  title: string;
+  client_name: string | null;
+  summary: string | null;
+  scope: string | null;
+  location: string | null;
+  year: string | null;
+  cover_image: string | null;
+  metric_label: string | null;
+  metric_value: string | null;
+}
+
+/** Published case studies / projects for a tenant (manual sort, newest first). */
+export const getPublishedCaseStudies = cache(async (companyId: string): Promise<CaseStudySeo[]> => {
+  const { data } = await supabase
+    .from('case_studies')
+    .select('id, slug, title, client_name, summary, scope, location, year, cover_image, metric_label, metric_value')
+    .eq('company_id', companyId)
+    .eq('status', 'published')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+  return (data as CaseStudySeo[]) ?? [];
+});
+
+export interface TestimonialSeo {
+  id: string;
+  quote: string;
+  author_name: string;
+  author_title: string | null;
+  author_company: string | null;
+  avatar_image: string | null;
+  rating: number | null;
+}
+
+/** Published testimonials for a tenant (manual sort, newest first). */
+export const getPublishedTestimonials = cache(async (companyId: string): Promise<TestimonialSeo[]> => {
+  const { data } = await supabase
+    .from('testimonials')
+    .select('id, quote, author_name, author_title, author_company, avatar_image, rating')
+    .eq('company_id', companyId)
+    .eq('status', 'published')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+  return (data as TestimonialSeo[]) ?? [];
+});
+
 /** Best available marketing tagline for a tenant. */
 export function tenantTagline(t: TenantSeo): string {
   const hero = t.builder?.generatedContent?.hero;

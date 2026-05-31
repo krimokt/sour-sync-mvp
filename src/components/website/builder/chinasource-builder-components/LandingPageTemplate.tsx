@@ -7,7 +7,7 @@ import {
   ShieldCheck, Instagram, Linkedin, MessageCircle,
   CheckCircle2, Globe, Clock, Package, Menu, X,
 } from 'lucide-react';
-import { EditableText, EditableIcon, EditableImage } from './EditorComponents';
+import { EditableText } from './EditorComponents';
 import Sidebar from './Sidebar';
 import PartnerLogoCarousel from './PartnerLogoCarousel';
 import SiteFooter from './SiteFooter';
@@ -15,8 +15,14 @@ import SourcingRequestForm from './SourcingRequestForm';
 import FactoryCertifications from './FactoryCertifications';
 import ProcessTimeline from './ProcessTimeline';
 import SolutionsList from './SolutionsList';
+import BrandMark from './BrandMark';
+import CaseStudyShowcase from './CaseStudyShowcase';
+import TestimonialsShowcase from './TestimonialsShowcase';
 import AboutHeroSection from '@/components/storefront/AboutHeroSection';
-import { AntiMetalButton } from '@/components/ui/anti-metal-button';
+import LanguageSwitcher from '@/components/storefront/LanguageSwitcher';
+import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
+import { NAV_LABEL_KEY } from '@/lib/i18n/storefront-dict';
+import type { CaseStudySeo, TestimonialSeo } from '@/lib/seo-data';
 
 interface LandingPageTemplateProps {
   data: FormData;
@@ -26,6 +32,10 @@ interface LandingPageTemplateProps {
   hasTopBar?: boolean;
   readOnly?: boolean;
   companySlug?: string;
+  /** Published case studies — fetched server-side, threaded in for the live site. */
+  caseStudies?: CaseStudySeo[];
+  /** Published testimonials — fetched server-side, threaded in for the live site. */
+  testimonials?: TestimonialSeo[];
 }
 
 const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string }> = {
@@ -38,7 +48,7 @@ const themeAccent: Record<ThemeColor, { hex: string; light: string; text: string
 };
 
 export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
-  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false, companySlug,
+  data, content: initialContent, hideSidebar = false, hasTopBar = false, readOnly = false, companySlug, caseStudies, testimonials,
 }) => {
   const normalized = {
     ...initialContent,
@@ -50,6 +60,8 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
   const [templateId, setTemplateId] = useState<TemplateId>(data.templateId);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t, locale } = useStorefrontLocale();
+  const langQs = locale !== 'en' ? `?lang=${locale}` : '';
 
   const accent = themeAccent[themeColor];
   // Shared CTA color — calm cyan-blue that pairs with the blue theme without
@@ -79,12 +91,16 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
     ...(content.products?.items?.length ? ['Products'] : []),
     'Solutions',
     'Process',
+    ...(caseStudies?.length ? ['Projects'] : []),
     'Certifications',
     'About',
+    'Blog',
     'Contact',
   ];
   const slug = companySlug || data.companyName.toLowerCase().replace(/\s+/g, '-');
   const signInHref = `/site/${slug}/signin`;
+  // Blog has no homepage section — route to its page; others smooth-scroll.
+  const navHref = (label: string) => (label === 'Blog' ? `/site/${slug}/blog${langQs}` : `#${label.toLowerCase()}`);
 
   const Navbar = () => (
     <>
@@ -98,29 +114,22 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
         <div className="max-w-6xl mx-auto px-6 lg:px-10">
           <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-20'}`}>
 
-            {/* Logo — soft accent glow on hover */}
-            <a href="#" className="group flex items-center gap-2.5 flex-shrink-0">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold transition-shadow"
-                style={{
-                  background: accent.hex,
-                  boxShadow: `0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 14px -4px ${accent.hex}66`,
-                }}
-              >
-                {data.companyName.charAt(0).toUpperCase()}
-              </div>
-              <span className={`font-semibold text-[15px] tracking-tight transition-colors ${scrolled ? 'text-slate-900' : 'text-white'}`}>
-                {data.companyName}
-              </span>
-            </a>
+            {/* Logo — real logo when uploaded, else accent initial tile */}
+            <BrandMark
+              companyName={data.companyName}
+              logoUrl={data.logoUrl}
+              accentHex={accent.hex}
+              href={`/site/${slug}${langQs}`}
+              onDark={!scrolled}
+            />
 
             {/* Desktop links — centered, pill hover with accent tint */}
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden lg:flex items-center gap-0.5 min-w-0">
               {navLinks.map(label => (
                 <a
                   key={label}
-                  href={`#${label.toLowerCase()}`}
-                  className={`relative px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-200 ${
+                  href={navHref(label)}
+                  className={`relative px-3 py-2 rounded-lg text-[13.5px] font-medium whitespace-nowrap transition-all duration-200 ${
                     scrolled
                       ? 'text-slate-600 hover:text-slate-900'
                       : 'text-white/75 hover:text-white'
@@ -139,46 +148,54 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                     e.currentTarget.style.background = '';
                   }}
                 >
-                  {label}
+                  {t(NAV_LABEL_KEY[label])}
                 </a>
               ))}
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center gap-2.5">
+            <div className="hidden lg:flex items-center gap-2 shrink-0">
+              {readOnly && <LanguageSwitcher accentHex={accent.hex} onDark={!scrolled} />}
               <a
                 href={signInHref}
-                className={`group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold transition-all ${
+                className={`group relative inline-flex items-center gap-2 pl-3.5 pr-4 h-10 rounded-full text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all ${
                   scrolled
-                    ? 'text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 hover:bg-blue-50/40 shadow-[0_1px_0_rgba(15,23,42,0.04)]'
+                    ? 'text-slate-700 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.04)]'
                     : 'text-white bg-white/10 ring-1 ring-white/25 hover:bg-white/15 hover:ring-white/40 backdrop-blur'
                 }`}
               >
                 <span
                   className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors ${
                     scrolled
-                      ? 'bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                      ? 'bg-slate-100 text-slate-500 group-hover:text-slate-700'
                       : 'bg-white/15 text-white'
                   }`}
                 >
                   <LogIn size={12} />
                 </span>
-                Client Portal
+                {t('cta.clientPortal')}
               </a>
               {/* Site-wide primary CTA */}
-              <a href="#contact" className="inline-flex">
-                <AntiMetalButton label="Get a Quote" className="w-36" />
+              <a
+                href="#contact"
+                className="inline-flex items-center gap-2 h-10 pl-2 pr-4 rounded-xl bg-neutral-900 text-white text-[13px] font-semibold whitespace-nowrap shrink-0 hover:bg-neutral-800 transition-colors shadow-sm"
+              >
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                  <ArrowUpRight size={13} className="text-white" />
+                </span>
+                {t('cta.getQuote')}
               </a>
             </div>
 
-            {/* Mobile: sign in + hamburger */}
+            {/* Mobile: language + sign in + hamburger */}
             <div className="flex lg:hidden items-center gap-2">
+              {readOnly && <LanguageSwitcher accentHex={accent.hex} onDark={!scrolled} />}
               <a
                 href={signInHref}
-                aria-label="Client Portal"
+                aria-label={t('cta.clientPortal')}
                 className={`inline-flex items-center justify-center w-10 h-10 rounded-full transition ${
                   scrolled
-                    ? 'bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-blue-300 hover:text-blue-700'
+                    ? 'bg-white ring-1 ring-slate-200 text-slate-600 hover:ring-slate-300 hover:text-slate-900'
                     : 'bg-white/10 ring-1 ring-white/25 text-white hover:bg-white/15 backdrop-blur'
                 }`}
               >
@@ -190,6 +207,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                   scrolled ? 'text-gray-600 hover:bg-gray-50' : 'text-white/80 hover:bg-white/10'
                 }`}
                 aria-label="Toggle menu"
+                aria-expanded={mobileOpen}
               >
                 {mobileOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
@@ -201,35 +219,38 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
       {/* Mobile menu */}
       {mobileOpen && (
         <div
-          className={`fixed ${hasTopBar ? 'top-[calc(4rem+3.5rem)]' : 'top-14'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-39 bg-white border-b border-gray-100 shadow-lg`}
+          className={`fixed ${hasTopBar ? 'top-[calc(4rem+3.5rem)]' : 'top-14'} ${!hideSidebar ? 'left-80' : 'left-0'} right-0 z-30 bg-white border-b border-gray-100 shadow-lg`}
         >
           <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
             {navLinks.map(label => (
               <a
                 key={label}
-                href={`#${label.toLowerCase()}`}
+                href={navHref(label)}
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
               >
-                {label}
+                {t(NAV_LABEL_KEY[label])}
               </a>
             ))}
             <div className="h-px bg-gray-100 my-1" />
             <a
               href={signInHref}
-              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-700 transition"
+              className="mt-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:text-slate-900 transition"
             >
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500">
                 <LogIn size={13} />
               </span>
-              Client Portal
+              {t('cta.clientPortal')}
             </a>
             <a
               href="#contact"
               onClick={() => setMobileOpen(false)}
-              className="mt-1 inline-flex justify-center"
+              className="mt-1 inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-neutral-900 text-white text-sm font-semibold whitespace-nowrap hover:bg-neutral-800 transition-colors"
             >
-              <AntiMetalButton label="Get a Quote" className="w-full" />
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg shrink-0" style={{ background: accent.hex }}>
+                <ArrowUpRight size={14} className="text-white" />
+              </span>
+              {t('cta.getQuote')}
             </a>
           </div>
         </div>
@@ -354,7 +375,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                 className="flex items-center gap-2 px-7 py-4 rounded-xl text-white text-sm font-semibold border transition-colors hover:bg-white/10"
                 style={{ borderColor: 'var(--ink-line-soft)' }}
               >
-                See Our Services
+                {t('cta.seeServices')}
               </a>
             </div>
 
@@ -471,7 +492,7 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: accent.hex }}
                 >
-                  View all products
+                  {t('cta.viewAllProducts')}
                   <ArrowUpRight className="w-4 h-4" />
                 </a>
               </div>
@@ -531,6 +552,11 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
             />
           </div>
         </section>
+
+        {/* ── CASE STUDIES / PROJECTS (published from the dashboard) ── */}
+        {caseStudies && caseStudies.length > 0 && (
+          <CaseStudyShowcase items={caseStudies} accentHex={accent.hex} />
+        )}
 
         {/* ── FACTORY CERTIFICATIONS (carousel of 3 documents) ── */}
         <FactoryCertifications
@@ -609,6 +635,11 @@ export const LandingPageTemplate: React.FC<LandingPageTemplateProps> = ({
               </div>
             </div>
           </section>
+        )}
+
+        {/* ── TESTIMONIALS (published from the dashboard) ── */}
+        {testimonials && testimonials.length > 0 && (
+          <TestimonialsShowcase items={testimonials} accentHex={accent.hex} />
         )}
 
         {/* ── CONTACT ── */}

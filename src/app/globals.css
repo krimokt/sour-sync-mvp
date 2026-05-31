@@ -153,6 +153,29 @@
 
   --color-theme-purple-500: #7a5af8;
 
+  /* shadcn/ui semantic tokens — mapped onto the existing palette so
+     utilities like bg-background, border-border, bg-accent, bg-primary,
+     ring-ring resolve under Tailwind v4 (used by header-2 + other shadcn
+     components such as dialog/stepper). */
+  --color-background: #ffffff;
+  --color-foreground: #101828;
+  --color-card: #ffffff;
+  --color-card-foreground: #101828;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #101828;
+  --color-primary: #465fff;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f2f4f7;
+  --color-secondary-foreground: #1d2939;
+  --color-muted: #f2f4f7;
+  --color-muted-foreground: #667085;
+  --color-accent: #f2f4f7;
+  --color-accent-foreground: #1d2939;
+  --color-destructive: #f04438;
+  --color-border: #e4e7ec;
+  --color-input: #e4e7ec;
+  --color-ring: #465fff;
+
   --shadow-theme-md:
     0px 4px 8px -2px rgba(16, 24, 40, 0.1),
     0px 2px 4px -2px rgba(16, 24, 40, 0.06);
@@ -218,6 +241,41 @@
   /* Tabular numbers for data/tables */
   table, .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Scroll-reveal (used by the whitesourcing homepage). Toggled by an
+     IntersectionObserver adding .is-in. Falls back to visible w/o motion. */
+  .ws-reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s ease-out, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  .ws-reveal.is-in {
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ws-reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* Per-language fonts. The storefront sets <html lang> per locale, so :lang()
+     swaps in script-appropriate fonts (CJK, Arabic, Cyrillic) the Latin display
+     font lacks. body:lang() overrides the base body font across the whole page,
+     including the header. Noto names are used if present; otherwise robust
+     system fonts. Arabic gets a touch more line-height for legibility. */
+  body:lang(zh) {
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+      var(--font-jakarta), system-ui, sans-serif;
+  }
+  body:lang(ar) {
+    font-family: "Noto Sans Arabic", "Geeza Pro", "Segoe UI", Tahoma,
+      var(--font-jakarta), system-ui, sans-serif;
+    line-height: 1.7;
+  }
+  body:lang(ru) {
+    font-family: "Noto Sans", "Segoe UI", Roboto,
+      var(--font-jakarta), system-ui, sans-serif;
   }
 
   /* Modern Animated Sign-in CSS Variables */

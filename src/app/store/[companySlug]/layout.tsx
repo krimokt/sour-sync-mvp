@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { StoreProvider, Company, Profile } from '@/context/StoreContext';
 import StoreLayoutClient from './StoreLayoutClient';
+import StoreAuthProviders from './StoreAuthProviders';
 
 interface StoreLayoutProps {
   children: React.ReactNode;
@@ -53,10 +54,12 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
   }
 
   return (
-    <StoreProvider company={company as Company} profile={profile as Profile}>
-      <StoreLayoutClient companySlug={companySlug}>
-        {children}
-      </StoreLayoutClient>
-    </StoreProvider>
+    <StoreAuthProviders>
+      <StoreProvider company={company as Company} profile={profile as Profile}>
+        <StoreLayoutClient companySlug={companySlug}>
+          {children}
+        </StoreLayoutClient>
+      </StoreProvider>
+    </StoreAuthProviders>
   );
 }

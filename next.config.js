@@ -1,5 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/images/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/favicon.svg',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+    ];
+  },
   eslint: { ignoreDuringBuilds: true },
   // Types are valid at runtime; the deprecated @supabase/auth-helpers-nextjs
   // package fails to infer them. Remove once we migrate to @supabase/ssr.

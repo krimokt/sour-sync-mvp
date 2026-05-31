@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { ClientProvider, Company, Profile, Client } from '@/context/ClientContext';
 import ClientLayoutClient from './ClientLayoutClient';
+import ClientAuthProviders from './ClientAuthProviders';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -57,14 +58,16 @@ export default async function ClientLayout({ children, params }: ClientLayoutPro
   }
 
   return (
-    <ClientProvider
-      company={companyData}
-      profile={profileData as Profile}
-      client={clientData as Client}
-    >
-      <ClientLayoutClient companySlug={companySlug}>
-        {children}
-      </ClientLayoutClient>
-    </ClientProvider>
+    <ClientAuthProviders>
+      <ClientProvider
+        company={companyData}
+        profile={profileData as Profile}
+        client={clientData as Client}
+      >
+        <ClientLayoutClient companySlug={companySlug}>
+          {children}
+        </ClientLayoutClient>
+      </ClientProvider>
+    </ClientAuthProviders>
   );
 }

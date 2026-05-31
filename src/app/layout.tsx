@@ -2,13 +2,9 @@ import "./globals.css";
 import { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 
-import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import { AuthProvider } from "@/context/AuthContext";
 import { Toaster as UIToaster } from "@/components/ui/toaster";
 import { Toaster } from "sonner";
-import { SupabaseProvider } from '@/context/SupabaseProvider';
-import { QueryProvider } from '@/providers/QueryProvider';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -80,13 +76,7 @@ export default function RootLayout({
     <html lang="en" className={plusJakartaSans.variable}>
       <body className="font-jakarta dark:bg-gray-900">
         <ThemeProvider>
-          <AuthProvider>
-            <QueryProvider>
-              <SupabaseProvider>
-                <SidebarProvider>{children}</SidebarProvider>
-              </SupabaseProvider>
-            </QueryProvider>
-          </AuthProvider>
+          {children}
         </ThemeProvider>
         <UIToaster />
         <Toaster />

@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { WebsiteSection } from '@/types/website';
-import PreviewWrapper from '@/components/storefront/PreviewWrapper';
-import PublishedBuilderSite from '@/components/storefront/PublishedBuilderSite';
-import WhiteSourcingHome from '@/components/storefront/whitesourcing/WhiteSourcingHome';
+import dynamic from 'next/dynamic';
 import { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
+
+// Dynamic imports: each storefront only loads the component it actually uses.
+const PreviewWrapper = dynamic(() => import('@/components/storefront/PreviewWrapper'));
+const PublishedBuilderSite = dynamic(() => import('@/components/storefront/PublishedBuilderSite'));
+const WhiteSourcingHome = dynamic(() => import('@/components/storefront/whitesourcing/WhiteSourcingHome'));
 
 import type { Metadata } from 'next';
 import JsonLd from '@/components/seo/JsonLd';

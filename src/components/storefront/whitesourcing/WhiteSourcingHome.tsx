@@ -216,6 +216,10 @@ export default function WhiteSourcingHome({
 
   return (
     <div className="bg-white text-[#0F1115]" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {/* Preconnect to the font + image CDNs so they resolve/handshake early. */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="preconnect" href="https://lh3.googleusercontent.com" />
       {/* Load the design's fonts (browser-side; falls back to system if offline) */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
@@ -297,6 +301,8 @@ export default function WhiteSourcingHome({
           src={HERO_VALVE}
           alt=""
           aria-hidden
+          decoding="async"
+          fetchPriority="low"
           className="absolute inset-0 z-0 h-full w-full object-cover opacity-30"
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO; }}
         />
@@ -357,6 +363,8 @@ export default function WhiteSourcingHome({
                     key={i}
                     src={src}
                     alt={`${formData.companyName} product ${i + 1}`}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
                     className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === heroIdx ? 'opacity-100' : 'opacity-0'}`}
                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO; }}
                   />

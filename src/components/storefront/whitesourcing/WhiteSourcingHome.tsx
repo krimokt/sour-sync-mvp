@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   ArrowRight, Factory, Headset, Truck, Globe, Mail, Phone, MapPin,
-  MessageCircle, ShieldCheck, Boxes,
+  MessageCircle, ShieldCheck, Boxes, Download,
 } from 'lucide-react';
 import type { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 import type { CaseStudySeo, TestimonialSeo } from '@/lib/seo-data';
@@ -324,13 +324,13 @@ export default function WhiteSourcingHome({
                     NEW 2026
                   </div>
                 )}
-                <div className={`flex h-80 items-center justify-center p-4 transition-colors ${p.isNew ? 'bg-gray-50 group-hover:bg-blue-50/50' : 'bg-white'}`}>
+                <div className={`flex h-96 items-center justify-center p-2 transition-colors ${p.isNew ? 'bg-gray-50 group-hover:bg-blue-50/50' : 'bg-white'}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={p.img}
                     alt={p.name}
                     loading="lazy"
-                    className="max-h-full w-auto object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-110"
+                    className="h-full w-full object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
                 <div className="border-t border-gray-100 p-6">
@@ -344,14 +344,15 @@ export default function WhiteSourcingHome({
             ))}
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-14 text-center">
             <a
               href={`${base}/products`}
-              className="inline-flex items-center gap-2 rounded-[3px] border-2 px-8 py-3 text-[13px] font-semibold uppercase tracking-wide transition-colors"
-              style={{ borderColor: INK, color: INK, letterSpacing: '0.04em' }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = INK; e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = INK; }}
+              className="group inline-flex items-center gap-2.5 rounded-full border-2 px-9 py-4 text-[13px] font-semibold uppercase tracking-wide shadow-sm transition-all hover:shadow-lg"
+              style={{ borderColor: NAVY, color: NAVY, letterSpacing: '0.04em' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = NAVY; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = NAVY; }}
             >
+              <Download size={17} className="transition-transform group-hover:translate-y-0.5" />
               Download Full Catalog (PDF)
             </a>
           </div>

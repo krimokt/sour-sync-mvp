@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight, Factory, Headset, Truck, Globe, Mail, Phone, MapPin,
-  MessageCircle, ShieldCheck, Boxes, Download,
+  MessageCircle, ShieldCheck, Boxes, Download, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import type { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 import type { CaseStudySeo, TestimonialSeo } from '@/lib/seo-data';
@@ -69,6 +69,76 @@ const CATALOG: { pn: string; name: string; category: string; isNew?: boolean; im
   },
 ];
 
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Fade/rise in when scrolled into view (and on first paint for above-the-fold). */
+function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (prefersReducedMotion()) { setShown(true); return; }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }),
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: shown ? 1 : 0,
+        transform: shown ? 'none' : 'translateY(26px)',
+        transition: `opacity 700ms ease-out ${delay}ms, transform 800ms cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Count up to a numeric value (preserving prefix/suffix like "29+", "20k") when in view. */
+function CountUp({ value, className, style }: { value: string; className?: string; style?: React.CSSProperties }) {
+  const m = String(value).match(/^(\d+(?:\.\d+)?)(.*)$/);
+  const target = m ? parseFloat(m[1]) : 0;
+  const suffix = m ? m[2] : value;
+  const decimals = m && m[1].includes('.') ? 1 : 0;
+  const [n, setN] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (prefersReducedMotion()) { setN(target); return; }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting && !started.current) {
+          started.current = true;
+          const dur = 1600;
+          const t0 = performance.now();
+          const tick = (now: number) => {
+            const p = Math.min(1, (now - t0) / dur);
+            setN(target * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) requestAnimationFrame(tick); else setN(target);
+          };
+          requestAnimationFrame(tick);
+          io.disconnect();
+        }
+      }),
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [target]);
+  return <span ref={ref} className={className} style={style}>{n.toFixed(decimals)}{suffix}</span>;
+}
+
 interface Props {
   companySlug: string;
   formData: FormData;
@@ -92,12 +162,26 @@ export default function WhiteSourcingHome({
 
   // Hero product carousel: the supplied valve + two catalog shots.
   const heroImages = [HERO_VALVE, CATALOG[0].img, CATALOG[2].img];
+  const prevHero = () => setHeroIdx((i) => (i - 1 + heroImages.length) % heroImages.length);
+  const nextHero = () => setHeroIdx((i) => (i + 1) % heroImages.length);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    if (prefersReducedMotion()) return;
     const id = setInterval(() => setHeroIdx((i) => (i + 1) % heroImages.length), 4000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Scroll-reveal: fade/rise elements tagged .ws-reveal as they enter view.
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll('.ws-reveal'));
+    if (prefersReducedMotion()) { els.forEach((e) => e.classList.add('is-in')); return; }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }),
+      { threshold: 0.12 },
+    );
+    els.forEach((e) => io.observe(e));
+    return () => io.disconnect();
   }, []);
 
   const base = `/site/${companySlug}`;
@@ -117,13 +201,13 @@ export default function WhiteSourcingHome({
     <a href={base} className="flex items-center gap-2.5 flex-shrink-0">
       <span
         className="inline-flex items-center justify-center h-8 w-8 rounded-[3px] text-white text-sm font-bold"
-        style={{ background: NAVY, fontFamily: "'IBM Plex Sans', sans-serif" }}
+        style={{ background: NAVY, fontFamily: "'Sora', sans-serif" }}
       >
         {formData.companyName.charAt(0).toUpperCase()}
       </span>
       <span
         className={`text-lg font-bold tracking-tight ${onDark ? 'text-white' : 'text-[#0F1115]'}`}
-        style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}
+        style={{ fontFamily: "'Sora', sans-serif" }}
       >
         {formData.companyName}
       </span>
@@ -135,7 +219,7 @@ export default function WhiteSourcingHome({
       {/* Load the design's fonts (browser-side; falls back to system if offline) */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@600&display=swap"
         rel="stylesheet"
       />
 
@@ -230,10 +314,10 @@ export default function WhiteSourcingHome({
           style={{ background: `linear-gradient(to right, ${INK} 0%, ${INK}e6 45%, transparent 100%)` }}
         />
         <div className="relative z-10 mx-auto flex w-full max-w-[1280px] px-5 lg:px-16 py-24">
-          <div className="flex w-full flex-col justify-center text-white md:w-1/2">
+          <Reveal className="flex w-full flex-col justify-center text-white md:w-1/2">
             <h1
               className="mb-6 font-bold leading-[1.1] tracking-tight text-[clamp(2.25rem,5vw,3rem)]"
-              style={{ fontFamily: "'IBM Plex Sans', sans-serif", letterSpacing: '-0.02em' }}
+              style={{ fontFamily: "'Sora', sans-serif", letterSpacing: '-0.02em' }}
             >
               {gc.hero?.headline || 'Precision Valve Systems & Control'}
             </h1>
@@ -260,22 +344,39 @@ export default function WhiteSourcingHome({
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </a>
             </div>
-          </div>
-          <div className="relative hidden w-1/2 flex-col items-center justify-center md:flex">
-            <div
-              className="relative h-[440px] w-[440px] max-w-full overflow-hidden"
-              style={{ borderRadius: '15%', filter: 'drop-shadow(0 20px 50px rgba(19,82,162,0.35))' }}
-            >
-              {heroImages.map((src, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={i}
-                  src={src}
-                  alt={`${formData.companyName} product ${i + 1}`}
-                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === heroIdx ? 'opacity-100' : 'opacity-0'}`}
-                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO; }}
-                />
-              ))}
+          </Reveal>
+          <Reveal delay={150} className="relative hidden w-1/2 flex-col items-center justify-center md:flex">
+            <div className="relative">
+              <div
+                className="relative h-[440px] w-[440px] max-w-full overflow-hidden"
+                style={{ borderRadius: '15%', filter: 'drop-shadow(0 20px 50px rgba(19,82,162,0.35))' }}
+              >
+                {heroImages.map((src, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={src}
+                    alt={`${formData.companyName} product ${i + 1}`}
+                    className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === heroIdx ? 'opacity-100' : 'opacity-0'}`}
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO; }}
+                  />
+                ))}
+              </div>
+              {/* prev / next arrows */}
+              <button
+                onClick={prevHero}
+                aria-label="Previous product"
+                className="absolute left-2 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[#0F1115] shadow-lg backdrop-blur transition-transform hover:scale-110"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={nextHero}
+                aria-label="Next product"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[#0F1115] shadow-lg backdrop-blur transition-transform hover:scale-110"
+              >
+                <ChevronRight size={20} />
+              </button>
             </div>
             {/* dots */}
             <div className="mt-5 flex justify-center gap-2">
@@ -289,7 +390,7 @@ export default function WhiteSourcingHome({
                 />
               ))}
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -299,9 +400,11 @@ export default function WhiteSourcingHome({
           <dl className="grid grid-cols-2 md:grid-cols-4 gap-8 md:divide-x md:divide-white/20">
             {STATS.map((s) => (
               <div key={s.label} className="text-center md:px-4">
-                <dd className="block text-4xl font-bold tabular-nums" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
-                  {s.value}
-                </dd>
+                <CountUp
+                  value={s.value}
+                  className="block text-4xl font-bold tabular-nums"
+                  style={{ fontFamily: "'Sora', sans-serif" }}
+                />
                 <dt className="mt-2 text-xs font-semibold uppercase tracking-wider text-blue-200">{s.label}</dt>
               </div>
             ))}
@@ -312,9 +415,9 @@ export default function WhiteSourcingHome({
       {/* ── Product Catalog (content copied from the supplied design) ── */}
       <section id="products" className="py-24" style={{ background: STEEL }}>
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-          <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+          <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end ws-reveal">
             <div className="max-w-2xl">
-              <h2 className="mb-4 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+              <h2 className="mb-4 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
                 Product Catalog
               </h2>
               <p className="text-gray-600">
@@ -340,7 +443,7 @@ export default function WhiteSourcingHome({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 ws-reveal">
             {shownProducts.map((p) => (
               <a
                 key={p.pn}
@@ -366,7 +469,7 @@ export default function WhiteSourcingHome({
                 </div>
                 <div className="border-t border-gray-100 p-6">
                   <div className="mb-1 text-sm text-gray-500" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{p.pn}</div>
-                  <h3 className="mb-2 text-lg font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>{p.name}</h3>
+                  <h3 className="mb-2 text-lg font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{p.name}</h3>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold group-hover:underline" style={{ color: NAVY }}>
                     View Specifications <ArrowRight size={14} />
                   </span>
@@ -393,7 +496,7 @@ export default function WhiteSourcingHome({
       {/* ── About ── */}
       <section id="about" className="py-24 bg-white">
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+          <div className="flex flex-col lg:flex-row items-center gap-16 ws-reveal">
             <div className="relative w-full lg:w-1/2">
               <div className="absolute -left-4 -top-4 z-0 h-24 w-24 rounded-[3px]" style={{ background: STEEL }} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -407,7 +510,7 @@ export default function WhiteSourcingHome({
               <span className="mb-4 block text-sm font-semibold uppercase tracking-widest" style={{ color: NAVY, letterSpacing: '0.12em' }}>
                 {t(NAV_LABEL_KEY.About)}
               </span>
-              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
                 {gc.about?.title || 'Manufacturing Excellence at Scale.'}
               </h2>
               <p className="mb-10 text-lg leading-relaxed text-gray-600">{gc.about?.description || ''}</p>
@@ -420,7 +523,7 @@ export default function WhiteSourcingHome({
                         <Icon size={22} strokeWidth={2} />
                       </div>
                       <div>
-                        <h3 className="mb-2 text-xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>{pillar.title}</h3>
+                        <h3 className="mb-2 text-xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{pillar.title}</h3>
                         <p className="text-gray-600">{pillar.description}</p>
                       </div>
                     </div>
@@ -436,10 +539,10 @@ export default function WhiteSourcingHome({
       {caseStudies.length > 0 && (
         <section id="projects" className="py-24" style={{ background: STEEL }}>
           <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
               {t('section.selectedProjects')}
             </h2>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ws-reveal">
               {caseStudies.map((cs) => (
                 <article key={cs.id} className="overflow-hidden rounded-[3px] border border-gray-200 bg-white">
                   <div className="aspect-[16/10] bg-gray-100">
@@ -452,9 +555,9 @@ export default function WhiteSourcingHome({
                     {cs.client_name && (
                       <div className="mb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: NAVY }}>{cs.client_name}</div>
                     )}
-                    <h3 className="text-lg font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>{cs.title}</h3>
+                    <h3 className="text-lg font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{cs.title}</h3>
                     {cs.metric_value && (
-                      <div className="mt-3 text-2xl font-bold tabular-nums" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+                      <div className="mt-3 text-2xl font-bold tabular-nums" style={{ fontFamily: "'Sora', sans-serif" }}>
                         {cs.metric_value} <span className="text-sm font-normal text-gray-500">{cs.metric_label}</span>
                       </div>
                     )}
@@ -469,9 +572,9 @@ export default function WhiteSourcingHome({
       {/* ── Global Network ── */}
       <section className="relative overflow-hidden py-24 text-white" style={{ background: NAVY }}>
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-          <div className="flex flex-col gap-16 md:flex-row">
+          <div className="flex flex-col gap-16 md:flex-row ws-reveal">
             <div className="w-full md:w-1/3">
-              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>Global Network</h2>
+              <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>Global Network</h2>
               <p className="mb-8 text-lg text-blue-100">
                 Delivering reliable supply chains to partners worldwide, with quality control at every step.
               </p>
@@ -506,15 +609,15 @@ export default function WhiteSourcingHome({
       {testimonials.length > 0 && (
         <section id="testimonials" className="py-24 bg-white">
           <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+            <h2 className="mb-12 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
               {t('section.testimonials')}
             </h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 ws-reveal">
               {testimonials.map((tm) => (
                 <figure key={tm.id} className="rounded-[3px] border border-gray-200 bg-white p-6">
                   <blockquote className="text-[15px] leading-relaxed text-gray-700">&ldquo;{tm.quote}&rdquo;</blockquote>
                   <figcaption className="mt-5 text-sm">
-                    <span className="font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>{tm.author_name}</span>
+                    <span className="font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>{tm.author_name}</span>
                     {(tm.author_title || tm.author_company) && (
                       <span className="block text-gray-500">{[tm.author_title, tm.author_company].filter(Boolean).join(', ')}</span>
                     )}
@@ -529,7 +632,7 @@ export default function WhiteSourcingHome({
       {/* ── Quote CTA ── */}
       <section className="border-b border-white/10 py-24 text-center text-white" style={{ background: INK }}>
         <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-          <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+          <h2 className="mb-6 text-4xl font-bold" style={{ fontFamily: "'Sora', sans-serif" }}>
             {gc.contact?.title || 'Need help with a project?'}
           </h2>
           <p className="mb-12 text-lg text-gray-400">
@@ -553,7 +656,7 @@ export default function WhiteSourcingHome({
             <p className="text-sm leading-relaxed">{gc.hero?.subheadline || ''}</p>
           </div>
           <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>Contact</h4>
+            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'Sora', sans-serif" }}>Contact</h4>
             <ul className="space-y-4 text-sm">
               {contact?.email && (
                 <li className="flex items-start gap-3"><Mail size={18} className="text-gray-500 shrink-0" /><a href={`mailto:${contact.email}`} className="hover:text-white">{contact.email}</a></li>
@@ -567,7 +670,7 @@ export default function WhiteSourcingHome({
             </ul>
           </div>
           <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>Quick Links</h4>
+            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'Sora', sans-serif" }}>Quick Links</h4>
             <ul className="space-y-3 text-sm">
               {navItems.map((item) => (
                 <li key={item.href}><a href={item.href} className="hover:text-white transition-colors">{item.label}</a></li>
@@ -575,7 +678,7 @@ export default function WhiteSourcingHome({
             </ul>
           </div>
           <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>{t('section.testimonials')}</h4>
+            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "'Sora', sans-serif" }}>{t('section.testimonials')}</h4>
             <div className="flex items-center gap-3">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-[3px]" style={{ background: NAVY }}><Boxes size={18} className="text-white" /></span>
               <a href={`${base}/contact`} className="text-sm font-semibold text-white hover:underline">{t('cta.getQuote')}</a>

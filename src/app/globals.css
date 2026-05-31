@@ -243,6 +243,22 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Scroll-reveal (used by the whitesourcing homepage). Toggled by an
+     IntersectionObserver adding .is-in. Falls back to visible w/o motion. */
+  .ws-reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s ease-out, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  .ws-reveal.is-in {
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ws-reveal { opacity: 1; transform: none; transition: none; }
+  }
+
   /* Per-language fonts. The storefront sets <html lang> per locale, so :lang()
      swaps in script-appropriate fonts (CJK, Arabic, Cyrillic) the Latin display
      font lacks. body:lang() overrides the base body font across the whole page,

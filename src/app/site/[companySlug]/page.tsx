@@ -13,7 +13,7 @@ import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
 import { isStorefrontLocale, dirFor, localeAlternates, DEFAULT_LOCALE } from '@/lib/i18n/storefront-dict';
 import { translateBuilderContent, translateCaseStudies, translateTestimonials } from '@/lib/i18n/translate-content';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // ISR: re-fetch from Supabase at most once per hour
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -107,6 +107,9 @@ export default async function SiteLayout({
   // LocaleProvider supplies storefront UI translations + RTL to the whole subtree.
   return (
     <LocaleProvider>
+      {/* Preconnect hints must be in the document head to take effect early. */}
+      <link rel="preconnect" href="https://lh3.googleusercontent.com" />
+      <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
       <div
         className={`min-h-screen flex flex-col bg-white ${sora.variable} ${inter.variable} ${jetbrainsMono.variable}`}
         style={{ '--theme-color': themeColor } as React.CSSProperties}

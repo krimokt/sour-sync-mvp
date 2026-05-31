@@ -216,8 +216,6 @@ export default function WhiteSourcingHome({
 
   return (
     <div className="bg-white text-[#0F1115]" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
-      {/* Preconnect to the image CDN so asset handshakes start early. */}
-      <link rel="preconnect" href="https://lh3.googleusercontent.com" />
 
       {/* ── Nav ── */}
       <nav
@@ -357,6 +355,7 @@ export default function WhiteSourcingHome({
                     alt={`${formData.companyName} product ${i + 1}`}
                     loading={i === 0 ? 'eager' : 'lazy'}
                     decoding="async"
+                    fetchPriority={i === 0 ? 'high' : 'low'}
                     className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === heroIdx ? 'opacity-100' : 'opacity-0'}`}
                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO; }}
                   />

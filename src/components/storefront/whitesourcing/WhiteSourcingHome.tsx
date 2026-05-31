@@ -33,6 +33,10 @@ const STEEL = '#F4F6FA';
 // Reused, known-good factory/industrial stock (already used elsewhere in repo).
 const FALLBACK_HERO = 'https://images.unsplash.com/photo-1565043666747-69f6646db940?auto=format&fit=crop&w=1400&q=75';
 const FALLBACK_FACTORY = 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=75';
+// Brass valve hero cutout from the supplied design (Stitch asset). Replace with
+// a real product photo when available; falls back to stock if the URL expires.
+const HERO_VALVE =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuAKrydcCqqAtrJKgrEJfLnITuzDkVPr8fYD86UWs7FnVsCqUOJjbHsl07VVq4D83I6uEtGGcgcsXCIe0pq-GX3JhFsTFc7_hMRuSUPYVlmsJYaPq2AaH7pneRiHiowfYl1vV6RjiWis-aZKndjGAxpFUsDFLMQi2kbB2oVAB1LRNyJnD_VJ3KTZmKD9GNV7Vmw3EV691Am2-5OpIs4R0ta6CHqyw2Fz3uIInfZphv9CKrLkg9CxWdytrt3ry1vdzzxv-nwgn8afDjrc';
 
 const PILLAR_ICONS = [Factory, Headset, Truck];
 
@@ -160,23 +164,29 @@ export default function WhiteSourcingHome({
         )}
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="relative min-h-[600px] flex overflow-hidden" style={{ background: INK }}>
-        <div className="absolute inset-0 z-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={gc.hero?.backgroundImage || FALLBACK_HERO} alt="" className="w-full h-full object-cover opacity-40" />
-          <div
-            className="absolute inset-0"
-            style={{ background: `linear-gradient(90deg, ${INK} 0%, ${INK}e6 45%, ${INK}80 100%)` }}
-          />
-        </div>
-        <div className="relative z-10 mx-auto flex w-full max-w-[1280px] px-5 lg:px-16 py-20 lg:py-28">
-          <div className="w-full lg:w-3/5 flex flex-col justify-center text-white">
+      {/* ── Hero (matches the supplied design: blueprint grid, split layout,
+              left→right black gradient, brass valve cutout on the right) ── */}
+      <section className="relative flex min-h-[600px] overflow-hidden" style={{ background: INK }}>
+        {/* blueprint grid */}
+        <div
+          className="absolute inset-0 z-0 opacity-20"
+          style={{
+            backgroundSize: '40px 40px',
+            backgroundImage:
+              'linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)',
+          }}
+        />
+        <div
+          className="absolute inset-0 z-0"
+          style={{ background: `linear-gradient(to right, ${INK} 0%, ${INK}e6 45%, transparent 100%)` }}
+        />
+        <div className="relative z-10 mx-auto flex w-full max-w-[1280px] px-5 lg:px-16 py-24">
+          <div className="flex w-full flex-col justify-center text-white md:w-1/2">
             <h1
-              className="mb-6 font-bold leading-[1.08] tracking-tight text-[clamp(2.25rem,5vw,3rem)]"
+              className="mb-6 font-bold leading-[1.1] tracking-tight text-[clamp(2.25rem,5vw,3rem)]"
               style={{ fontFamily: "'IBM Plex Sans', sans-serif", letterSpacing: '-0.02em' }}
             >
-              {gc.hero?.headline || 'Precision Sourcing & Quality Control'}
+              {gc.hero?.headline || 'Precision Valve Systems & Control'}
             </h1>
             <p className="mb-10 max-w-xl text-lg leading-relaxed text-gray-300">
               {gc.hero?.subheadline || ''}
@@ -197,6 +207,19 @@ export default function WhiteSourcingHome({
                 {t(NAV_LABEL_KEY.About)}
               </a>
             </div>
+          </div>
+          <div className="relative hidden w-1/2 items-center justify-center md:flex">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={HERO_VALVE}
+              alt={`${formData.companyName} flagship product`}
+              className="z-20 max-h-[500px] object-contain transition-transform duration-700 hover:scale-105"
+              style={{ filter: 'drop-shadow(0 20px 50px rgba(19,82,162,0.3))' }}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO;
+              }}
+            />
           </div>
         </div>
       </section>

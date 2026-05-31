@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowRight, Factory, Headset, Truck, Globe, Mail, Phone, MapPin,
   MessageCircle, ShieldCheck, Boxes, Download,
@@ -88,6 +88,17 @@ export default function WhiteSourcingHome({
   const scrolled = useScroll(50);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [catFilter, setCatFilter] = useState<string>('All');
+  const [heroIdx, setHeroIdx] = useState(0);
+
+  // Hero product carousel: the supplied valve + two catalog shots.
+  const heroImages = [HERO_VALVE, CATALOG[0].img, CATALOG[2].img];
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => setHeroIdx((i) => (i + 1) % heroImages.length), 4000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const base = `/site/${companySlug}`;
   const shownProducts = catFilter === 'All' ? CATALOG : CATALOG.filter((c) => c.category === catFilter);
@@ -250,18 +261,34 @@ export default function WhiteSourcingHome({
               </a>
             </div>
           </div>
-          <div className="relative hidden w-1/2 items-center justify-center md:flex">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={HERO_VALVE}
-              alt={`${formData.companyName} flagship product`}
-              className="z-20 h-[440px] w-[440px] max-w-full object-cover transition-transform duration-700 hover:scale-105"
+          <div className="relative hidden w-1/2 flex-col items-center justify-center md:flex">
+            <div
+              className="relative h-[440px] w-[440px] max-w-full overflow-hidden"
               style={{ borderRadius: '15%', filter: 'drop-shadow(0 20px 50px rgba(19,82,162,0.35))' }}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO;
-              }}
-            />
+            >
+              {heroImages.map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={src}
+                  alt={`${formData.companyName} product ${i + 1}`}
+                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === heroIdx ? 'opacity-100' : 'opacity-0'}`}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO; }}
+                />
+              ))}
+            </div>
+            {/* dots */}
+            <div className="mt-5 flex justify-center gap-2">
+              {heroImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setHeroIdx(i)}
+                  aria-label={`Show product ${i + 1}`}
+                  className="h-2 rounded-full transition-all"
+                  style={{ width: i === heroIdx ? '24px' : '8px', background: i === heroIdx ? '#fff' : 'rgba(255,255,255,0.4)' }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>

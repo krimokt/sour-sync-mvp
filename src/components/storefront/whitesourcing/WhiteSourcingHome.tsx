@@ -40,6 +40,14 @@ const HERO_VALVE =
 
 const PILLAR_ICONS = [Factory, Headset, Truck];
 
+// Fixed company stats (from the supplied design).
+const STATS: { value: string; label: string }[] = [
+  { value: '29+', label: 'Years Experience' },
+  { value: '280', label: 'Expert Staff' },
+  { value: '25', label: 'Product Lines' },
+  { value: '20k', label: 'Units/Month' },
+];
+
 interface Props {
   companySlug: string;
   formData: FormData;
@@ -61,7 +69,6 @@ export default function WhiteSourcingHome({
 
   const base = `/site/${companySlug}`;
   const products = gc.products?.items ?? [];
-  const metrics = (gc.about?.trustMetrics ?? []).filter((m) => (m?.value ?? '').toString().trim() !== '').slice(0, 4);
   const pillars = (gc.solutions?.items ?? []).slice(0, 3);
   const contact = gc.contact;
 
@@ -167,6 +174,15 @@ export default function WhiteSourcingHome({
       {/* ── Hero (matches the supplied design: blueprint grid, split layout,
               left→right black gradient, brass valve cutout on the right) ── */}
       <section className="relative flex min-h-[600px] overflow-hidden" style={{ background: INK }}>
+        {/* background image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={HERO_VALVE}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 z-0 h-full w-full object-cover opacity-30"
+          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO; }}
+        />
         {/* blueprint grid */}
         <div
           className="absolute inset-0 z-0 opacity-20"
@@ -213,8 +229,8 @@ export default function WhiteSourcingHome({
             <img
               src={HERO_VALVE}
               alt={`${formData.companyName} flagship product`}
-              className="z-20 max-h-[500px] object-contain transition-transform duration-700 hover:scale-105"
-              style={{ filter: 'drop-shadow(0 20px 50px rgba(19,82,162,0.3))' }}
+              className="z-20 h-[440px] w-[440px] max-w-full object-cover transition-transform duration-700 hover:scale-105"
+              style={{ borderRadius: '15%', filter: 'drop-shadow(0 20px 50px rgba(19,82,162,0.35))' }}
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = gc.hero?.backgroundImage || FALLBACK_HERO;
@@ -225,23 +241,20 @@ export default function WhiteSourcingHome({
       </section>
 
       {/* ── Stats bar ── */}
-      {metrics.length > 0 && (
-        <div className="relative z-20 border-y py-12 text-white shadow-xl" style={{ background: NAVY, borderColor: NAVY_DARK }}>
-          <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
-            <dl className="grid grid-cols-2 md:grid-cols-4 gap-8 md:divide-x md:divide-white/20">
-              {metrics.map((m, i) => (
-                <div key={i} className="text-center md:px-4">
-                  <dd className="block text-4xl font-bold tabular-nums" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
-                    {m.value}
-                    {m.suffix}
-                  </dd>
-                  <dt className="mt-2 text-xs font-semibold uppercase tracking-wider text-blue-200">{m.label}</dt>
-                </div>
-              ))}
-            </dl>
-          </div>
+      <div className="relative z-20 border-y py-12 text-white shadow-xl" style={{ background: NAVY, borderColor: NAVY_DARK }}>
+        <div className="mx-auto max-w-[1280px] px-5 lg:px-16">
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-8 md:divide-x md:divide-white/20">
+            {STATS.map((s) => (
+              <div key={s.label} className="text-center md:px-4">
+                <dd className="block text-4xl font-bold tabular-nums" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+                  {s.value}
+                </dd>
+                <dt className="mt-2 text-xs font-semibold uppercase tracking-wider text-blue-200">{s.label}</dt>
+              </div>
+            ))}
+          </dl>
         </div>
-      )}
+      </div>
 
       {/* ── Product Catalog ── */}
       <section id="products" className="py-24" style={{ background: STEEL }}>

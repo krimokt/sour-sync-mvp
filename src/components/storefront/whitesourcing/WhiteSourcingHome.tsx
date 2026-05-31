@@ -232,17 +232,21 @@ export default function WhiteSourcingHome({
             <div className="flex flex-wrap gap-4">
               <a
                 href={`${base}/products`}
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-[3px] text-white text-[13px] font-semibold uppercase tracking-wide shadow-lg transition-colors"
-                style={{ background: NAVY, letterSpacing: '0.04em' }}
+                className="group inline-flex items-center gap-2.5 rounded-full border-2 px-9 py-4 text-[13px] font-semibold uppercase tracking-wide text-white shadow-lg transition-all hover:shadow-xl"
+                style={{ background: NAVY, borderColor: NAVY, letterSpacing: '0.04em' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = NAVY_DARK; e.currentTarget.style.borderColor = NAVY_DARK; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = NAVY; e.currentTarget.style.borderColor = NAVY; }}
               >
-                {t('cta.viewAllProducts')} <ArrowRight size={16} />
+                {t('cta.viewAllProducts')}
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </a>
               <a
                 href={`${base}/about`}
-                className="inline-flex items-center px-8 py-4 rounded-[3px] border border-white/30 text-white text-[13px] font-semibold uppercase tracking-wide hover:bg-white/10 transition-colors"
+                className="group inline-flex items-center gap-2.5 rounded-full border-2 border-white/40 px-9 py-4 text-[13px] font-semibold uppercase tracking-wide text-white shadow-sm transition-all hover:border-white hover:bg-white hover:text-[#0F1115] hover:shadow-lg"
                 style={{ letterSpacing: '0.04em' }}
               >
                 {t(NAV_LABEL_KEY.About)}
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </a>
             </div>
           </div>

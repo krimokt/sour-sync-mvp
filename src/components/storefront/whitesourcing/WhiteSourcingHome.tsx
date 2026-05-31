@@ -314,23 +314,23 @@ export default function WhiteSourcingHome({
               <a
                 key={p.pn}
                 href={`${base}/products`}
-                className={`group relative block overflow-hidden rounded-[3px] bg-white transition-all hover:shadow-xl ${
+                className={`group relative block overflow-hidden rounded-2xl bg-white shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 ${
                   p.isNew ? 'border-2' : 'border border-gray-200 hover:border-gray-300'
                 }`}
                 style={p.isNew ? { borderColor: NAVY } : undefined}
               >
                 {p.isNew && (
-                  <div className="absolute left-4 top-4 z-10 rounded-[3px] px-3 py-1 text-xs font-semibold text-white" style={{ background: NAVY }}>
+                  <div className="absolute left-4 top-4 z-10 rounded-md px-3 py-1 text-xs font-semibold text-white" style={{ background: NAVY }}>
                     NEW 2026
                   </div>
                 )}
-                <div className={`flex h-64 items-center justify-center p-8 transition-colors ${p.isNew ? 'bg-gray-50 group-hover:bg-blue-50/50' : 'bg-white'}`}>
+                <div className={`flex h-80 items-center justify-center p-4 transition-colors ${p.isNew ? 'bg-gray-50 group-hover:bg-blue-50/50' : 'bg-white'}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={p.img}
                     alt={p.name}
                     loading="lazy"
-                    className="max-h-full object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-110"
+                    className="max-h-full w-auto object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
                 <div className="border-t border-gray-100 p-6">

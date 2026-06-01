@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Search, Package2, Sparkles, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import ProductGrid from './ProductGrid';
 import BuilderSiteShell from '@/components/storefront/BuilderSiteShell';
@@ -10,11 +11,32 @@ import { tenantUrl, metaDescription, absoluteImage } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { breadcrumbLd } from '@/lib/jsonld';
 
-export const dynamic = 'force-dynamic';
+const WhiteSourcingProducts = dynamic(() => import('@/components/storefront/whitesourcing/WhiteSourcingProducts'));
+
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: { companySlug: string } }): Promise<Metadata> {
   const t = await getTenantSeo(params.companySlug);
   if (!t) return { title: 'Products', robots: { index: false, follow: false } };
+
+  if (params.companySlug === 'whitesourcing') {
+    const title = 'Industrial Ball Valves, Gate Valves & Brass Fittings — China Manufacturer';
+    const description = metaDescription(
+      undefined,
+      'Browse the catalog from Whitesourcing (商丘市水力达水暖器材厂 / Shangqiu Shuilida Plumbing & Heating Equipment Factory): ball valves, gate valves, globe valves, brass fittings and NSF-certified lead-free plumbing equipment. ISO 9001 & CE certified, fast bulk quotes.',
+    );
+    const url = tenantUrl(t, '/products');
+    const image = absoluteImage(t.logo_url);
+    return {
+      title: { absolute: title },
+      description,
+      keywords: ['ball valves', 'gate valves', 'globe valves', 'brass fittings', 'lead-free fittings', 'China valve manufacturer', 'plumbing equipment'],
+      alternates: { canonical: url },
+      openGraph: { title, description, url, siteName: t.name, images: image ? [{ url: image }] : undefined },
+      twitter: { card: 'summary_large_image', title, description, images: image ? [image] : undefined },
+    };
+  }
+
   const description = metaDescription(
     undefined,
     `Browse products from ${t.name}${t.country ? `, ${t.country.toUpperCase()}` : ''}. Wholesale supply with fast quotes.`,
@@ -108,13 +130,30 @@ export default async function ProductsPage({
   params: { companySlug: string };
   searchParams: { category?: string; search?: string };
 }) {
+  const t = await getTenantSeo(params.companySlug);
+
+  // whitesourcing uses the bespoke "Industrial Precision" catalog page.
+  if (params.companySlug === 'whitesourcing') {
+    const ldCrumb = t
+      ? breadcrumbLd([
+          { name: 'Home', url: tenantUrl(t, '') },
+          { name: 'Products', url: tenantUrl(t, '/products') },
+        ])
+      : null;
+    return (
+      <>
+        <JsonLd data={ldCrumb} />
+        <WhiteSourcingProducts companySlug={params.companySlug} companyName={t?.name || 'Whitesourcing'} />
+      </>
+    );
+  }
+
   const data = await getCompanyAndProducts(
     params.companySlug,
     searchParams.category,
     searchParams.search
   );
 
-  const t = await getTenantSeo(params.companySlug);
   const ldCrumb = t
     ? breadcrumbLd([
         { name: 'Home', url: tenantUrl(t, '') },

@@ -2,16 +2,15 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ArrowRight, Factory, Headset, Truck, Globe, Mail, Phone, MapPin,
-  MessageCircle, ShieldCheck, Boxes, Download, ChevronLeft, ChevronRight,
+  ArrowRight, Factory, Headset, Truck, Globe,
+  ShieldCheck, Boxes, Download, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import type { FormData, GeneratedContent } from '@/components/website/builder/chinasource-types';
 import type { CaseStudySeo, TestimonialSeo } from '@/lib/seo-data';
-import { useScroll } from '@/components/ui/use-scroll';
-import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useStorefrontLocale } from '@/components/storefront/LocaleProvider';
-import LanguageSwitcher from '@/components/storefront/LanguageSwitcher';
 import { NAV_LABEL_KEY } from '@/lib/i18n/storefront-dict';
+import WhiteSourcingNav from './WhiteSourcingNav';
+import WhiteSourcingFooter from './WhiteSourcingFooter';
 
 /**
  * "Industrial Precision" homepage — a bespoke design (from Stitch) scoped to
@@ -155,8 +154,6 @@ export default function WhiteSourcingHome({
   testimonials,
 }: Props) {
   const { t } = useStorefrontLocale();
-  const scrolled = useScroll(50);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [catFilter, setCatFilter] = useState<string>('All');
   const [heroIdx, setHeroIdx] = useState(0);
 
@@ -189,98 +186,11 @@ export default function WhiteSourcingHome({
   const pillars = (gc.solutions?.items ?? []).slice(0, 3);
   const contact = gc.contact;
 
-  const navItems: { label: string; href: string }[] = [
-    { label: t(NAV_LABEL_KEY.Products), href: `${base}/products` },
-    { label: t(NAV_LABEL_KEY.About), href: `${base}/about` },
-    { label: t(NAV_LABEL_KEY.Certifications), href: `${base}/certifications` },
-    { label: t(NAV_LABEL_KEY.Blog), href: `${base}/blog` },
-    { label: t(NAV_LABEL_KEY.Contact), href: `${base}/contact` },
-  ];
-
-  const Brand = ({ onDark = false }: { onDark?: boolean }) => (
-    <a href={base} className="flex items-center gap-2.5 flex-shrink-0">
-      <span
-        className="inline-flex items-center justify-center h-8 w-8 rounded-[3px] text-white text-sm font-bold"
-        style={{ background: NAVY, fontFamily: "var(--font-sora), sans-serif" }}
-      >
-        {formData.companyName.charAt(0).toUpperCase()}
-      </span>
-      <span
-        className={`text-lg font-bold tracking-tight ${onDark ? 'text-white' : 'text-[#0F1115]'}`}
-        style={{ fontFamily: "var(--font-sora), sans-serif" }}
-      >
-        {formData.companyName}
-      </span>
-    </a>
-  );
-
   return (
     <div className="bg-white text-[#0F1115]" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
 
-      {/* ── Nav ── */}
-      <nav
-        className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
-          scrolled ? 'bg-white shadow-sm border-gray-200' : 'bg-white/85 backdrop-blur-md border-gray-200/70'
-        }`}
-      >
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between px-5 lg:px-16 py-3.5">
-          <Brand />
-          <div className="hidden lg:flex items-center gap-8">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="text-[13px] font-semibold uppercase tracking-wide text-gray-600 hover:text-[#1B3E84] transition-colors whitespace-nowrap"
-                style={{ letterSpacing: '0.04em' }}
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
-            <LanguageSwitcher accentHex={NAVY} />
-            <a
-              href={`${base}/contact`}
-              className="hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-[3px] text-white text-[13px] font-semibold uppercase tracking-wide whitespace-nowrap shadow-sm transition-colors"
-              style={{ background: NAVY, letterSpacing: '0.04em' }}
-            >
-              {t('cta.getQuote')}
-            </a>
-            <button
-              onClick={() => setMobileOpen((v) => !v)}
-              className="lg:hidden p-2 -mr-2 text-gray-700"
-              aria-label="Toggle menu"
-              aria-expanded={mobileOpen}
-            >
-              <MenuToggleIcon open={mobileOpen} className="size-5" duration={300} />
-            </button>
-          </div>
-        </div>
-        {mobileOpen && (
-          <div className="lg:hidden border-t border-gray-200 bg-white px-5 py-4">
-            <div className="flex flex-col gap-1">
-              {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="px-3 py-3 rounded-[3px] text-sm font-semibold uppercase tracking-wide text-gray-700 hover:bg-gray-50"
-                >
-                  {item.label}
-                </a>
-              ))}
-              <a
-                href={`${base}/contact`}
-                onClick={() => setMobileOpen(false)}
-                className="mt-2 inline-flex justify-center items-center px-5 py-3 rounded-[3px] text-white text-sm font-semibold uppercase"
-                style={{ background: NAVY }}
-              >
-                {t('cta.getQuote')}
-              </a>
-            </div>
-          </div>
-        )}
-      </nav>
+      {/* ── Nav (shared component) ── */}
+      <WhiteSourcingNav companySlug={companySlug} companyName={formData.companyName} />
 
       {/* ── Hero (matches the supplied design: blueprint grid, split layout,
               left→right black gradient, brass valve cutout on the right) ── */}
@@ -647,59 +557,12 @@ export default function WhiteSourcingHome({
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="pb-8 pt-16 text-gray-400" style={{ background: INK }}>
-        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-10 px-5 lg:px-16 pb-12 md:grid-cols-4">
-          <div>
-            <div className="mb-5"><Brand onDark /></div>
-            <p className="text-sm leading-relaxed">{gc.hero?.subheadline || ''}</p>
-          </div>
-          <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "var(--font-sora), sans-serif" }}>Contact</h4>
-            <ul className="space-y-4 text-sm">
-              {contact?.email && (
-                <li className="flex items-start gap-3"><Mail size={18} className="text-gray-500 shrink-0" /><a href={`mailto:${contact.email}`} className="hover:text-white">{contact.email}</a></li>
-              )}
-              {contact?.phone && (
-                <li className="flex items-start gap-3"><Phone size={18} className="text-gray-500 shrink-0" /><a href={`tel:${contact.phone}`} className="hover:text-white">{contact.phone}</a></li>
-              )}
-              {contact?.address && (
-                <li className="flex items-start gap-3"><MapPin size={18} className="text-gray-500 shrink-0" /><span>{contact.address}</span></li>
-              )}
-            </ul>
-          </div>
-          <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "var(--font-sora), sans-serif" }}>Quick Links</h4>
-            <ul className="space-y-3 text-sm">
-              {navItems.map((item) => (
-                <li key={item.href}><a href={item.href} className="hover:text-white transition-colors">{item.label}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="mb-5 text-lg font-bold text-white" style={{ fontFamily: "var(--font-sora), sans-serif" }}>{t('section.testimonials')}</h4>
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-[3px]" style={{ background: NAVY }}><Boxes size={18} className="text-white" /></span>
-              <a href={`${base}/contact`} className="text-sm font-semibold text-white hover:underline">{t('cta.getQuote')}</a>
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto max-w-[1280px] border-t border-white/10 px-5 lg:px-16 pt-8 text-center">
-          <p className="text-xs uppercase tracking-widest text-gray-600">
-            © {new Date().getFullYear()} {formData.companyName}. {t('footer.rights')}
-          </p>
-        </div>
-      </footer>
-
-      {/* ── Chat FAB ── */}
-      <a
-        href={`${base}/contact`}
-        aria-label={t('cta.getQuote')}
-        className="fixed bottom-8 right-8 z-[100] flex h-14 w-14 items-center justify-center rounded-full text-white shadow-2xl transition-transform hover:scale-110"
-        style={{ background: NAVY }}
-      >
-        <MessageCircle size={26} />
-      </a>
+      {/* ── Footer (shared component; chat FAB lives in the shared nav) ── */}
+      <WhiteSourcingFooter
+        companySlug={companySlug}
+        companyName={formData.companyName}
+        contact={{ email: contact?.email, phone: contact?.phone, address: contact?.address }}
+      />
     </div>
   );
 }

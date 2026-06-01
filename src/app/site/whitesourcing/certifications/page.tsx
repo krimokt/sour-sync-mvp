@@ -219,14 +219,14 @@ const faqs = [
 ];
 
 const CERT_IMAGES = [
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
 ];
 
 export default function CertificationsPage() {

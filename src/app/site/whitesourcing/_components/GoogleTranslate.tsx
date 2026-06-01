@@ -25,7 +25,9 @@ export default function GoogleTranslate() {
     script.src =
       'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
     script.async = true;
-    document.head.appendChild(script);
+    // defer=true keeps it off the critical path — loads after page is interactive
+    script.defer = true;
+    document.body.appendChild(script);
 
     // After 1.5 s, force-show any shd-fade elements still at opacity:0
     // This covers the case where translation is active but IntersectionObserver

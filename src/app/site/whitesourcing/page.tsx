@@ -161,14 +161,14 @@ const STEEL = '#F4F6FA';
 const BLACK = '#0F1115';
 
 const CERT_IMAGES = [
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
-  '/images/banks/certification.jpg',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
+  '/images/banks/certification.webp',
 ];
 
 /* ── Products ── */

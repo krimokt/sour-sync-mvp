@@ -354,7 +354,7 @@ export default function ShuilidaAboutPage() {
           >
             <div style={{ position: 'relative', width: '100%', maxWidth: 480 }}>
               <img
-                src="/shuilida-cert.jpg"
+                src="/shuilida-cert.webp"
                 alt="Shuilida factory production floor, Shangqiu, Henan Province"
                 style={{
                   width: '100%',

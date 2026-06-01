@@ -100,7 +100,7 @@ const articles: Article[] = [
     id: 5,
     title: 'Steel Panel Radiators: Type 11, 21, 22, 33 — What\'s the Difference?',
     category: 'Radiators',
-    image: '/shuilida-valve.png',
+    image: '/shuilida-valve.webp',
     imageAlt: 'Steel panel radiator installed on a wall',
     excerpt:
       'The panel type number on a steel radiator tells you everything about its heat output structure. Type 11 (single panel, single convector) through Type 33 (triple panel, triple convector) — we explain heat output differences, weight and wall-loading implications, and when to specify each type based on room volume, window area, and system flow temperature.',
@@ -136,7 +136,7 @@ const articles: Article[] = [
     id: 8,
     title: 'Henan Province as a Manufacturing Hub: Why Location Matters for Lead Times',
     category: 'Sourcing Tips',
-    image: '/shuilida-cert.jpg',
+    image: '/shuilida-cert.webp',
     imageAlt: 'Industrial manufacturing facility in Henan Province, China',
     excerpt:
       "Shangqiu City sits at the intersection of China's central rail logistics network, giving manufacturers direct access to Qingdao, Shanghai, and Tianjin ports without the costly inland trucking that affects factories in coastal provinces. We explain why factory location affects sea-freight booking windows, transit times, and the practical advantages this geography delivers for European buyers working to tight project schedules.",
@@ -421,7 +421,7 @@ export default function BlogPage() {
                     className="md:w-96 lg:w-[420px]"
                   >
                     <img
-                      src="/shuilida-valve.png"
+                      src="/shuilida-valve.webp"
                       alt="Steel panel radiator close-up — panel type selection guide"
                       style={{
                         width: '100%',

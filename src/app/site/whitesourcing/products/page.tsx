@@ -31,7 +31,7 @@ const STATIC_PRODUCTS = [
     sku: 'SP-RAD-600',
     name: 'Steel Panel Radiators',
     category: 'radiators',
-    img: '/shuilida-valve.png',
+    img: '/shuilida-valve.webp',
     alt: 'Steel panel radiator wall-mounted',
     description: 'Compact, high-efficiency steel panel radiators suitable for residential and light commercial heating. Available in single, double, and triple panel configurations with bottom or side connection options.',
     price: null as number | null,
@@ -61,7 +61,7 @@ const STATIC_PRODUCTS = [
     sku: 'AL-SEC-80',
     name: 'Aluminum Section Radiators',
     category: 'radiators',
-    img: '/shuilida-cert.jpg',
+    img: '/shuilida-cert.webp',
     alt: 'Aluminum section radiator in silver finish',
     description: 'Lightweight, high-output aluminum radiators with rapid heat-up response. Superior thermal conductivity makes these ideal for low-temperature underfloor heating systems and modern condensing boiler setups.',
     price: null as number | null,
@@ -258,7 +258,7 @@ export default function ProductsPage() {
               category: p.category ?? 'radiators',
               img: p.images && p.images.length > 0
                 ? p.images[0]
-                : '/shuilida-valve.png',
+                : '/shuilida-valve.webp',
               alt: p.name,
               description: p.description,
               price: p.price,

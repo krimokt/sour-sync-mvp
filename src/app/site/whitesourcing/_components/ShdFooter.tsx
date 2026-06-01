@@ -12,7 +12,7 @@ const quickLinks = [
   { label: 'Certifications', href: '/site/whitesourcing/certifications' },
   { label: 'Blog', href: '/site/whitesourcing/blog' },
   { label: 'Contact & Quote', href: '/site/whitesourcing/contact' },
-  { label: 'Privacy Policy', href: '#' },
+  { label: 'Privacy Policy', href: '/site/whitesourcing' },
 ];
 
 export function ShdFAB() {

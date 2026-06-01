@@ -179,7 +179,7 @@ const products = [
     desc: 'Compact high-efficiency wall-mounted heating panels. Single/double/triple panel, 300–900 mm height.',
     category: 'radiators',
     featured: true,
-    img: '/shuilida-valve.png',
+    img: '/shuilida-valve.webp',
     alt: 'Steel panel radiator mounted on wall',
   },
   {
@@ -326,7 +326,7 @@ export default function ShuilidaPage() {
           : (p.category ?? '').toLowerCase().includes('heat') || (p.category ?? '').toLowerCase().includes('floor') || (p.category ?? '').toLowerCase().includes('pipe') ? 'heating'
           : 'valves',
         featured: false,
-        img: p.images?.[0] ?? '/shuilida-valve.png',
+        img: p.images?.[0] ?? '/shuilida-valve.webp',
         alt: p.name,
         price: p.price,
       }))
@@ -588,7 +588,7 @@ export default function ShuilidaPage() {
             style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }}
           >
             <img
-              src="/shuilida-valve.png"
+              src="/shuilida-valve.webp"
               alt="Steel panel radiator — SHUILIDA flagship product"
               style={{
                 maxHeight: 460,
@@ -836,7 +836,7 @@ export default function ShuilidaPage() {
                 }}
               />
               <img
-                src="/shuilida-valve.png"
+                src="/shuilida-valve.webp"
                 alt="Shuilida factory production floor, Shangqiu, Henan"
                 style={{
                   width: '100%',
@@ -907,7 +907,7 @@ export default function ShuilidaPage() {
                 style={{ marginBottom: 24, borderRadius: 6, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
               >
                 <img
-                  src="/shuilida-cert.jpg"
+                  src="/shuilida-cert.webp"
                   alt="Shuilida ISO & CE Certifications"
                   style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 280 }}
                 />

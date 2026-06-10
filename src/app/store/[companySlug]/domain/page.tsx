@@ -26,7 +26,7 @@ interface DomainSettings {
 
 // Progress steps for domain setup
 const DOMAIN_STEPS = [
-  { id: 'registered', label: 'Domain Registered', description: 'Domain added to Netlify' },
+  { id: 'registered', label: 'Domain Registered', description: 'Domain added to Vercel' },
   { id: 'dns_pending', label: 'DNS Configuration', description: 'Waiting for DNS to propagate' },
   { id: 'dns_verified', label: 'DNS Verified', description: 'DNS is pointing correctly' },
   { id: 'ssl_provisioning', label: 'SSL Certificate', description: 'Provisioning secure certificate' },
@@ -102,9 +102,9 @@ export default function DomainSettingsPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
 
-  // Netlify site URL
-  const netlifyUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://soursync.com';
-  const platformDomain = netlifyUrl.replace('https://', '').replace('http://', '');
+  // Platform site URL
+  const platformUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://soursync.com';
+  const platformDomain = platformUrl.replace('https://', '').replace('http://', '');
 
   const fetchSettings = useCallback(async () => {
     if (!company?.id) return;
@@ -170,7 +170,7 @@ export default function DomainSettingsPage() {
     if (!company?.id || !settings?.custom_domain) return;
     setIsChecking(true);
     try {
-      const res = await fetch('/api/netlify/check-domain', {
+      const res = await fetch('/api/vercel/check-domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: settings.custom_domain, companyId: company.id }),
@@ -235,8 +235,8 @@ export default function DomainSettingsPage() {
         return;
       }
 
-      // Register domain with Netlify API
-      const registerRes = await fetch('/api/netlify/register-domain', {
+      // Register domain with Vercel API
+      const registerRes = await fetch('/api/vercel/register-domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: cleanDomain, companyId: company.id }),
@@ -279,7 +279,7 @@ export default function DomainSettingsPage() {
     try {
       // Detach the alias from Netlify AND clear the DB mapping server-side
       // (service role) so the domain is not orphaned in Netlify.
-      const res = await fetch('/api/netlify/remove-domain', {
+      const res = await fetch('/api/vercel/remove-domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -318,8 +318,8 @@ export default function DomainSettingsPage() {
   const dnsRecords: DnsRecord[] = settings?.netlify_dns_records && settings.netlify_dns_records.length > 0
     ? settings.netlify_dns_records
     : [
-        { type: 'A', host: '@', value: '75.2.60.5' },
-        { type: 'CNAME', host: 'www', value: 'phenomenal-snickerdoodle-3977a7.netlify.app' },
+        { type: 'A', host: '@', value: '76.76.21.21' },
+        { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com' },
       ];
 
   const stepStatuses = getStepStatus(settings);
@@ -359,7 +359,7 @@ export default function DomainSettingsPage() {
               </div>
             </div>
             <a
-              href={`${netlifyUrl}/site/${company?.slug}`}
+              href={`${platformUrl}/site/${company?.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-gray-400 hover:text-cyan-500 transition-colors"
@@ -558,7 +558,7 @@ export default function DomainSettingsPage() {
                     setIsChecking(true);
                     try {
                       // Force SSL provisioning by calling the API
-                      const res = await fetch('/api/netlify/force-ssl', {
+                      const res = await fetch('/api/vercel/force-ssl', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ domain: settings.custom_domain, companyId: company?.id }),

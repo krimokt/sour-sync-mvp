@@ -45,7 +45,7 @@ const reservedSubdomains = ['www', 'admin', 'api', 'app', 'dashboard'];
 // Main platform domains (not custom domains)
 const platformDomains = [
   'soursync.com',
-  'netlify.app',
+  'vercel.app',
   'localhost',
 ];
 
@@ -130,7 +130,7 @@ export async function middleware(req: NextRequest) {
   // If someone visits a custom domain (e.g. sthe.shop) with an admin path (/store/...),
   // redirect them to the platform app domain so admin always runs on one trusted domain.
   if (isCustomDomain(hostname) && path.startsWith('/store/')) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soursync.netlify.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://soursync.com';
     const redirectUrl = new URL(path, appUrl);
     return NextResponse.redirect(redirectUrl, 301);
   }

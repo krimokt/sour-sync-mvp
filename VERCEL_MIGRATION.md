@@ -22,6 +22,26 @@ This app serves many tenants from one deployment:
 > (`netlify_dns_records`, `netlify_domain_id`) to avoid a DB migration. They now
 > hold Vercel data. Rename later if desired.
 
+## Plan & cost (Hobby vs Pro)
+
+- **Tenant custom domains** and **automatic SSL** work on the free **Hobby** plan,
+  so this can be tested/launched for free.
+- **Caveat:** Hobby is for *non-commercial* use. A multi-tenant SaaS where tenants
+  attach their own branded domains is commercial use and can be flagged/suspended.
+  Upgrade to **Pro (~$20/mo)** before onboarding real/paying tenants.
+- **Wildcard `*.soursync.com` (any plan):** Vercel can only auto-issue a wildcard
+  SSL cert when it controls DNS, so the apex `soursync.com` must use **Vercel's
+  nameservers** (set `ns1.vercel-dns.com` / `ns2.vercel-dns.com` at your registrar).
+  Individual tenant custom domains do NOT need this — only the wildcard subdomain.
+
+### Personal (non-team) account
+
+If the project lives on a personal account (no team):
+
+- `VERCEL_PROJECT_ID=prj_CXhL2u2v1k8WQTXFAwDQmx4GNRnA`
+- `VERCEL_API_TOKEN=` personal token (Account → Settings → Tokens)
+- `VERCEL_TEAM_ID=` **leave empty** — the helper omits the `teamId` param when unset.
+
 ## One-time manual setup in Vercel
 
 1. **Import the repo** into a Vercel project (framework auto-detected as Next.js,

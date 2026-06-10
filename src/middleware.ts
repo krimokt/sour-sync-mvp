@@ -39,13 +39,16 @@ const alwaysPublicPatterns = [
 ];
 
 
-// Reserved subdomains that should not be treated as company slugs
-const reservedSubdomains = ['www', 'admin', 'api', 'app', 'dashboard'];
+// Reserved subdomains that should not be treated as company slugs.
+// Includes the Cloudflare for SaaS infra hostnames (origin/customers/fallback).
+const reservedSubdomains = ['www', 'admin', 'api', 'app', 'dashboard', 'origin', 'customers', 'fallback'];
 
-// Main platform domains (not custom domains)
+// Main platform domains (not tenant custom domains).
+// The app is served from the soursync.com Cloudflare zone (incl. *.soursync.com
+// subdomains and the origin host); everything else is a tenant custom domain
+// resolved via the website_settings lookup below.
 const platformDomains = [
   'soursync.com',
-  'vercel.app',
   'localhost',
 ];
 

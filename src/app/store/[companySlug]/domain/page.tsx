@@ -26,7 +26,7 @@ interface DomainSettings {
 
 // Progress steps for domain setup
 const DOMAIN_STEPS = [
-  { id: 'registered', label: 'Domain Registered', description: 'Domain added to Vercel' },
+  { id: 'registered', label: 'Domain Registered', description: 'Domain added to Cloudflare' },
   { id: 'dns_pending', label: 'DNS Configuration', description: 'Waiting for DNS to propagate' },
   { id: 'dns_verified', label: 'DNS Verified', description: 'DNS is pointing correctly' },
   { id: 'ssl_provisioning', label: 'SSL Certificate', description: 'Provisioning secure certificate' },
@@ -105,6 +105,8 @@ export default function DomainSettingsPage() {
   // Platform site URL
   const platformUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://soursync.com';
   const platformDomain = platformUrl.replace('https://', '').replace('http://', '');
+  // Cloudflare for SaaS: the hostname tenants point their CNAME at.
+  const cnameTarget = process.env.NEXT_PUBLIC_DASHBOARD_CNAME_TARGET || 'customers.soursync.com';
 
   const fetchSettings = useCallback(async () => {
     if (!company?.id) return;
@@ -170,7 +172,7 @@ export default function DomainSettingsPage() {
     if (!company?.id || !settings?.custom_domain) return;
     setIsChecking(true);
     try {
-      const res = await fetch('/api/vercel/check-domain', {
+      const res = await fetch('/api/cloudflare/check-domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: settings.custom_domain, companyId: company.id }),
@@ -235,8 +237,8 @@ export default function DomainSettingsPage() {
         return;
       }
 
-      // Register domain with Vercel API
-      const registerRes = await fetch('/api/vercel/register-domain', {
+      // Register domain with Cloudflare for SaaS (custom hostnames)
+      const registerRes = await fetch('/api/cloudflare/register-domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: cleanDomain, companyId: company.id }),
@@ -279,7 +281,7 @@ export default function DomainSettingsPage() {
     try {
       // Detach the alias from Netlify AND clear the DB mapping server-side
       // (service role) so the domain is not orphaned in Netlify.
-      const res = await fetch('/api/vercel/remove-domain', {
+      const res = await fetch('/api/cloudflare/remove-domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -318,8 +320,8 @@ export default function DomainSettingsPage() {
   const dnsRecords: DnsRecord[] = settings?.netlify_dns_records && settings.netlify_dns_records.length > 0
     ? settings.netlify_dns_records
     : [
-        { type: 'A', host: '@', value: '76.76.21.21' },
-        { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com' },
+        { type: 'CNAME', host: '@', value: cnameTarget },
+        { type: 'CNAME', host: 'www', value: cnameTarget },
       ];
 
   const stepStatuses = getStepStatus(settings);
@@ -558,7 +560,7 @@ export default function DomainSettingsPage() {
                     setIsChecking(true);
                     try {
                       // Force SSL provisioning by calling the API
-                      const res = await fetch('/api/vercel/force-ssl', {
+                      const res = await fetch('/api/cloudflare/force-ssl', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ domain: settings.custom_domain, companyId: company?.id }),
@@ -609,20 +611,24 @@ export default function DomainSettingsPage() {
               Add the following DNS records at your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.):
             </p>
 
-            {/* Dynamic DNS Records from Netlify */}
+            {/* Dynamic DNS records from Cloudflare for SaaS (CNAME + SSL validation TXT) */}
             <div className="space-y-4">
               {dnsRecords.map((record, index) => (
                 <div key={index} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
                   <div className="flex items-center gap-2 mb-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                      record.type === 'A' 
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                      record.type === 'TXT'
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                     }`}>
                       {record.type}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {record.type === 'A' ? 'Root domain (@)' : 'Subdomain (www)'}
+                      {record.type === 'TXT'
+                        ? 'SSL / ownership verification'
+                        : record.host === 'www'
+                          ? 'Subdomain (www)'
+                          : 'Root domain (@)'}
                     </span>
                   </div>
                   
@@ -664,9 +670,10 @@ export default function DomainSettingsPage() {
 
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
               <p className="text-sm text-blue-700 dark:text-blue-400">
-                <strong>Tip:</strong> For root domain ({settings.custom_domain}), use the A record. 
-                For www.{settings.custom_domain}, use the CNAME record. 
-                You can set up both for full coverage.
+                <strong>Tip:</strong> Point {settings.custom_domain} and www.{settings.custom_domain} at{' '}
+                <span className="font-mono">{cnameTarget}</span> using a CNAME record. If your DNS provider
+                doesn&apos;t allow a CNAME on the root domain, use its &quot;CNAME flattening&quot; / ALIAS / ANAME option.
+                Add any TXT records shown above so we can verify ownership and issue your SSL certificate.
               </p>
             </div>
 

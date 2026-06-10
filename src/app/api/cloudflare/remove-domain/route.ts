@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getClientIp, rateLimit } from '@/lib/ratelimit';
-import { getVercelConfig, removeDomain } from '@/lib/vercel';
+import { deleteCustomHostname, findCustomHostname, getCloudflareConfig } from '@/lib/cloudflare';
 
 /**
- * Remove a tenant's custom domain.
- * First detaches the domain (+ www variant) from the Vercel project so it is
- * not orphaned, then clears the DB mapping. Vercel failures are surfaced but DB
- * cleanup still proceeds so the tenant is never stuck pointing at a domain they
- * can't re-add.
+ * Remove a tenant's custom domain. First deletes the Cloudflare custom hostname
+ * so it isn't orphaned, then clears the DB mapping. Cloudflare failures are
+ * surfaced but DB cleanup still proceeds so the tenant can re-add the domain.
  */
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    const rl = await rateLimit({ route: 'vercel_remove_domain', ip }, { limit: 10, window: '1 m' });
+    const rl = await rateLimit({ route: 'cf_remove_domain', ip }, { limit: 10, window: '1 m' });
     if (!rl.ok) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
     }
@@ -23,10 +21,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing companyId' }, { status: 400 });
     }
 
-    const cfg = getVercelConfig();
+    const cfg = getCloudflareConfig();
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Database configuration missing' }, { status: 500 });
     }
@@ -38,26 +35,35 @@ export async function POST(request: Request) {
         ? domain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '')
         : '';
 
-    let vercelDetached: boolean | null = null;
+    // Look up the stored Cloudflare hostname id to delete precisely.
+    const { data: priv } = await supabase
+      .from('website_settings_private')
+      .select('netlify_domain_id')
+      .eq('company_id', companyId)
+      .single();
 
-    // Step 1: detach from Vercel (best-effort — DB cleanup proceeds regardless)
+    let cfDetached: boolean | null = null;
     if (cfg && cleanDomain) {
       try {
-        const results = await Promise.all([
-          removeDomain(cleanDomain, cfg),
-          removeDomain(`www.${cleanDomain}`, cfg),
-        ]);
-        vercelDetached = results.every((r) => r.ok);
-        if (!vercelDetached) {
-          console.error('Failed to fully detach domain from Vercel:', results.map((r) => r.status));
+        let id: string | null = priv?.netlify_domain_id ?? null;
+        if (!id) {
+          const found = await findCustomHostname(cleanDomain, cfg);
+          id = found.record?.id ?? null;
         }
-      } catch (vercelErr) {
-        console.error('Vercel domain removal error:', vercelErr);
-        vercelDetached = false;
+        if (id) {
+          const del = await deleteCustomHostname(id, cfg);
+          cfDetached = del.ok;
+          if (!del.ok) console.error('Failed to delete Cloudflare custom hostname:', del.status, del.data?.errors);
+        } else {
+          cfDetached = true; // nothing to remove
+        }
+      } catch (cfErr) {
+        console.error('Cloudflare custom hostname removal error:', cfErr);
+        cfDetached = false;
       }
     }
 
-    // Step 2: clear the public domain mapping
+    // Clear the public domain mapping
     const { error: dbError } = await supabase
       .from('website_settings')
       .update({ custom_domain: null, custom_domain_verified: false })
@@ -67,7 +73,7 @@ export async function POST(request: Request) {
       throw dbError;
     }
 
-    // Step 3: reset private domain ops state
+    // Reset private domain ops state
     const { error: privateError } = await supabase
       .from('website_settings_private')
       .update({
@@ -80,14 +86,13 @@ export async function POST(request: Request) {
       })
       .eq('company_id', companyId);
     if (privateError) {
-      // Non-fatal: the public mapping is already cleared, which is what routing depends on.
       console.error('Private settings reset error (non-fatal):', privateError);
     }
 
     return NextResponse.json({
       success: true,
       domain: cleanDomain || null,
-      vercel_detached: vercelDetached,
+      cloudflare_detached: cfDetached,
       message: 'Custom domain removed.',
     });
   } catch (error: unknown) {

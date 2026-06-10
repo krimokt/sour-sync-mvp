@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getClientIp, rateLimit } from '@/lib/ratelimit';
-import { addDomain, buildDnsRecords, getVercelConfig } from '@/lib/vercel';
+import {
+  buildDnsRecords,
+  createCustomHostname,
+  extractValidationRecords,
+  findCustomHostname,
+  getCloudflareConfig,
+} from '@/lib/cloudflare';
 
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    const rl = await rateLimit({ route: 'vercel_register_domain', ip }, { limit: 10, window: '1 m' });
+    const rl = await rateLimit({ route: 'cf_register_domain', ip }, { limit: 10, window: '1 m' });
     if (!rl.ok) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
     }
@@ -20,17 +26,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing companyId' }, { status: 400 });
     }
 
-    const cfg = getVercelConfig();
+    const cfg = getCloudflareConfig();
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!cfg) {
-      console.error('Vercel configuration missing');
+      console.error('Cloudflare configuration missing');
       return NextResponse.json({
-        error: 'Vercel configuration missing. Please set VERCEL_API_TOKEN and VERCEL_PROJECT_ID.',
+        error: 'Cloudflare configuration missing. Set CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID and NEXT_PUBLIC_DASHBOARD_CNAME_TARGET.',
       }, { status: 500 });
     }
-
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Database configuration missing' }, { status: 500 });
     }
@@ -44,38 +49,45 @@ export async function POST(request: Request) {
       .replace(/^www\./, '')
       .replace(/\/+$/, '');
 
-    console.log(`Registering domain ${cleanDomain} with Vercel project ${cfg.projectId}...`);
+    console.log(`Creating Cloudflare custom hostname for ${cleanDomain}...`);
 
-    // Add both the apex and the www variant to the project. Vercel issues SSL
-    // automatically once DNS points at us, so there is no separate SSL trigger.
-    for (const d of [cleanDomain, `www.${cleanDomain}`]) {
-      const res = await addDomain(d, cfg);
-      if (!res.ok) {
-        const message = res.data?.error?.message || res.data?.message || 'Failed to register domain with Vercel';
-        console.error('Failed to add domain to Vercel:', d, res.status, res.data);
-        // Surface the apex failure; a www failure alone shouldn't block the apex.
-        if (d === cleanDomain) {
-          return NextResponse.json({ error: message, details: res.data }, { status: res.status });
-        }
+    // Create the custom hostname; if it already exists, reuse it (idempotent).
+    let record: any = null;
+    const created = await createCustomHostname(cleanDomain, cfg);
+    if (created.ok) {
+      record = created.data?.result;
+    } else {
+      const existing = await findCustomHostname(cleanDomain, cfg);
+      if (existing.record) {
+        record = existing.record;
+      } else {
+        const message =
+          created.data?.errors?.[0]?.message || 'Failed to register domain with Cloudflare';
+        console.error('Cloudflare create custom hostname failed:', created.status, created.data?.errors);
+        return NextResponse.json({ error: message, details: created.data?.errors }, { status: created.status || 500 });
       }
     }
 
-    const dnsRecords = buildDnsRecords(cleanDomain);
+    const hostnameId: string | null = record?.id ?? null;
+
+    // Records the tenant must add: the CNAME to our target + any DV/ownership TXT.
+    const dnsRecords = [
+      ...buildDnsRecords(cleanDomain, cfg),
+      ...extractValidationRecords(record),
+    ];
 
     // Public table: store the custom domain mapping
     const { error: dbError } = await supabase
       .from('website_settings')
       .update({ custom_domain: cleanDomain, custom_domain_verified: false })
       .eq('company_id', companyId);
-
     if (dbError) {
       console.error('Database error:', dbError);
       throw dbError;
     }
 
-    // Private table: store domain ops status + dns records.
-    // (Column names retain the `netlify_` prefix to avoid a schema migration;
-    //  they now hold Vercel data.)
+    // Private table: store ops status + dns records + the Cloudflare hostname id.
+    // (Columns keep their `netlify_` prefix to avoid a schema migration.)
     const { error: privateError } = await supabase
       .from('website_settings_private')
       .upsert(
@@ -84,7 +96,7 @@ export async function POST(request: Request) {
           dns_status: 'pending',
           ssl_status: 'pending',
           netlify_dns_records: dnsRecords,
-          netlify_domain_id: cleanDomain,
+          netlify_domain_id: hostnameId,
           domain_registered_at: new Date().toISOString(),
           dns_verified_at: null,
           ssl_provisioned_at: null,
@@ -92,7 +104,6 @@ export async function POST(request: Request) {
         },
         { onConflict: 'company_id' }
       );
-
     if (privateError) {
       console.error('Private settings error:', privateError);
       throw privateError;
@@ -102,7 +113,7 @@ export async function POST(request: Request) {
       success: true,
       domain: cleanDomain,
       dns_records: dnsRecords,
-      message: 'Domain registered successfully. Please configure your DNS records.',
+      message: 'Domain registered. Add the DNS records below to finish setup.',
     });
 
   } catch (error: unknown) {
